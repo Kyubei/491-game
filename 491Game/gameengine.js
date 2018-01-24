@@ -45,6 +45,11 @@ GameEngine.prototype.init = function (ctx) {
     this.surfaceHeight = this.ctx.canvas.height;
     this.startInput();
     this.timer = new Timer();
+	this.player1Right = false;
+	this.player1Left = false;
+	this.player1RightUp = true;
+	this.player1LeftUp = true;
+	this.player1LastDirection = "Right";
     console.log('game initialized');
 };
 
@@ -62,18 +67,35 @@ GameEngine.prototype.startInput = function () {
     var that = this;
 
     this.ctx.canvas.addEventListener("keydown", function (e) {
-        if (String.fromCharCode(e.which) === ' ') that.space = true;
-        if (String.fromCharCode(e.which) === 'D') { 
-			that.right = true;
-			that.rightUp = false;
+        if (String.fromCharCode(e.which) === ' ') {
+			that.space = true;
+		}	
+		
+		if (String.fromCharCode(e.which) === 'D') { 
+			that.player1Right = true;
+			that.player1RightUp = false;
+			that.player1LastDirection = "Right";
+		} else if (String.fromCharCode(e.which) === 'A') {
+			that.player1Left = true;
+			that.player1LeftUp = false;
+			that.player1LastDirection = "Left";
 		}
-        if (String.fromCharCode(e.which) === 'R') that.r = true;
-        console.log("Key: "+String.fromCharCode(e.which));
+        if (String.fromCharCode(e.which) === 'R') {
+			that.r = true;
+		}
+        //console.log("Key: "+String.fromCharCode(e.which));
         e.preventDefault();
     }, false);
     this.ctx.canvas.addEventListener("keyup", function (e) {
-        if (String.fromCharCode(e.which) === 'D') that.rightUp = true;
-        console.log("KeyUP: "+String.fromCharCode(e.which));
+        if (String.fromCharCode(e.which) === 'D') {
+			that.player1Right = false;
+			that.player1RightUp = true;
+		}
+        if (String.fromCharCode(e.which) === 'A') {
+			that.player1Left = false;
+			that.player1LeftUp = true;
+		}
+        //console.log("KeyUP: "+String.fromCharCode(e.which));
         e.preventDefault();
     }, false);
 
@@ -117,7 +139,6 @@ GameEngine.prototype.loop = function () {
     this.update();
     this.draw();
     this.space = null;
-	this.right = null;
 	this.r = null;
 };
 

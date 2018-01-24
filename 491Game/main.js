@@ -55,8 +55,7 @@ Animation.prototype.isDone = function () {
 };
 
 function Background(game) {
-    Entity.call(this, game, 0, 400);
-    this.radius = 200;
+    Entity.call(this, game, 0, 0);
 }
 
 Background.prototype = new Entity();
@@ -66,8 +65,7 @@ Background.prototype.update = function () {
 };
 
 Background.prototype.draw = function (ctx) {
-    ctx.fillStyle = "SaddleBrown";
-    ctx.fillRect(0,500,800,300);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 0, 0);
     Entity.prototype.draw.call(this);
 };
 
@@ -188,17 +186,18 @@ Arrow.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 };
 
-
 function Character(game) {
-    this.animation = new Animation(ASSET_MANAGER.getAsset("./img/madoka_idle.png"), 0, 0, 673 / 8 - 1, 133, 0.1, 8, true, false, 0, 0);
-    this.runAnimation = new Animation(ASSET_MANAGER.getAsset("./img/madoka_run.png"), 0, 0, 811 / 8 - 1, 133, 0.1, 8, true, false, 8, -5);
+    this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
+    this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleLeft.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
+    this.runAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningRight.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
+    this.runAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningLeft.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
     this.attackAnimation = new Animation(ASSET_MANAGER.getAsset("./img/madoka_arrow.png"), 0, 0, 811 / 6 - 1, 133, 0.1, 9, false, false, -23, -8);
 	this.running = false;
     this.jumping = false;
 	this.attacking = false;
-    this.radius = 100;
-    this.ground = 400;
-    Entity.call(this, game, 0, 400);
+    this.radius = 0;
+    this.ground = 200;
+    Entity.call(this, game, 100, 200);
 }
 
 Character.prototype = new Entity();
@@ -213,14 +212,20 @@ Character.prototype.update = function () {
 			this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
 		}
 	}
-    if (this.game.right && !this.attacking)
+    if ((this.game.player1Right || this.game.player1Left) && !this.attacking) {
 		this.running = true;
-	if (this.game.rightUp)
+	}
+	if (this.game.player1RightUp && this.game.player1LeftUp) {
 		this.running = false;
+	}
+		//console.log("Running: " + this.running + " | Right: " + this.game.right + " | Left: " + this.game.left + " | RightUp: " + this.game.rightUp + " | LeftUp: " + this.game.leftUp);
+		
 	if (this.running) {
-		this.x += 6;
-		if (this.x > 850)
-			this.x = -150;
+		if (this.game.player1Right) {
+			this.x += 3;
+		} else if (this.game.player1Left) {
+			this.x -= 3;
+		}
 	}
 	if (this.attacking) {
         if (this.attackAnimation.isDone()) {
@@ -248,13 +253,21 @@ Character.prototype.update = function () {
 
 Character.prototype.draw = function (ctx) {
     if (this.running) {
-        this.runAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimation.offsetX, this.y + this.runAnimation.offsetY);
+		if (this.game.player1Right) {			
+			this.runAnimationRight.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimationRight.offsetX, this.y + this.runAnimationRight.offsetY);		
+		} else if (this.game.player1Left) {
+			this.runAnimationLeft.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimationLeft.offsetX, this.y + this.runAnimationLeft.offsetY);
+		}
     } else if (this.jumping) {
         this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY);
     } else if (this.attacking) {
         this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
     } else {
-        this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX, this.y + this.animation.offsetY);
+		if (this.game.player1LastDirection === "Right") {
+			this.idleRight.drawFrame(this.game.clockTick, ctx, this.x + this.idleRight.offsetX, this.y + this.idleRight.offsetY);
+		} else {
+			this.idleLeft.drawFrame(this.game.clockTick, ctx, this.x + this.idleLeft.offsetX, this.y + this.idleLeft.offsetY);
+		}
     }
     Entity.prototype.draw.call(this);
 };
@@ -271,9 +284,13 @@ ASSET_MANAGER.queueDownload("./img/arrow.png");
 ASSET_MANAGER.queueDownload("./img/arrow_start.png");
 ASSET_MANAGER.queueDownload("./img/pink_flare.png");
 ASSET_MANAGER.queueDownload("./img/small_flare.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleRight.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleLeft.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningRight.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningLeft.png");
+ASSET_MANAGER.queueDownload("./img/Background.png");
 
 ASSET_MANAGER.downloadAll(function () {
-    console.log("starting up da sheild");
     var canvas = document.getElementById('gameWorld');
     var ctx = canvas.getContext('2d');
 
