@@ -241,6 +241,25 @@ Arrow.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 };
 
+function Reksai(game) {
+	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleRight.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
+	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleLeft.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
+    Entity.call(this, game, 600, 195);
+}
+
+Reksai.prototype.update = function() {
+    Entity.prototype.update.call(this);
+}
+
+Reksai.prototype.draw = function (ctx) {
+	if (this.game.bossLastDirection === "Right") {
+		this.idleRight.drawFrame(this.game.clockTick, ctx, this.x + this.idleRight.offsetX, this.y + this.idleRight.offsetY);
+	} else {
+		this.idleLeft.drawFrame(this.game.clockTick, ctx, this.x + this.idleLeft.offsetX, this.y + this.idleLeft.offsetY);
+	}
+    Entity.prototype.draw.call(this);
+};
+
 function Character(game) {
     this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
     this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleLeft.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
@@ -254,8 +273,8 @@ function Character(game) {
     this.attackAnimation = null;
     
     //light attack combo 1
-    this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.1, 10, false, false, -18, -29);
-    this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.1, 10, false, false, -18, -29);
+    this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
+    this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
     
     this.lockDirection = 0; //0 = right, 1 = left
 	this.running = false;
@@ -308,8 +327,6 @@ Character.prototype.update = function () {
 	if (this.game.player1RightUp && this.game.player1LeftUp) {
 		this.running = false;
 	}
-		//console.log("Running: " + this.running + " | Right: " + this.game.right + " | Left: " + this.game.left + " | RightUp: " + this.game.rightUp + " | LeftUp: " + this.game.leftUp);
-		
 	if (this.running) {
 		if (this.game.player1Right) {
 			this.x += 3;
@@ -339,7 +356,7 @@ Character.prototype.update = function () {
             this.jumping = false;
         }
         var jumpDistance = this.jumpAnimation.elapsedTime / (this.jumpAnimation.totalTime * 2);
-        var totalHeight = 50;
+        var totalHeight = 80;
 
         if (jumpDistance > 0.5)
             jumpDistance = 1 - jumpDistance;
@@ -388,6 +405,8 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Left.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Right.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpRight.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleRight.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleLeft.png");
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
@@ -401,12 +420,14 @@ ASSET_MANAGER.downloadAll(function () {
 
     var gameEngine = new GameEngine();
     var bg = new Background(gameEngine);
+	var reksai = new Reksai(gameEngine);
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
 
     gameEngine.addEntity(bg);
     gameEngine.addEntity(character);
     gameEngine.addEntity(ui);
+    gameEngine.addEntity(reksai);
  
     gameEngine.init(ctx);
     gameEngine.start();
