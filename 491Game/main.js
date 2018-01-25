@@ -14,18 +14,23 @@ function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDu
 	this.offsetY = offsetY || 0;
 }
 
-Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy) {
+Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
+	var linger = linger || false;
     var scale = scaleBy || 1;
     this.elapsedTime += tick;
     if (this.loop) {
         if (this.isDone()) {
             this.elapsedTime = 0;
         }
-    } else if (this.isDone()) {
+    } else if (this.isDone() && !linger) {
         return;
     }
     var index = this.reverse ? this.frames - this.currentFrame() - 1 : this.currentFrame();
     var vindex = 0;
+    if (linger) { //stay on the last frame
+        if (index >= this.frames)
+        	index = this.frames - 1;
+    }
     if ((index + 1) * this.frameWidth + this.startX > this.spriteSheet.width) {
         index -= Math.floor((this.spriteSheet.width - this.startX) / this.frameWidth);
         vindex++;
@@ -38,6 +43,8 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy) {
     var locX = x;
     var locY = y;
     var offset = vindex === 0 ? this.startX : 0;
+    console.log("drawing index="+index+" from "+(index * this.frameWidth + offset)+", "+(vindex * this.frameHeight + this.startY)+
+    		" at coords "+locX+", "+locY);
     ctx.drawImage(this.spriteSheet,
                   index * this.frameWidth + offset, vindex * this.frameHeight + this.startY,  // source from sheet
                   this.frameWidth, this.frameHeight,
@@ -242,10 +249,9 @@ function Character(game) {
     this.runAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningRight.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
     this.runAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningLeft.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
     
-    //temp - using run animations for jump
     this.jumpAnimation = null;
-    this.jumpAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningRight.png"), 0, 0, 79, 80, 0.1, 13, false, false, 0, 5);
-    this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningLeft.png"), 0, 0, 79, 80, 0.1, 13, false, false, 0, 5);
+    this.jumpAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpRight.png"), 0, 0, 101, 105, 0.1, 3, false, false, -20, -10);
+    this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpLeft.png"), 0, 0, 101, 105, 0.1, 3, false, false, -20, -10);
 
     this.attackAnimation = null;
     
@@ -328,12 +334,13 @@ Character.prototype.update = function () {
         }
 	}
     if (this.jumping) {
-        if (this.jumpAnimation.isDone()) {
+    	console.log("jump = "+this.jumpAnimation.elapsedTime+" out of "+this.jumpAnimation.totalTime);
+        //if (this.jumpAnimation.isDone()) {
+    	if (this.jumpAnimation.elapsedTime >= this.jumpAnimation.totalTime * 2) {
             this.jumpAnimation.elapsedTime = 0;
             this.jumping = false;
-            console.log("jumping finished");
         }
-        var jumpDistance = this.jumpAnimation.elapsedTime / this.jumpAnimation.totalTime;
+        var jumpDistance = this.jumpAnimation.elapsedTime / (this.jumpAnimation.totalTime * 2);
         var totalHeight = 50;
 
         if (jumpDistance > 0.5)
@@ -348,7 +355,7 @@ Character.prototype.update = function () {
 
 Character.prototype.draw = function (ctx) {
 	if (this.jumping) {
-		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY);
+		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY, 1, true);
     } else if (this.attacking) {
         this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
     } else if (this.running) {
@@ -381,6 +388,8 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Left.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Right.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpLeft.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpRight.png");
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
