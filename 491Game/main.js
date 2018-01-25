@@ -69,6 +69,56 @@ Background.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 };
 
+function UI(game) {
+	this.bottomX = 0;
+	this.bottomY = 280;
+	this.bottomWidth = 800;
+	this.bottomHeight = 120;
+	
+	this.portraitX = 0;
+	this.portraitY = 300;
+	this.portraitWidth = 100;
+	this.portraitHeight = 100;
+	
+	this.bar1X = this.portraitX + this.portraitWidth - 20;
+	this.bar1Y = this.portraitY + 25;
+	this.bar1Width = 150;
+	this.bar1Height = 30;
+	
+	this.bar2X = this.portraitX + this.portraitWidth - 20;
+	this.bar2Y = this.portraitY + 45;
+	this.bar2Width = 150;
+	this.bar2Height = 30;
+	
+	this.health1X = this.bar1X + 5;
+	this.health1Y = this.bar1Y + 11;
+	this.health1Width = this.bar1Width - 8;
+	this.health1Height = this.bar1Height - 21;
+	
+	this.stamina1X = this.bar2X + 5;
+	this.stamina1Y = this.bar2Y + 11;
+	this.stamina1Width = this.bar2Width - 8;
+	this.stamina1Height = this.bar2Height - 21;
+	
+	Entity.call(this, game, 0, 0);
+}
+
+UI.prototype = new Entity();
+UI.prototype.constructor = UI;
+
+UI.prototype.update = function () {
+};
+
+UI.prototype.draw = function (ctx) {
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/Bottom.png"), this.bottomX, this.bottomY, this.bottomWidth, this.bottomHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar1X, this.bar1Y, this.bar1Width, this.bar1Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.health1X, this.health1Y, this.health1Width * (this.game.player1Health / this.game.player1MaxHealth), this.health1Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar2X, this.bar2Y, this.bar2Width, this.bar2Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBar.png"), this.stamina1X, this.stamina1Y, this.stamina1Width * (this.game.player1Stamina / this.game.player1MaxStamina), this.stamina1Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Riven/RivenPortrait.png"), this.portraitX, this.portraitY, this.portraitWidth, this.portraitHeight);
+    Entity.prototype.draw.call(this);	
+};
+
 var ARROW_PART_MAIN = 1;
 var ARROW_PART_SECONDARY = 2;
 
@@ -289,6 +339,11 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningLeft.png");
 ASSET_MANAGER.queueDownload("./img/Background.png");
+ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
+ASSET_MANAGER.queueDownload("./img/UI/BarBack.png");
+ASSET_MANAGER.queueDownload("./img/UI/HealthBar.png");
+ASSET_MANAGER.queueDownload("./img/UI/StaminaBar.png");
 
 ASSET_MANAGER.downloadAll(function () {
     var canvas = document.getElementById('gameWorld');
@@ -297,9 +352,11 @@ ASSET_MANAGER.downloadAll(function () {
     var gameEngine = new GameEngine();
     var bg = new Background(gameEngine);
     var character = new Character(gameEngine);
+    var ui = new UI(gameEngine);
 
     gameEngine.addEntity(bg);
     gameEngine.addEntity(character);
+    gameEngine.addEntity(ui);
  
     gameEngine.init(ctx);
     gameEngine.start();

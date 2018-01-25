@@ -50,6 +50,10 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1RightUp = true;
 	this.player1LeftUp = true;
 	this.player1LastDirection = "Right";
+	this.player1Health = 100.0;
+	this.player1MaxHealth = 100.0;
+	this.player1Stamina = 100.0;
+	this.player1MaxStamina = 100.0;
     console.log('game initialized');
 };
 
