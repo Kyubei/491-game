@@ -49,11 +49,14 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1Left = false;
 	this.player1RightUp = true;
 	this.player1LeftUp = true;
+	this.player1Jump = false;
+	this.player1JumpUp = true;
 	this.player1LastDirection = "Right";
 	this.player1Health = 100.0;
 	this.player1MaxHealth = 100.0;
 	this.player1Stamina = 100.0;
 	this.player1MaxStamina = 100.0;
+	this.player1AttackIndex = 0;
     console.log('game initialized');
 };
 
@@ -83,6 +86,10 @@ GameEngine.prototype.startInput = function () {
 			that.player1Left = true;
 			that.player1LeftUp = false;
 			that.player1LastDirection = "Left";
+		} else if (String.fromCharCode(e.which) === 'W') {
+			that.player1Jump = true;
+		} else if (String.fromCharCode(e.which) === 'Y') {
+			that.player1AttackIndex = 1;
 		}
         if (String.fromCharCode(e.which) === 'R') {
 			that.r = true;
@@ -98,6 +105,12 @@ GameEngine.prototype.startInput = function () {
         if (String.fromCharCode(e.which) === 'A') {
 			that.player1Left = false;
 			that.player1LeftUp = true;
+		}
+        if (String.fromCharCode(e.which) === 'W') {
+			that.player1Jump = false;
+		}
+        if (String.fromCharCode(e.which) === 'Y') {
+			that.player1AttackIndex = 0;
 		}
         //console.log("KeyUP: "+String.fromCharCode(e.which));
         e.preventDefault();

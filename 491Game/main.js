@@ -241,10 +241,23 @@ function Character(game) {
     this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleLeft.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
     this.runAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningRight.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
     this.runAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningLeft.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
-    this.attackAnimation = new Animation(ASSET_MANAGER.getAsset("./img/madoka_arrow.png"), 0, 0, 811 / 6 - 1, 133, 0.1, 9, false, false, -23, -8);
+    
+    //temp - using run animations for jump
+    this.jumpAnimation = null;
+    this.jumpAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningRight.png"), 0, 0, 79, 80, 0.1, 13, false, false, 0, 5);
+    this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningLeft.png"), 0, 0, 79, 80, 0.1, 13, false, false, 0, 5);
+
+    this.attackAnimation = null;
+    
+    //light attack combo 1
+    this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.1, 10, false, false, -18, -29);
+    this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.1, 10, false, false, -18, -29);
+    
+    this.lockDirection = 0; //0 = right, 1 = left
 	this.running = false;
     this.jumping = false;
 	this.attacking = false;
+	this.attackIndex = 0;
     this.radius = 0;
     this.ground = 200;
     Entity.call(this, game, 100, 200);
@@ -265,6 +278,29 @@ Character.prototype.update = function () {
     if ((this.game.player1Right || this.game.player1Left) && !this.attacking) {
 		this.running = true;
 	}
+	if (this.game.player1AttackIndex > 0) { //certain skills can break movement
+		this.attackIndex = this.game.player1AttackIndex;
+		this.lockDirection = this.game.player1LastDirection === "Right" ? 0 : 1;
+		switch(this.game.player1AttackIndex) {
+			case 1: //light attack
+				if (!this.attacking && !this.jumping) { //no attacking in the air... for now
+					this.attacking = true;
+					this.running = false;
+			    	if (this.game.player1LastDirection === "Right")
+			    		this.attackAnimation = this.attackAnimation1Right;
+			    	else
+			    		this.attackAnimation = this.attackAnimation1Left;
+				}
+			break;
+		}
+	}
+    if (this.game.player1Jump && !this.attacking && !this.jumping) { //todo - add a floor check. jumping currently does not work with collisions.
+    	if (this.game.player1LastDirection === "Right")
+    		this.jumpAnimation = this.jumpAnimationRight;
+    	else
+    		this.jumpAnimation = this.jumpAnimationLeft;
+    	this.jumping = true;
+	}
 	if (this.game.player1RightUp && this.game.player1LeftUp) {
 		this.running = false;
 	}
@@ -277,19 +313,28 @@ Character.prototype.update = function () {
 			this.x -= 3;
 		}
 	}
+	if (this.attackIndex === 1 && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
+		if (this.lockDirection === 0) {
+			this.x += 4;
+		} else {
+			this.x -= 4;
+		}
+	}
 	if (this.attacking) {
         if (this.attackAnimation.isDone()) {
             this.attackAnimation.elapsedTime = 0;
             this.attacking = false;
+            this.attackIndex = 0;
         }
 	}
     if (this.jumping) {
         if (this.jumpAnimation.isDone()) {
             this.jumpAnimation.elapsedTime = 0;
             this.jumping = false;
+            console.log("jumping finished");
         }
         var jumpDistance = this.jumpAnimation.elapsedTime / this.jumpAnimation.totalTime;
-        var totalHeight = 200;
+        var totalHeight = 50;
 
         if (jumpDistance > 0.5)
             jumpDistance = 1 - jumpDistance;
@@ -302,17 +347,17 @@ Character.prototype.update = function () {
 };
 
 Character.prototype.draw = function (ctx) {
-    if (this.running) {
+	if (this.jumping) {
+		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY);
+    } else if (this.attacking) {
+        this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
+    } else if (this.running) {
 		if (this.game.player1Right) {			
 			this.runAnimationRight.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimationRight.offsetX, this.y + this.runAnimationRight.offsetY);		
 		} else if (this.game.player1Left) {
 			this.runAnimationLeft.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimationLeft.offsetX, this.y + this.runAnimationLeft.offsetY);
 		}
-    } else if (this.jumping) {
-        this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY);
-    } else if (this.attacking) {
-        this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
-    } else {
+    } else { //idle
 		if (this.game.player1LastDirection === "Right") {
 			this.idleRight.drawFrame(this.game.clockTick, ctx, this.x + this.idleRight.offsetX, this.y + this.idleRight.offsetY);
 		} else {
@@ -326,10 +371,6 @@ Character.prototype.draw = function (ctx) {
 
 var ASSET_MANAGER = new AssetManager();
 
-ASSET_MANAGER.queueDownload("./img/madoka_idle.png");
-ASSET_MANAGER.queueDownload("./img/madoka_run.png");
-ASSET_MANAGER.queueDownload("./img/madoka_rain.png");
-ASSET_MANAGER.queueDownload("./img/madoka_arrow.png");
 ASSET_MANAGER.queueDownload("./img/arrow.png");
 ASSET_MANAGER.queueDownload("./img/arrow_start.png");
 ASSET_MANAGER.queueDownload("./img/pink_flare.png");
@@ -338,6 +379,8 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningLeft.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Left.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Right.png");
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
