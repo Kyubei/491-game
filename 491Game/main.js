@@ -43,8 +43,6 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
     var locX = x;
     var locY = y;
     var offset = vindex === 0 ? this.startX : 0;
-    console.log("drawing index="+index+" from "+(index * this.frameWidth + offset)+", "+(vindex * this.frameHeight + this.startY)+
-    		" at coords "+locX+", "+locY);
     ctx.drawImage(this.spriteSheet,
                   index * this.frameWidth + offset, vindex * this.frameHeight + this.startY,  // source from sheet
                   this.frameWidth, this.frameHeight,
@@ -285,8 +283,6 @@ Character.prototype.update = function () {
 		this.running = true;
 	}
 	if (this.game.player1AttackIndex > 0) { //certain skills can break movement
-		this.attackIndex = this.game.player1AttackIndex;
-		this.lockDirection = this.game.player1LastDirection === "Right" ? 0 : 1;
 		switch(this.game.player1AttackIndex) {
 			case 1: //light attack
 				if (!this.attacking && !this.jumping) { //no attacking in the air... for now
@@ -296,6 +292,8 @@ Character.prototype.update = function () {
 			    		this.attackAnimation = this.attackAnimation1Right;
 			    	else
 			    		this.attackAnimation = this.attackAnimation1Left;
+					this.attackIndex = this.game.player1AttackIndex;
+					this.lockDirection = this.game.player1LastDirection === "Right" ? 0 : 1;
 				}
 			break;
 		}
