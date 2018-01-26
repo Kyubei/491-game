@@ -56,7 +56,8 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1MaxHealth = 100.0;
 	this.player1Stamina = 100.0;
 	this.player1MaxStamina = 100.0;
-	this.player1AttackIndex = 0;
+	this.player1AttackIndex = 0; //the actual skill being used
+	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
 	
 	this.bossLastDirection = "Left";
@@ -92,7 +93,7 @@ GameEngine.prototype.startInput = function () {
 		} else if (String.fromCharCode(e.which) === 'W') {
 			that.player1Jump = true;
 		} else if (String.fromCharCode(e.which) === 'Y') {
-			that.player1AttackIndex = 1;
+			that.player1AttackInput = 1;
 		}
         if (String.fromCharCode(e.which) === 'R') {
 			that.r = true;
@@ -113,7 +114,7 @@ GameEngine.prototype.startInput = function () {
 			that.player1Jump = false;
 		}
         if (String.fromCharCode(e.which) === 'Y') {
-			that.player1AttackIndex = 0;
+			that.player1AttackInput = 0;
 		}
         //console.log("KeyUP: "+String.fromCharCode(e.which));
         e.preventDefault();
