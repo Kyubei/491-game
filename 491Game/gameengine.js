@@ -57,6 +57,7 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1Stamina = 100.0;
 	this.player1MaxStamina = 100.0;
 	this.player1AttackIndex = 0;
+	this.player1LastLightAttack = 0;
 	
 	this.bossLastDirection = "Left";
     console.log('game initialized');

@@ -261,8 +261,15 @@ Reksai.prototype.draw = function (ctx) {
 };
 
 function Character(game) {
-    this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
-    this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleLeft.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
+	this.runSpeed = 4;
+	this.jumpSpeed = 0;
+	this.lastDirection = "Right";
+	
+	this.idleAnimation = null;
+    this.idleAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
+    this.idleAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleLeft.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
+	
+	this.runAnimation = null;
     this.runAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningRight.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
     this.runAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningLeft.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
     
@@ -270,13 +277,13 @@ function Character(game) {
     this.jumpAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpRight.png"), 0, 0, 72, 90, 0.1, 3, false, false, 0, -10);
     this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpLeft.png"), 0, 0, 72, 90, 0.1, 3, false, false, 0, -10);
 
-    this.attackAnimation = null;
-    
     //light attack combo 1
+    this.attackAnimation = null;
     this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
     this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
+    this.attackAnimation2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 153, 120, 0.08, 10, false, false, 0, -25);
+    this.attackAnimation2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 153, 120, 0.08, 10, false, false, 0, -25);
     
-    this.lockDirection = 0; //0 = right, 1 = left
 	this.running = false;
     this.jumping = false;
 	this.attacking = false;
@@ -298,58 +305,97 @@ Character.prototype.update = function () {
 			this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
 		}
 	}
-    if ((this.game.player1Right || this.game.player1Left) && !this.attacking) {
+    if (this.game.player1Jump && !this.attacking && !this.jumping) { //todo - add a floor check. jumping currently does not work with collisions.
+    	this.jumping = true;
+		if (this.game.player1Right) {
+			this.lastDirection = "Right";
+			this.jumpSpeed = this.runSpeed;
+		} else if (this.game.player1Left) {
+			this.lastDirection = "Left";
+			this.jumpSpeed = -this.runSpeed;
+		} else {
+			this.jumpSpeed = 0;
+		}
+	}	
+    if ((this.game.player1Right || this.game.player1Left) && !this.attacking && !this.jumping) {
 		this.running = true;
+		if (this.game.player1Right) {
+			this.lastDirection = "Right";
+		} else if (this.game.player1Left) {
+			this.lastDirection = "Left";
+		}
+	} else {
+		this.running = false;
 	}
+	
 	if (this.game.player1AttackIndex > 0) { //certain skills can break movement
 		switch(this.game.player1AttackIndex) {
 			case 1: //light attack
 				if (!this.attacking && !this.jumping) { //no attacking in the air... for now
 					this.attacking = true;
-					this.running = false;
-			    	if (this.game.player1LastDirection === "Right")
+			    	if (this.game.player1LastDirection === "Right") {
 			    		this.attackAnimation = this.attackAnimation1Right;
-			    	else
+						this.lastDirection = "Right";
+			    	} else {
 			    		this.attackAnimation = this.attackAnimation1Left;
+						this.lastDirection = "Left";
+					}
 					this.attackIndex = this.game.player1AttackIndex;
-					this.lockDirection = this.game.player1LastDirection === "Right" ? 0 : 1;
 				}
+			case 2:
+				if (!this.attacking && !this.jumping) {
+					this.attacking = true;
+			    	if (this.game.player1LastDirection === "Right") {
+			    		this.attackAnimation = this.attackAnimation2Right;
+						this.lastDirection = "Right";
+			    	} else {
+			    		this.attackAnimation = this.attackAnimation2Left;
+						this.lastDirection = "Left";
+					}
+					this.attackIndex = this.game.player1AttackIndex;
+				}	
 			break;
 		}
 	}
-    if (this.game.player1Jump && !this.attacking && !this.jumping) { //todo - add a floor check. jumping currently does not work with collisions.
-    	if (this.game.player1LastDirection === "Right")
-    		this.jumpAnimation = this.jumpAnimationRight;
-    	else
-    		this.jumpAnimation = this.jumpAnimationLeft;
-    	this.jumping = true;
+	
+	// Animation Direction Control
+	if (this.lastDirection === "Right") {
+    	this.jumpAnimation = this.jumpAnimationRight;
+		this.idleAnimation = this.idleAnimationRight;
+		this.runAnimation = this.runAnimationRight;
+	} else {
+		this.jumpAnimation = this.jumpAnimationLeft;
+		this.idleAnimation = this.idleAnimationLeft;
+		this.runAnimation = this.runAnimationLeft;
 	}
-	if (this.game.player1RightUp && this.game.player1LeftUp) {
-		this.running = false;
-	}
+	
 	if (this.running) {
-		if (this.game.player1Right) {
-			this.x += 4;
-		} else if (this.game.player1Left) {
-			this.x -= 4;
+		if (this.lastDirection === "Right") {
+			this.x += this.runSpeed;
+		} else if (this.lastDirection === "Left") {
+			this.x -= this.runSpeed;
 		}
+	} else if (this.jumping) {
+		this.x += this.jumpSpeed;
 	}
+	
 	if (this.attackIndex === 1 && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
-		if (this.lockDirection === 0) {
-			this.x += 4;
+		if (this.lastDirection === "Right") {
+			this.x += this.runSpeed;
 		} else {
-			this.x -= 4;
+			this.x -= this.runSpeed;
 		}
 	}
 	if (this.attacking) {
-        if (this.attackAnimation.isDone()) {
+        if (this.attackAnimation != null && this.attackAnimation.isDone()) {
             this.attackAnimation.elapsedTime = 0;
             this.attacking = false;
+			this.game.player1LastLightAttack = this.attackIndex;
             this.attackIndex = 0;
         }
 	}
     if (this.jumping) {
-    	console.log("jump = "+this.jumpAnimation.elapsedTime+" out of "+this.jumpAnimation.totalTime);
+    	//console.log("jump = "+this.jumpAnimation.elapsedTime+" out of "+this.jumpAnimation.totalTime);
         //if (this.jumpAnimation.isDone()) {
     	if (this.jumpAnimation.elapsedTime >= this.jumpAnimation.totalTime * 2) {
             this.jumpAnimation.elapsedTime = 0;
@@ -358,8 +404,9 @@ Character.prototype.update = function () {
         var jumpDistance = this.jumpAnimation.elapsedTime / (this.jumpAnimation.totalTime * 2);
         var totalHeight = 60;
 
-        if (jumpDistance > 0.5)
+        if (jumpDistance > 0.5) {
             jumpDistance = 1 - jumpDistance;
+		}
 
         //var height = jumpDistance * 2 * totalHeight;
         var height = totalHeight*(-4 * (jumpDistance * jumpDistance - jumpDistance));
@@ -369,27 +416,21 @@ Character.prototype.update = function () {
 };
 
 Character.prototype.draw = function (ctx) {
-	if (this.jumping) {
+	if (this.jumping) { // Jumping
 		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY, 1, true);
-    } else if (this.attacking) {
+    } else if (this.attacking && this.attackAnimation != null) { // Attacking
         this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
-    } else if (this.running) {
-		if (this.game.player1Right) {			
-			this.runAnimationRight.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimationRight.offsetX, this.y + this.runAnimationRight.offsetY);		
-		} else if (this.game.player1Left) {
-			this.runAnimationLeft.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimationLeft.offsetX, this.y + this.runAnimationLeft.offsetY);
-		}
-    } else { //idle
-		if (this.game.player1LastDirection === "Right") {
-			this.idleRight.drawFrame(this.game.clockTick, ctx, this.x + this.idleRight.offsetX, this.y + this.idleRight.offsetY);
-		} else {
-			this.idleLeft.drawFrame(this.game.clockTick, ctx, this.x + this.idleLeft.offsetX, this.y + this.idleLeft.offsetY);
-		}
+    } else if (this.running) { // Running
+		this.runAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimation.offsetX, this.y + this.runAnimation.offsetY);	
+    } else { // Idle
+		this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
     }
     Entity.prototype.draw.call(this);
 };
 
-// the "main" code begins here
+/*
+	Asset manager
+*/
 
 var ASSET_MANAGER = new AssetManager();
 
@@ -397,19 +438,24 @@ ASSET_MANAGER.queueDownload("./img/arrow.png");
 ASSET_MANAGER.queueDownload("./img/arrow_start.png");
 ASSET_MANAGER.queueDownload("./img/pink_flare.png");
 ASSET_MANAGER.queueDownload("./img/small_flare.png");
+
+ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenRunningLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Left.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ1Right.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenQ2Left.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenQ2Right.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpRight.png");
+
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleLeft.png");
+
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
-ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
 ASSET_MANAGER.queueDownload("./img/UI/BarBack.png");
 ASSET_MANAGER.queueDownload("./img/UI/HealthBar.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBar.png");
