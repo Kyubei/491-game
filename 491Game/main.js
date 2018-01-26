@@ -267,8 +267,8 @@ function Character(game) {
     this.runAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenRunningLeft.png"), 0, 0, 79, 80, 0.1, 13, true, false, 0, 5);
     
     this.jumpAnimation = null;
-    this.jumpAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpRight.png"), 0, 0, 101, 105, 0.1, 3, false, false, -20, -10);
-    this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpLeft.png"), 0, 0, 101, 105, 0.1, 3, false, false, -20, -10);
+    this.jumpAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpRight.png"), 0, 0, 72, 90, 0.1, 3, false, false, 0, -10);
+    this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpLeft.png"), 0, 0, 72, 90, 0.1, 3, false, false, 0, -10);
 
     this.attackAnimation = null;
     
@@ -329,9 +329,9 @@ Character.prototype.update = function () {
 	}
 	if (this.running) {
 		if (this.game.player1Right) {
-			this.x += 3;
+			this.x += 4;
 		} else if (this.game.player1Left) {
-			this.x -= 3;
+			this.x -= 4;
 		}
 	}
 	if (this.attackIndex === 1 && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
@@ -356,7 +356,7 @@ Character.prototype.update = function () {
             this.jumping = false;
         }
         var jumpDistance = this.jumpAnimation.elapsedTime / (this.jumpAnimation.totalTime * 2);
-        var totalHeight = 80;
+        var totalHeight = 60;
 
         if (jumpDistance > 0.5)
             jumpDistance = 1 - jumpDistance;
