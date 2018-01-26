@@ -94,6 +94,8 @@ GameEngine.prototype.startInput = function () {
 			that.player1Jump = true;
 		} else if (String.fromCharCode(e.which) === 'Y') {
 			that.player1AttackInput = 1;
+		} else if (String.fromCharCode(e.which) === 'U') {
+			that.player1AttackInput = 2;
 		}
         if (String.fromCharCode(e.which) === 'R') {
 			that.r = true;
@@ -113,7 +115,8 @@ GameEngine.prototype.startInput = function () {
         if (String.fromCharCode(e.which) === 'W') {
 			that.player1Jump = false;
 		}
-        if (String.fromCharCode(e.which) === 'Y') {
+        if (String.fromCharCode(e.which) === 'Y' ||
+        		String.fromCharCode(e.which) === 'U') {
 			that.player1AttackInput = 0;
 		}
         //console.log("KeyUP: "+String.fromCharCode(e.which));

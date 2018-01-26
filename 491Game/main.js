@@ -264,7 +264,7 @@ Reksai.prototype.draw = function (ctx) {
 };
 
 function Character(game) {
-	this.runSpeed = 4;
+	this.runSpeed = 3;
 	this.jumpSpeed = 0;
 	this.lastDirection = "Right";
 	
@@ -285,9 +285,9 @@ function Character(game) {
     this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
     this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
     this.attackAnimation2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -10);
-    this.attackAnimation2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -10);
+    this.attackAnimation2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -50, -10);
     this.attackAnimation3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Right.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -20, -25);
-    this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -20, -25);
+    this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -65, -25);
     
     this.lastSideStrongIndex = 0; //your last side strong attack index, for combo purposes
     this.sideStrongComboTime = 0; //the timer before the combo drops off
@@ -346,16 +346,21 @@ Character.prototype.update = function () {
     if (this.game.player1AttackInput > 0) { 
 		switch(this.game.player1AttackInput) {
 			case 1: //light attack
+				//autoattacks go here!
+	    	break;
+			case 2: //strong attack
 		    	if (!this.attacking && !this.jumping) {
-		    		this.attacking = true;
-		    		//q will take attack indexes 1, 2, and 3
-		    		if (this.lastSideStrongIndex < 3)
-		    			this.game.player1AttackIndex = this.lastSideStrongIndex + 1;
-		    		else
-		    			this.game.player1AttackIndex = 1;
-		    		this.lastSideStrongIndex = this.game.player1AttackIndex;
-		    		this.sideStrongComboTime = COMBO_DROPOFF_TIME;
-		        	console.log("combo stage "+this.game.player1AttackIndex+" started");
+		    		if (this.game.player1Right || this.game.player1Left) {
+			    		this.attacking = true;
+			    		//q will take attack indexes 1, 2, and 3
+			    		if (this.lastSideStrongIndex < 3)
+			    			this.game.player1AttackIndex = this.lastSideStrongIndex + 1;
+			    		else
+			    			this.game.player1AttackIndex = 1;
+			    		this.lastSideStrongIndex = this.game.player1AttackIndex;
+			    		this.sideStrongComboTime = COMBO_DROPOFF_TIME;
+			        	console.log("combo stage "+this.game.player1AttackIndex+" started");
+		    		}
 		    	}
 	    	break;
 		}
@@ -415,7 +420,7 @@ Character.prototype.update = function () {
 		this.x += this.jumpSpeed;
 	}
 	
-	if (this.attackIndex === 1 && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
+	if (this.attackIndex >= 1 && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
 		if (this.lastDirection === "Right") {
 			this.x += this.runSpeed;
 		} else {
