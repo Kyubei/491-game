@@ -420,7 +420,7 @@ Character.prototype.update = function () {
 		this.x += this.jumpSpeed;
 	}
 	
-	if (this.attackIndex >= 1 && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
+	if ((this.attackIndex >= 1 && this.attackIndex <= 3) && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
 		if (this.lastDirection === "Right") {
 			this.x += this.runSpeed;
 		} else {
