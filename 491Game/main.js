@@ -308,7 +308,7 @@ Character.prototype.update = function () {
     //if (this.game.space) this.jumping = true; //i don't have the jump animation! so we'll leave this out
 	if (this.game.r) {
 		if (!this.attacking) {
-			this.attacking = true;
+			//this.attacking = true;
 			this.running = false;
 			this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
 		}
