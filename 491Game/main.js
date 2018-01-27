@@ -43,7 +43,7 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
     var locX = x;
     var locY = y;
     var offset = vindex === 0 ? this.startX : 0;
-    console.log("drawing "+index+" from ("+(index * this.frameWidth + offset)+", "+(vindex * this.frameHeight + this.startY)+")");
+    //console.log("drawing "+index+" from ("+(index * this.frameWidth + offset)+", "+(vindex * this.frameHeight + this.startY)+")");
     ctx.drawImage(this.spriteSheet,
                   index * this.frameWidth + offset, vindex * this.frameHeight + this.startY,  // source from sheet
                   this.frameWidth, this.frameHeight,
@@ -284,10 +284,10 @@ function Character(game) {
     this.attackAnimation = null;
     this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
     this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
-    this.attackAnimation2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -10);
-    this.attackAnimation2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -50, -10);
-    this.attackAnimation3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Right.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -20, -25);
-    this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -65, -25);
+    this.attackAnimation2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -9);
+    this.attackAnimation2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -50, -9);
+    this.attackAnimation3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Right.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -20, -30);
+    this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -65, -30);
     
     this.lastSideStrongIndex = 0; //your last side strong attack index, for combo purposes
     this.sideStrongComboTime = 0; //the timer before the combo drops off
@@ -514,9 +514,9 @@ ASSET_MANAGER.downloadAll(function () {
     var ui = new UI(gameEngine);
 
     gameEngine.addEntity(bg);
-    gameEngine.addEntity(character);
     gameEngine.addEntity(ui);
-    //gameEngine.addEntity(reksai);
+    gameEngine.addEntity(character);
+    gameEngine.addEntity(reksai);
  
     gameEngine.init(ctx);
     gameEngine.start();
