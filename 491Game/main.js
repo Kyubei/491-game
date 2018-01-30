@@ -237,9 +237,9 @@ Arrow.prototype.update = function() {
 
 Arrow.prototype.draw = function (ctx) {
     if (this.starting) {
-        this.startAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.startAnimation.offsetX, this.y + this.startAnimation.offsetY);
+        //this.startAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.startAnimation.offsetX, this.y + this.startAnimation.offsetY);
     } else {
-        this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX, this.y + this.animation.offsetY);
+        //this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX, this.y + this.animation.offsetY);
     }
     Entity.prototype.draw.call(this);
 };
@@ -281,6 +281,14 @@ function Character(game) {
     this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpLeft.png"), 0, 0, 72, 90, 0.1, 3, false, false, 0, -10);
 
     //light attack combo 1
+    this.attackAnimationLight1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA1Right.png"), 0, 0, 109, 110, 0.06, 16, false, false, 2, -20);
+    this.attackAnimationLight1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA1Left.png"), 0, 0, 109, 110, 0.06, 16, false, false, -56, -25 + 2);
+    this.attackAnimationLight2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Right.png"), 0, 0, 94, 110, 0.06, 12, false, false, 4, 8 + 6);
+    this.attackAnimationLight2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Left.png"), 0, 0, 94, 110, 0.06, 12, false, false, -45, 8 + 2);
+    this.attackAnimationLight3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA3Right.png"), 0, 0, 128, 110, 0.06, 13, false, false, -20, -12);
+    this.attackAnimationLight3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA3Left.png"), 0, 0, 138, 110, 0.06, 13, false, false, -58, -17);
+    
+    //strong side attack combo 1
     this.attackAnimation = null;
     this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
     this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
@@ -289,8 +297,9 @@ function Character(game) {
     this.attackAnimation3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Right.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -20, -30);
     this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -65, -30);
     
-    this.lastSideStrongIndex = 0; //your last side strong attack index, for combo purposes
-    this.sideStrongComboTime = 0; //the timer before the combo drops off
+    this.lastComboIndex = 0; //the last combo index (AA, Q, etc)
+    this.lastComboStage = 0; //the last stage of your combo (1, 2, 3, etc)
+    this.comboTime = 0; //the timer before the combo drops off
     
 	this.running = false;
     this.jumping = false;
@@ -336,30 +345,48 @@ Character.prototype.update = function () {
 		this.running = false;
 	}
 
-    this.sideStrongComboTime -= this.game.clockTick;
-    if (this.sideStrongComboTime <= 0 && this.lastSideStrongIndex > 0) {
-    	console.log("combo stage "+this.lastSideStrongIndex+" has dropped off!");
-    	this.lastSideStrongIndex = 0;
+    this.comboTime -= this.game.clockTick;
+    if (this.comboTime <= 0 && this.lastComboStage > 0) {
+    	console.log("combo stage "+this.lastComboStage+" has dropped off!");
+    	this.lastComboStage = 0;
     }
     
   //process the raw attack input into the appropriate skill
     if (this.game.player1AttackInput > 0) { 
 		switch(this.game.player1AttackInput) {
 			case 1: //light attack
-				//autoattacks go here!
+		    	if (!this.attacking && !this.jumping) {
+	    			if (this.lastComboType != this.game.player1AttackInput) {
+	    				//last combo was different (e.g. AA vs Q) - drop combo
+	    				this.lastComboStage = 0;		    				
+	    			}
+		    		this.attacking = true;
+		    		//AA will take attack indexes 4-6
+		    		if (this.lastComboStage < 3)
+		    			this.game.player1AttackIndex = this.lastComboStage + 4;
+		    		else
+		    			this.game.player1AttackIndex = 4;
+		    		this.lastComboType = this.game.player1AttackInput;
+		    		this.lastComboStage = this.game.player1AttackIndex - 3;
+		    		this.comboTime = COMBO_DROPOFF_TIME;
+		    	}
 	    	break;
 			case 2: //strong attack
 		    	if (!this.attacking && !this.jumping) {
 		    		if (this.game.player1Right || this.game.player1Left) {
+		    			if (this.lastComboType != this.game.player1AttackInput) {
+		    				//last combo was different (e.g. AA vs Q) - drop combo
+		    				this.lastComboStage = 0;		    				
+		    			}
 			    		this.attacking = true;
 			    		//q will take attack indexes 1, 2, and 3
-			    		if (this.lastSideStrongIndex < 3)
-			    			this.game.player1AttackIndex = this.lastSideStrongIndex + 1;
+			    		if (this.lastComboStage < 3)
+			    			this.game.player1AttackIndex = this.lastComboStage + 1;
 			    		else
 			    			this.game.player1AttackIndex = 1;
-			    		this.lastSideStrongIndex = this.game.player1AttackIndex;
-			    		this.sideStrongComboTime = COMBO_DROPOFF_TIME;
-			        	console.log("combo stage "+this.game.player1AttackIndex+" started");
+			    		this.lastComboType = this.game.player1AttackInput;
+			    		this.lastComboStage = this.game.player1AttackIndex;
+			    		this.comboTime = COMBO_DROPOFF_TIME;
 		    		}
 		    	}
 	    	break;
@@ -369,7 +396,7 @@ Character.prototype.update = function () {
 	if (this.game.player1AttackIndex > 0) {
 		this.attackIndex = this.game.player1AttackIndex;
 		switch(this.game.player1AttackIndex) {
-			case 1: //light attack
+			case 1: //strong side attack
 		    	if (this.game.player1LastDirection === "Right") {
 		    		this.attackAnimation = this.attackAnimation1Right;
 		    	} else {
@@ -388,6 +415,27 @@ Character.prototype.update = function () {
 		    		this.attackAnimation = this.attackAnimation3Right;
 		    	} else {
 		    		this.attackAnimation = this.attackAnimation3Left;
+				}
+			break;
+			case 4: //light attack
+		    	if (this.game.player1LastDirection === "Right") {
+		    		this.attackAnimation = this.attackAnimationLight1Right;
+		    	} else {
+		    		this.attackAnimation = this.attackAnimationLight1Left;
+				}
+			break;
+			case 5:
+		    	if (this.game.player1LastDirection === "Right") {
+		    		this.attackAnimation = this.attackAnimationLight2Right;
+		    	} else {
+		    		this.attackAnimation = this.attackAnimationLight2Left;
+				}
+			break;
+			case 6:
+		    	if (this.game.player1LastDirection === "Right") {
+		    		this.attackAnimation = this.attackAnimationLight3Right;
+		    	} else {
+		    		this.attackAnimation = this.attackAnimationLight3Left;
 				}
 			break;
 		}
@@ -491,6 +539,12 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenQ2Left.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ2Right.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ3Left.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenQ3Right.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenAA1Left.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenAA1Right.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenAA2Left.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenAA2Right.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenAA3Left.png");
+ASSET_MANAGER.queueDownload("./img/Riven/RivenAA3Right.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpRight.png");
 
