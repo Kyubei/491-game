@@ -45,6 +45,7 @@ GameEngine.prototype.init = function (ctx) {
     this.surfaceHeight = this.ctx.canvas.height;
     this.startInput();
     this.timer = new Timer();
+    this.player1 = null;
 	this.player1Right = false;
 	this.player1Left = false;
 	this.player1RightUp = true;
@@ -59,8 +60,7 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1AttackIndex = 0; //the actual skill being used
 	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
-	
-	this.bossLastDirection = "Left";
+	this.currentBoss = null;
     console.log('game initialized');
 };
 
@@ -129,6 +129,14 @@ GameEngine.prototype.startInput = function () {
 GameEngine.prototype.addEntity = function (entity) {
     console.log('added entity');
     this.entities.push(entity);
+};
+
+GameEngine.prototype.setPlayer1 = function (entity) {
+    this.player1 = entity;
+};
+
+GameEngine.prototype.setBoss = function (entity) {
+    this.currentBoss = entity;
 };
 
 GameEngine.prototype.draw = function () {

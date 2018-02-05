@@ -14,6 +14,23 @@ function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDu
 	this.offsetY = offsetY || 0;
 }
 
+function getXDistance(entity1, entity2) {
+    var distance = 0;
+    if (entity1.hitBox.x + entity1.hitBox.width < entity2.hitBox.x) {
+        distance = entity1.hitBox.x + entity1.hitBox.width - entity2.hitBox.x;        
+    } else if (entity1.hitBox.x > entity2.hitBox.x + entity2.hitBox.width) {
+        distance = entity1.hitBox.x - entity2.hitBox.x + entity2.hitBox.width;
+    }
+    return distance;
+};
+
+function drawHitBox(entity, ctx) {
+    entity.hitBox = {x:entity.x + entity.currentAnimation.offsetX, y:entity.y + entity.currentAnimation.offsetY, width:entity.currentAnimation.frameWidth, height:entity.currentAnimation.frameHeight};
+    ctx.globalAlpha=0.2;
+    ctx.fillRect(entity.hitBox.x,entity.hitBox.y,entity.hitBox.width,entity.hitBox.height); // Hitbox drawing for testing
+    ctx.globalAlpha=1;
+}
+
 Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
 	var linger = linger || false;
     var scale = scaleBy || 1;
@@ -245,21 +262,62 @@ Arrow.prototype.draw = function (ctx) {
 };
 
 function Reksai(game) {
+    this.state = "idle";
+    this.walkSpeed = 2;
+	this.lastDirection = "Left";
+    
 	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleRight.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
 	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleLeft.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
+
+    this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiWalkRight.png"), 0, 0, 192, 107, 0.1, 17, true, false, 0, 0);
+    this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiWalkLeft.png"), 0, 0, 192, 107, 0.1, 17, true, false, 0, 0);
+        
     Entity.call(this, game, 600, 195);
+    
+    this.currentAnimation = this.idleLeft;
+    this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
 }
 
 Reksai.prototype.update = function() {
+    var distance = getXDistance(this.game.player1, this);
+    if (distance < 0) {
+        this.state = "walking";
+        this.lastDirection = "Left";
+        this.x -= this.walkSpeed;
+    } else if (distance > 0) {
+        this.state = "walking";
+        this.lastDirection = "Right";
+        this.x += this.walkSpeed;
+    } else {
+        this.state = "idle"
+    }
+    console.log(distance);
     Entity.prototype.update.call(this);
 }
 
 Reksai.prototype.draw = function (ctx) {
-	if (this.game.bossLastDirection === "Right") {
-		this.idleRight.drawFrame(this.game.clockTick, ctx, this.x + this.idleRight.offsetX, this.y + this.idleRight.offsetY);
-	} else {
-		this.idleLeft.drawFrame(this.game.clockTick, ctx, this.x + this.idleLeft.offsetX, this.y + this.idleLeft.offsetY);
-	}
+    if (this.lastDirection === "Right") {
+        if (this.state === "idle") {
+            this.idleRight.drawFrame(this.game.clockTick, ctx, this.x + this.idleRight.offsetX, this.y + this.idleRight.offsetY);
+            this.currentAnimation = this.idleRight;
+        } else if (this.state === "walking") {
+            this.walkAnimationRight.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimationRight.offsetX, this.y + this.walkAnimationRight.offsetY);
+            this.currentAnimation = this.walkAnimationRight;
+        }
+    } else {
+        if (this.state === "idle") {
+            this.idleLeft.drawFrame(this.game.clockTick, ctx, this.x + this.idleLeft.offsetX, this.y + this.idleLeft.offsetY);
+            this.currentAnimation = this.idleLeft;
+        } else if (this.state === "walking") {
+            this.walkAnimationLeft.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimationLeft.offsetX, this.y + this.walkAnimationLeft.offsetY);
+            this.currentAnimation = this.walkAnimationLeft;
+        }
+    }
+    
+    this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
+
+    drawHitBox(this, ctx);
+    
     Entity.prototype.draw.call(this);
 };
 
@@ -267,7 +325,7 @@ function Character(game) {
 	this.runSpeed = 3;
 	this.jumpSpeed = 0;
 	this.lastDirection = "Right";
-	
+    	
 	this.idleAnimation = null;
     this.idleAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
     this.idleAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleLeft.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
@@ -307,14 +365,17 @@ function Character(game) {
 	this.attackIndex = 0;
     this.radius = 0;
     this.ground = 200;
+    
     Entity.call(this, game, 100, 200);
+    
+    this.currentAnimation = this.idleAnimationRight;
+    this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
 }
 
 Character.prototype = new Entity();
 Character.prototype.constructor = Character;
 
 Character.prototype.update = function () {
-    //if (this.game.space) this.jumping = true; //i don't have the jump animation! so we'll leave this out
 	if (this.game.r) {
 		if (!this.attacking) {
 			//this.attacking = true;
@@ -507,13 +568,20 @@ Character.prototype.update = function () {
 Character.prototype.draw = function (ctx) {
 	if (this.jumping) { // Jumping
 		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY, 1, true);
+        this.currentAnimation = this.jumpAnimation;        
     } else if (this.attacking && this.attackAnimation != null) { // Attacking
         this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
+        this.currentAnimation = this.attackAnimation;
     } else if (this.running) { // Running
 		this.runAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimation.offsetX, this.y + this.runAnimation.offsetY);	
+        this.currentAnimation = this.runAnimation;
     } else { // Idle
 		this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
+        this.currentAnimation = this.idleAnimation;
     }
+    
+    drawHitBox(this, ctx);
+    
     Entity.prototype.draw.call(this);
 };
 
@@ -550,6 +618,8 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpRight.png");
 
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleLeft.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiWalkLeft.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiWalkRight.png");
 
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
@@ -571,7 +641,10 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.addEntity(ui);
     gameEngine.addEntity(character);
     gameEngine.addEntity(reksai);
+    console.log(gameEngine.player1);
  
     gameEngine.init(ctx);
+    gameEngine.setPlayer1(character);
+    gameEngine.setBoss(reksai);
     gameEngine.start();
 });
