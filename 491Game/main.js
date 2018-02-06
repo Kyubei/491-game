@@ -103,12 +103,12 @@ Background.prototype.draw = function (ctx) {
 
 function UI(game) {
 	this.bottomX = 0;
-	this.bottomY = 280;
+	this.bottomY = 380;
 	this.bottomWidth = 800;
 	this.bottomHeight = 120;
 	
-	this.portraitX = 0;
-	this.portraitY = 300;
+	this.portraitX = 10;
+	this.portraitY = this.bottomY + 10;
 	this.portraitWidth = 100;
 	this.portraitHeight = 100;
 	
@@ -131,6 +131,21 @@ function UI(game) {
 	this.stamina1Y = this.bar2Y + 11;
 	this.stamina1Width = this.bar2Width - 8;
 	this.stamina1Height = this.bar2Height - 21;
+    
+    this.bossPortraitX = 150;
+    this.bossPortraitY = 20;
+    this.bossPortraitWidth = 80;
+    this.bossPortraitHeight = 80;
+    
+    this.bossBarX = this.bossPortraitX + this.bossPortraitWidth - 12;
+    this.bossBarY = this.bossPortraitY + 15;
+    this.bossBarWidth = 400;
+    this.bossBarHeight = 50;
+    
+    this.bossHealthX = this.bossBarX + 10;
+    this.bossHealthY = this.bossBarY + 18;
+    this.bossHealthWidth = this.bossBarWidth - 20;
+    this.bossHealthHeight = this.bossBarHeight - 35;
 	
 	Entity.call(this, game, 0, 0);
 }
@@ -148,6 +163,9 @@ UI.prototype.draw = function (ctx) {
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar2X, this.bar2Y, this.bar2Width, this.bar2Height);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBar.png"), this.stamina1X, this.stamina1Y, this.stamina1Width * (this.game.player1Stamina / this.game.player1MaxStamina), this.stamina1Height);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Riven/RivenPortrait.png"), this.portraitX, this.portraitY, this.portraitWidth, this.portraitHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX, this.bossBarY, this.bossBarWidth, this.bossBarHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX, this.bossHealthY, this.bossHealthWidth, this.bossHealthHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX, this.bossPortraitY, this.bossPortraitWidth, this.bossPortraitHeight);
     Entity.prototype.draw.call(this);	
 };
 
@@ -281,7 +299,7 @@ function Reksai(game) {
     this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiWalkRight.png"), 0, 0, 192, 107, 0.1, 17, true, false, 0, 0);
     this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiWalkLeft.png"), 0, 0, 192, 107, 0.1, 17, true, false, 0, 0);
         
-    Entity.call(this, game, 600, 195);
+    Entity.call(this, game, 600, 295);
     
     this.currentAnimation = this.idleLeft;
     this.hitBoxDef = {
@@ -293,7 +311,6 @@ function Reksai(game) {
 		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
 		height: this.hitBoxDef.height
 	};
-    //this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
 }
 
 Reksai.prototype.update = function() {
@@ -337,8 +354,7 @@ Reksai.prototype.draw = function (ctx) {
 		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
 		height: this.hitBoxDef.height
 	};
-    //this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
-
+    
     drawHitBox(this, ctx);
     
     Entity.prototype.draw.call(this);
@@ -387,9 +403,9 @@ function Character(game) {
 	this.attacking = false;
 	this.attackIndex = 0;
     this.radius = 0;
-    this.ground = 200;
+    this.ground = 300;
     
-    Entity.call(this, game, 100, 200);
+    Entity.call(this, game, 100, 300);
     
     this.currentAnimation = this.idleAnimationRight;
     this.hitBoxDef = {
@@ -401,12 +417,6 @@ function Character(game) {
 		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
 		height: this.hitBoxDef.height
 	};
-    /*this.hitBox = {
-    	x:this.x + this.currentAnimation.offsetX, 
-		y:this.y + this.currentAnimation.offsetY, 
-		width:this.currentAnimation.frameWidth, 
-		height:this.currentAnimation.frameHeight
-	};*/
 }
 
 Character.prototype = new Entity();
@@ -665,6 +675,7 @@ ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiIdleLeft.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiWalkLeft.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiWalkRight.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiPortrait.png");
 
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
