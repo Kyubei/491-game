@@ -26,9 +26,9 @@ function getXDistance(entity1, entity2) {
 
 function drawHitBox(entity, ctx) {
     entity.hitBox = {
-    	x: entity.x + entity.hitBoxDef.offsetX, 
+    	x: entity.x + entity.hitBoxDef.offsetX + (entity.hitBoxDef.growthX < 0 ? entity.hitBoxDef.growthX : 0), 
 		y: entity.y + entity.hitBoxDef.offsetY,
-		width: entity.hitBoxDef.width, 
+		width: entity.hitBoxDef.width + Math.abs(entity.hitBoxDef.growthX), 
 		height: entity.hitBoxDef.height
 	};
     /*entity.hitBox = {x:entity.x + entity.currentAnimation.offsetX,
@@ -285,12 +285,12 @@ function Reksai(game) {
     
     this.currentAnimation = this.idleLeft;
     this.hitBoxDef = {
-    	width: 150, height: 100, offsetX: 15, offsetY: 0
+    	width: 150, height: 100, offsetX: 15, offsetY: 0, growthX: 0
     };
     this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX, 
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
 		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width, 
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
 		height: this.hitBoxDef.height
 	};
     //this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
@@ -332,9 +332,9 @@ Reksai.prototype.draw = function (ctx) {
     }
     
     this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX, 
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
 		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width, 
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
 		height: this.hitBoxDef.height
 	};
     //this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
@@ -393,12 +393,12 @@ function Character(game) {
     
     this.currentAnimation = this.idleAnimationRight;
     this.hitBoxDef = {
-        	width: 45, height: 70, offsetX: 8, offsetY: 10
-        };
+    	width: 45, height: 70, offsetX: 8, offsetY: 10, growthX: 0
+    };
     this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX, 
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
 		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width, 
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
 		height: this.hitBoxDef.height
 	};
     /*this.hitBox = {
@@ -574,11 +574,19 @@ Character.prototype.update = function () {
 		}
 	}
 	if (this.attacking) {
+		if (this.attackIndex >= 1 && this.attackIndex <= 6 && this.attackAnimation.elapsedTime <= 0.5) {
+			if (this.lastDirection === "Right") {
+	            this.hitBoxDef.growthX += 1.6;
+			} else {
+	            this.hitBoxDef.growthX -= 1.6;
+			}
+		}
         if (this.attackAnimation != null && this.attackAnimation.isDone()) {
             this.attackAnimation.elapsedTime = 0;
             this.attacking = false;
 			this.game.player1AttackIndex = 0;
             this.attackIndex = 0;
+            this.hitBoxDef.growthX = 0; //reset
         }
 	}
     if (this.jumping) {
