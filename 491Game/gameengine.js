@@ -61,6 +61,7 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
 	this.currentBoss = null;
+    this.currentMap = null;
     console.log('game initialized');
 };
 
@@ -137,6 +138,10 @@ GameEngine.prototype.setPlayer1 = function (entity) {
 
 GameEngine.prototype.setBoss = function (entity) {
     this.currentBoss = entity;
+};
+
+GameEngine.prototype.setMap = function (entity) {
+    this.currentMap = entity;
 };
 
 GameEngine.prototype.draw = function () {

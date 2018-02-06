@@ -169,6 +169,56 @@ UI.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);	
 };
 
+function Platform(game, x, y) {
+    this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/Platform.png");
+    this.width = 63;
+    this.height = 16;
+    
+    Entity.call(this, game, x, y);
+    
+    this.hitBoxDef = {
+    	width: this.width, height: this.height, offsetX: 0, offsetY: 0, growthX: 0
+    };
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height
+	};
+}
+
+Platform.prototype = new Entity();
+Platform.prototype.constructor = Platform;
+
+Platform.prototype.update = function () {
+};
+
+Platform.prototype.draw = function (ctx) {
+    ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
+    Entity.prototype.draw.call(this);
+}
+
+function Map1(game) {
+    Entity.call(this, game, 0, 0);
+    this.platforms = [];
+    this.platforms.push(new Platform(game, 150, 315));
+    this.platforms.push(new Platform(game, 300, 315));
+    this.platforms.push(new Platform(game, 225, 250));
+}
+
+Map1.prototype = new Entity();
+Map1.prototype.constructor = UI;
+
+Map1.prototype.update = function () {
+};
+
+Map1.prototype.draw = function (ctx) {
+    this.platforms.forEach(function(currentPlatform) {
+        currentPlatform.draw(ctx);
+    });
+    Entity.prototype.draw.call(this);
+}
+
 var COMBO_DROPOFF_TIME = 5;
 
 var ARROW_PART_MAIN = 1;
@@ -363,6 +413,9 @@ Reksai.prototype.draw = function (ctx) {
 function Character(game) {
 	this.runSpeed = 3;
 	this.jumpSpeed = 0;
+    this.yVelocity = 0;
+    this.jumpYVelocity = 9;
+    this.gravity = 0.55;
 	this.lastDirection = "Right";
     	
 	this.idleAnimation = null;
@@ -400,10 +453,11 @@ function Character(game) {
     
 	this.running = false;
     this.jumping = false;
+    this.falling = true;
 	this.attacking = false;
 	this.attackIndex = 0;
     this.radius = 0;
-    this.ground = 300;
+    this.ground = 370;
     
     Entity.call(this, game, 100, 300);
     
@@ -430,8 +484,9 @@ Character.prototype.update = function () {
 			this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
 		}
 	}
-    if (this.game.player1Jump && !this.attacking && !this.jumping) { //todo - add a floor check. jumping currently does not work with collisions.
+    if (this.game.player1Jump && !this.attacking && !this.jumping && !this.falling) {
     	this.jumping = true;
+        this.yVelocity = this.jumpYVelocity;
 		if (this.game.player1Right) {
 			this.lastDirection = "Right";
 			this.jumpSpeed = this.runSpeed;
@@ -442,7 +497,7 @@ Character.prototype.update = function () {
 			this.jumpSpeed = 0;
 		}
 	}	
-    if ((this.game.player1Right || this.game.player1Left) && !this.attacking && !this.jumping) {
+    if ((this.game.player1Right || this.game.player1Left) && !this.attacking && !this.jumping && !this.falling) {
 		this.running = true;
 		if (this.game.player1Right) {
 			this.lastDirection = "Right";
@@ -463,7 +518,7 @@ Character.prototype.update = function () {
     if (this.game.player1AttackInput > 0) { 
 		switch(this.game.player1AttackInput) {
 			case 1: //light attack
-		    	if (!this.attacking && !this.jumping) {
+		    	if (!this.attacking && !this.jumping && !this.falling) {
 	    			if (this.lastComboType != this.game.player1AttackInput) {
 	    				//last combo was different (e.g. AA vs Q) - drop combo
 	    				this.lastComboStage = 0;		    				
@@ -480,7 +535,7 @@ Character.prototype.update = function () {
 		    	}
 	    	break;
 			case 2: //strong attack
-		    	if (!this.attacking && !this.jumping) {
+		    	if (!this.attacking && !this.jumping && !this.falling) {
 		    		if (this.game.player1Right || this.game.player1Left) {
 		    			if (this.lastComboType != this.game.player1AttackInput) {
 		    				//last combo was different (e.g. AA vs Q) - drop combo
@@ -572,7 +627,7 @@ Character.prototype.update = function () {
 		} else if (this.lastDirection === "Left") {
 			this.x -= this.runSpeed;
 		}
-	} else if (this.jumping) {
+	} else if (this.jumping || this.falling) {
 		this.x += this.jumpSpeed;
 	}
 	
@@ -599,6 +654,57 @@ Character.prototype.update = function () {
             this.hitBoxDef.growthX = 0; //reset
         }
 	}
+    
+    
+    var that = this;
+    var platformFound = false;
+    this.game.currentMap.platforms.forEach(function(currentPlatform) {
+        if ((that.hitBox.x + that.hitBox.width) > currentPlatform.hitBox.x) {
+            if (that.hitBox.x < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+                if ((that.hitBox.y + that.hitBox.height) <= currentPlatform.hitBox.y) {
+                    if ((that.hitBox.y + that.hitBox.height - (that.yVelocity - that.gravity )) >= currentPlatform.hitBox.y) {
+                        platformFound = true;
+                        if (that.falling) {
+                            that.falling = false;
+                            that.yVelocity = 0;
+                            that.y = currentPlatform.hitBox.y - that.hitBox.height - that.hitBoxDef.offsetY;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    if (!platformFound && !this.jumping) {
+        if (!this.falling) {
+            this.falling = true;
+            if (this.game.player1Right) {
+                this.lastDirection = "Right";
+                this.jumpSpeed = this.runSpeed;
+            } else if (this.game.player1Left) {
+                this.lastDirection = "Left";
+                this.jumpSpeed = -this.runSpeed;
+            } else {
+                this.jumpSpeed = 0;
+            }
+        }
+    }
+    
+    if (this.jumping || this.falling) {
+        this.yVelocity-= this.gravity;  
+        this.y -= this.yVelocity;    
+    }
+    if (this.jumping && this.yVelocity <= 0) {
+        this.falling = true;
+        this.jumping = false;
+    }
+    if (this.falling && this.hitBox.y + this.hitBox.height > this.ground) {
+        this.yVelocity = 0;
+        this.falling = false;
+        this.y = this.ground - this.hitBox.height;
+    }
+    
+    /*
     if (this.jumping) {
     	//console.log("jump = "+this.jumpAnimation.elapsedTime+" out of "+this.jumpAnimation.totalTime);
         //if (this.jumpAnimation.isDone()) {
@@ -607,7 +713,7 @@ Character.prototype.update = function () {
             this.jumping = false;
         }
         var jumpDistance = this.jumpAnimation.elapsedTime / (this.jumpAnimation.totalTime * 2);
-        var totalHeight = 60;
+        var totalHeight = 70;
 
         if (jumpDistance > 0.5) {
             jumpDistance = 1 - jumpDistance;
@@ -616,12 +722,12 @@ Character.prototype.update = function () {
         //var height = jumpDistance * 2 * totalHeight; 
         var height = totalHeight*(-4 * (jumpDistance * jumpDistance - jumpDistance));
         this.y = this.ground - height;
-    }
+    }*/
     Entity.prototype.update.call(this);
 };
 
 Character.prototype.draw = function (ctx) {
-	if (this.jumping) { // Jumping
+	if (this.jumping || this.falling) { // Jumping
 		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY, 1, true);
         this.currentAnimation = this.jumpAnimation;        
     } else if (this.attacking && this.attackAnimation != null) { // Attacking
@@ -682,6 +788,7 @@ ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/UI/BarBack.png");
 ASSET_MANAGER.queueDownload("./img/UI/HealthBar.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBar.png");
+ASSET_MANAGER.queueDownload("./img/UI/Platform.png");
 
 ASSET_MANAGER.downloadAll(function () {
     var canvas = document.getElementById('gameWorld');
@@ -692,9 +799,11 @@ ASSET_MANAGER.downloadAll(function () {
 	var reksai = new Reksai(gameEngine);
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
+    var map1 = new Map1(gameEngine);
 
     gameEngine.addEntity(bg);
     gameEngine.addEntity(ui);
+    gameEngine.addEntity(map1);
     gameEngine.addEntity(character);
     gameEngine.addEntity(reksai);
     console.log(gameEngine.player1);
@@ -702,5 +811,6 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.init(ctx);
     gameEngine.setPlayer1(character);
     gameEngine.setBoss(reksai);
+    gameEngine.setMap(map1);
     gameEngine.start();
 });
