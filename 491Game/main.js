@@ -595,7 +595,7 @@ Character.prototype.update = function () {
             jumpDistance = 1 - jumpDistance;
 		}
 
-        //var height = jumpDistance * 2 * totalHeight;
+        //var height = jumpDistance * 2 * totalHeight; 
         var height = totalHeight*(-4 * (jumpDistance * jumpDistance - jumpDistance));
         this.y = this.ground - height;
     }
