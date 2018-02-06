@@ -25,7 +25,16 @@ function getXDistance(entity1, entity2) {
 };
 
 function drawHitBox(entity, ctx) {
-    entity.hitBox = {x:entity.x + entity.currentAnimation.offsetX, y:entity.y + entity.currentAnimation.offsetY, width:entity.currentAnimation.frameWidth, height:entity.currentAnimation.frameHeight};
+    entity.hitBox = {
+    	x: entity.x + entity.hitBoxDef.offsetX, 
+		y: entity.y + entity.hitBoxDef.offsetY,
+		width: entity.hitBoxDef.width, 
+		height: entity.hitBoxDef.height
+	};
+    /*entity.hitBox = {x:entity.x + entity.currentAnimation.offsetX,
+    		y:entity.y + entity.currentAnimation.offsetY,
+    		width:entity.currentAnimation.frameWidth,
+    		height:entity.currentAnimation.frameHeight};*/
     ctx.globalAlpha=0.2;
     ctx.fillRect(entity.hitBox.x,entity.hitBox.y,entity.hitBox.width,entity.hitBox.height); // Hitbox drawing for testing
     ctx.globalAlpha=1;
@@ -275,7 +284,16 @@ function Reksai(game) {
     Entity.call(this, game, 600, 195);
     
     this.currentAnimation = this.idleLeft;
-    this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
+    this.hitBoxDef = {
+    	width: 150, height: 100, offsetX: 15, offsetY: 0
+    };
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX, 
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width, 
+		height: this.hitBoxDef.height
+	};
+    //this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
 }
 
 Reksai.prototype.update = function() {
@@ -291,7 +309,6 @@ Reksai.prototype.update = function() {
     } else {
         this.state = "idle"
     }
-    console.log(distance);
     Entity.prototype.update.call(this);
 }
 
@@ -314,7 +331,13 @@ Reksai.prototype.draw = function (ctx) {
         }
     }
     
-    this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX, 
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width, 
+		height: this.hitBoxDef.height
+	};
+    //this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
 
     drawHitBox(this, ctx);
     
@@ -369,7 +392,21 @@ function Character(game) {
     Entity.call(this, game, 100, 200);
     
     this.currentAnimation = this.idleAnimationRight;
-    this.hitBox = {x:this.x + this.currentAnimation.offsetX, y:this.y + this.currentAnimation.offsetY, width:this.currentAnimation.frameWidth, height:this.currentAnimation.frameHeight};
+    this.hitBoxDef = {
+        	width: 40, height: 60, offsetX: 0, offsetY: 10
+        };
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX, 
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width, 
+		height: this.hitBoxDef.height
+	};
+    /*this.hitBox = {
+    	x:this.x + this.currentAnimation.offsetX, 
+		y:this.y + this.currentAnimation.offsetY, 
+		width:this.currentAnimation.frameWidth, 
+		height:this.currentAnimation.frameHeight
+	};*/
 }
 
 Character.prototype = new Entity();
