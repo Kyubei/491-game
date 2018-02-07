@@ -627,10 +627,9 @@ Character.prototype.update = function () {
 		} else if (this.lastDirection === "Left") {
 			this.x -= this.runSpeed;
 		}
-	} else if (this.jumping || this.falling) {
+	} else if ((this.jumping || this.falling) && !this.attacking) {
 		this.x += this.jumpSpeed;
 	}
-	
 	if ((this.attackIndex >= 1 && this.attackIndex <= 3) && this.attackAnimation.elapsedTime <= 0.5) { //q first part - has movement on first half
 		if (this.lastDirection === "Right") {
 			this.x += this.runSpeed;
@@ -678,14 +677,16 @@ Character.prototype.update = function () {
     if (!platformFound && !this.jumping) {
         if (!this.falling) {
             this.falling = true;
-            if (this.game.player1Right) {
-                this.lastDirection = "Right";
-                this.jumpSpeed = this.runSpeed;
-            } else if (this.game.player1Left) {
-                this.lastDirection = "Left";
-                this.jumpSpeed = -this.runSpeed;
-            } else {
-                this.jumpSpeed = 0;
+            if (!this.attacking) {
+                if (this.game.player1Right) {
+                    this.lastDirection = "Right";
+                    this.jumpSpeed = this.runSpeed;
+                } else if (this.game.player1Left) {
+                    this.lastDirection = "Left";
+                    this.jumpSpeed = -this.runSpeed;
+                } else {
+                    this.jumpSpeed = 0;
+                }
             }
         }
     }
@@ -727,7 +728,7 @@ Character.prototype.update = function () {
 };
 
 Character.prototype.draw = function (ctx) {
-	if (this.jumping || this.falling) { // Jumping
+	if ((this.jumping || this.falling) && !this.attacking) { // Jumping
 		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY, 1, true);
         this.currentAnimation = this.jumpAnimation;        
     } else if (this.attacking && this.attackAnimation != null) { // Attacking
