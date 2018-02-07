@@ -1,3 +1,5 @@
+var testing = false;
+
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
     this.startX = startX;
@@ -12,6 +14,10 @@ function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDu
     this.reverse = reverse;
 	this.offsetX = offsetX || 0;
 	this.offsetY = offsetY || 0;
+}
+
+function isPlaying(audio) {
+    return !audio.paused;
 }
 
 function getXDistance(entity1, entity2) {
@@ -147,6 +153,13 @@ function UI(game) {
     this.bossHealthY = this.bossBarY + 18;
     this.bossHealthWidth = this.bossBarWidth - 20;
     this.bossHealthHeight = this.bossBarHeight - 35;
+    
+    this.map1BGMusic = new Audio("./sounds/map1BGMusic.mp3");
+    this.map1BGMusic.loop = true;
+    this.map1BGMusic.volume = 0.2;
+    if (!testing) {
+        this.map1BGMusic.play();
+    }
 	
 	Entity.call(this, game, 0, 0);
 }
@@ -753,6 +766,13 @@ Character.prototype.update = function () {
         this.yVelocity = 0;
         this.falling = false;
         this.y = this.ground - this.hitBox.height;
+    }
+    
+    if (this.hitBox.x + this.hitBoxDef.width >= this.game.surfaceWidth && this.lastDirection === "Right") {
+        this.x = this.game.surfaceWidth - this.hitBoxDef.width - this.hitBoxDef.offsetX;
+    }
+    if (this.hitBox.x + this.hitBox.width - this.hitBoxDef.width <= 0 && this.lastDirection === "Left") {
+        this.x = 0 - this.hitBoxDef.offsetX;
     }
     
     /*
