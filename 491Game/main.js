@@ -159,7 +159,7 @@ function UI(game) {
     
     this.map1BGMusic = new Audio("./sounds/map1BGMusic.mp3");
     this.map1BGMusic.loop = true;
-    this.map1BGMusic.volume = 0.2;
+    this.map1BGMusic.volume = 0.1;
     if (soundOn) {
         this.map1BGMusic.play();
     }
@@ -705,7 +705,7 @@ Character.prototype.update = function () {
 	}
 	
 	if (this.running) {
-        this.footsteps.volume = 1;
+        this.footsteps.volume = 0.8;
 		if (this.lastDirection === "Right") {
 			this.x += this.runSpeed;
 		} else if (this.lastDirection === "Left") {
