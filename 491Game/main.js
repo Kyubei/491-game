@@ -1,4 +1,5 @@
-var testing = false;
+var soundOn = true;
+var showHitBox = true;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -37,13 +38,15 @@ function drawHitBox(entity, ctx) {
 		width: entity.hitBoxDef.width + Math.abs(entity.hitBoxDef.growthX), 
 		height: entity.hitBoxDef.height
 	};
-    /*entity.hitBox = {x:entity.x + entity.currentAnimation.offsetX,
-    		y:entity.y + entity.currentAnimation.offsetY,
-    		width:entity.currentAnimation.frameWidth,
-    		height:entity.currentAnimation.frameHeight};*/
-    ctx.globalAlpha=0.2;
-    ctx.fillRect(entity.hitBox.x,entity.hitBox.y,entity.hitBox.width,entity.hitBox.height); // Hitbox drawing for testing
-    ctx.globalAlpha=1;
+    
+    if (showHitBox) {
+        ctx.globalAlpha=0.2;
+        var tempStyle = ctx.fillStyle;
+        ctx.fillStyle = "black";
+        ctx.fillRect(entity.hitBox.x,entity.hitBox.y,entity.hitBox.width,entity.hitBox.height); // Hitbox drawing for testing
+        ctx.fillStyle = tempStyle;
+        ctx.globalAlpha=1;
+    }
 }
 
 Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
@@ -157,7 +160,7 @@ function UI(game) {
     this.map1BGMusic = new Audio("./sounds/map1BGMusic.mp3");
     this.map1BGMusic.loop = true;
     this.map1BGMusic.volume = 0.2;
-    if (!testing) {
+    if (soundOn) {
         this.map1BGMusic.play();
     }
 	
@@ -213,6 +216,15 @@ UI.prototype.draw = function (ctx) {
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX, this.bossBarY, this.bossBarWidth, this.bossBarHeight);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX, this.bossHealthY, this.bossHealthWidth, this.bossHealthHeight);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX, this.bossPortraitY, this.bossPortraitWidth, this.bossPortraitHeight);
+    var tempColor = ctx.fillStyle;
+    ctx.font = "30px Calibri";
+    ctx.fillStyle = "white";
+    ctx.fillText("Rek'sai",this.bossPortraitX + 80,45);
+    ctx.font = "20px Calibri";
+    ctx.fillText("Player1",this.portraitX + 90,this.portraitY + 30);
+    ctx.fillText("Player1",this.game.player1.x + 5,this.game.player1.y + 0);
+    ctx.fillText("Rek'sai",this.game.currentBoss.x + 50,this.game.currentBoss.y - 5);
+    ctx.fillStyle = tempColor;
     Entity.prototype.draw.call(this);	
 };
 
@@ -249,8 +261,7 @@ function Map1(game) {
     Entity.call(this, game, 0, 0);
     this.platforms = [];
     this.platforms.push(new Platform(game, 150, 315));
-    this.platforms.push(new Platform(game, 300, 315));
-    this.platforms.push(new Platform(game, 225, 250));
+    this.platforms.push(new Platform(game, 400, 315));
 }
 
 Map1.prototype = new Entity();
@@ -458,6 +469,14 @@ Reksai.prototype.draw = function (ctx) {
 };
 
 function Character(game) {
+    
+    // Sounds
+    this.footsteps = new Audio("./sounds/footsteps.mp3");
+    this.footsteps.loop = true;
+    this.footsteps.volume = 0;
+    if (soundOn) {
+        this.footsteps.play();
+    }
     
     // Animations    	
 	this.idleAnimation = null;
@@ -686,6 +705,7 @@ Character.prototype.update = function () {
 	}
 	
 	if (this.running) {
+        this.footsteps.volume = 1;
 		if (this.lastDirection === "Right") {
 			this.x += this.runSpeed;
 		} else if (this.lastDirection === "Left") {
@@ -694,6 +714,16 @@ Character.prototype.update = function () {
 	} else if ((this.jumping || this.falling) && !this.attacking) {
 		this.x += this.jumpSpeed;
 	}
+    
+    if (!this.running) {
+        if (this.footsteps.volume > 0.05) {
+            this.footsteps.volume -= 0.05;
+        }
+        if (this.footsteps.volume <= 0.05) {
+            this.footsteps.volume = 0;
+            this.currentTime = 0;
+        }
+    }
 	if ((this.attackIndex >= 1 && this.attackIndex <= 3) && this.attackAnimation.elapsedTime <= 0.5) { // Q first part - has movement on first half
 		if (this.lastDirection === "Right") {
 			this.x += this.runSpeed;
