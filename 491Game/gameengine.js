@@ -53,15 +53,12 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1Jump = false;
 	this.player1JumpUp = true;
 	this.player1LastDirection = "Right";
-	this.player1Health = 100.0;
-	this.player1MaxHealth = 100.0;
-	this.player1Stamina = 100.0;
-	this.player1MaxStamina = 100.0;
 	this.player1AttackIndex = 0; //the actual skill being used
 	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
 	this.currentBoss = null;
     this.currentMap = null;
+    this.UI = null;
     console.log('game initialized');
 };
 
@@ -142,6 +139,10 @@ GameEngine.prototype.setBoss = function (entity) {
 
 GameEngine.prototype.setMap = function (entity) {
     this.currentMap = entity;
+};
+
+GameEngine.prototype.setUI = function (entity) {
+    this.UI = entity;
 };
 
 GameEngine.prototype.draw = function () {

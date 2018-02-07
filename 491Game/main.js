@@ -122,15 +122,26 @@ function UI(game) {
 	this.bar2Width = 150;
 	this.bar2Height = 30;
 	
-	this.health1X = this.bar1X + 5;
-	this.health1Y = this.bar1Y + 11;
-	this.health1Width = this.bar1Width - 8;
-	this.health1Height = this.bar1Height - 21;
+	this.healthX = this.bar1X + 5;
+	this.healthY = this.bar1Y + 11;
+	this.healthWidth = this.bar1Width - 8;
+	this.healthHeight = this.bar1Height - 21;
+    
+    this.barChangingSpeed = 1;
+    this.staminaRegen = 0.3;
+    
+    this.maxHealth = 100.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;
 	
-	this.stamina1X = this.bar2X + 5;
-	this.stamina1Y = this.bar2Y + 11;
-	this.stamina1Width = this.bar2Width - 8;
-	this.stamina1Height = this.bar2Height - 21;
+	this.staminaX = this.bar2X + 5;
+	this.staminaY = this.bar2Y + 11;
+	this.staminaWidth = this.bar2Width - 8;
+	this.staminaHeight = this.bar2Height - 21;
+    
+    this.maxStamina = 100.0;
+    this.currentStamina = this.maxStamina;
+    this.currentStaminaTemp = this.currentStamina;
     
     this.bossPortraitX = 150;
     this.bossPortraitY = 20;
@@ -154,14 +165,44 @@ UI.prototype = new Entity();
 UI.prototype.constructor = UI;
 
 UI.prototype.update = function () {
+    if (this.currentHealthTemp > this.currentHealth) {
+        this.currentHealthTemp -= this.barChangingSpeed;
+    }
+    if (Math.abs(this.currentHealthTemp - this.currentHealth) <= this.barChangingSpeed) {
+        this.currentHealthTemp = this.currentHealth;
+    }
+    if (this.currentHealth > this.currentHealthTemp) {
+        this.currentHealthTemp = this.currentHealth;
+    }
+    
+    if (this.currentStaminaTemp > this.currentStamina) {
+        this.currentStaminaTemp -= this.barChangingSpeed;
+    }
+    if (Math.abs(this.currentStaminaTemp - this.currentStamina) <= this.barChangingSpeed) {
+        this.currentStaminaTemp = this.currentStamina;
+    }
+    if (this.currentStamina > this.currentStaminaTemp) {
+        this.currentStaminaTemp = this.currentStamina;
+    }
+    if (this.currentStamina === this.currentStaminaTemp && this.currentStamina < this.maxStamina) {
+        this.currentStamina += this.staminaRegen;
+        this.currentStaminaTemp = this.currentStamina;
+        if (this.currentStamina > this.maxStamina) {
+            this.currentStamina = this.maxStamina;
+            this.currentStaminaTemp = this.maxStamina;
+        }
+    }    
 };
 
 UI.prototype.draw = function (ctx) {
+    console.log(this.currentStamina);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/Bottom.png"), this.bottomX, this.bottomY, this.bottomWidth, this.bottomHeight);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar1X, this.bar1Y, this.bar1Width, this.bar1Height);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.health1X, this.health1Y, this.health1Width * (this.game.player1Health / this.game.player1MaxHealth), this.health1Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.healthX, this.healthY, this.healthWidth * (this.currentHealthTemp / this.maxHealth), this.healthHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.healthX, this.healthY, this.healthWidth * (this.currentHealth / this.maxHealth), this.healthHeight);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar2X, this.bar2Y, this.bar2Width, this.bar2Height);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBar.png"), this.stamina1X, this.stamina1Y, this.stamina1Width * (this.game.player1Stamina / this.game.player1MaxStamina), this.stamina1Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBarLight.png"), this.staminaX, this.staminaY, this.staminaWidth * (this.currentStaminaTemp / this.maxStamina), this.staminaHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBar.png"), this.staminaX, this.staminaY, this.staminaWidth * (this.currentStamina / this.maxStamina), this.staminaHeight);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Riven/RivenPortrait.png"), this.portraitX, this.portraitY, this.portraitWidth, this.portraitHeight);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX, this.bossBarY, this.bossBarWidth, this.bossBarHeight);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX, this.bossHealthY, this.bossHealthWidth, this.bossHealthHeight);
@@ -417,6 +458,8 @@ function Character(game) {
     this.jumpYVelocity = 9;
     this.gravity = 0.55;
 	this.lastDirection = "Right";
+    
+    this.strongAttackCost = 20;
     	
 	this.idleAnimation = null;
     this.idleAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
@@ -537,19 +580,22 @@ Character.prototype.update = function () {
 			case 2: //strong attack
 		    	if (!this.attacking && !this.jumping && !this.falling) {
 		    		if (this.game.player1Right || this.game.player1Left) {
-		    			if (this.lastComboType != this.game.player1AttackInput) {
-		    				//last combo was different (e.g. AA vs Q) - drop combo
-		    				this.lastComboStage = 0;		    				
-		    			}
-			    		this.attacking = true;
-			    		//q will take attack indexes 1, 2, and 3
-			    		if (this.lastComboStage < 3)
-			    			this.game.player1AttackIndex = this.lastComboStage + 1;
-			    		else
-			    			this.game.player1AttackIndex = 1;
-			    		this.lastComboType = this.game.player1AttackInput;
-			    		this.lastComboStage = this.game.player1AttackIndex;
-			    		this.comboTime = COMBO_DROPOFF_TIME;
+                        if (this.game.UI.currentStamina >= this.strongAttackCost) {
+                            this.game.UI.currentStamina -= this.strongAttackCost;
+                            if (this.lastComboType != this.game.player1AttackInput) {
+                                //last combo was different (e.g. AA vs Q) - drop combo
+                                this.lastComboStage = 0;		    				
+                            }
+                            this.attacking = true;
+                            //q will take attack indexes 1, 2, and 3
+                            if (this.lastComboStage < 3)
+                                this.game.player1AttackIndex = this.lastComboStage + 1;
+                            else
+                                this.game.player1AttackIndex = 1;
+                            this.lastComboType = this.game.player1AttackInput;
+                            this.lastComboStage = this.game.player1AttackIndex;
+                            this.comboTime = COMBO_DROPOFF_TIME;
+                        }
 		    		}
 		    	}
 	    	break;
@@ -788,7 +834,9 @@ ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/UI/BarBack.png");
 ASSET_MANAGER.queueDownload("./img/UI/HealthBar.png");
+ASSET_MANAGER.queueDownload("./img/UI/HealthBarLight.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBar.png");
+ASSET_MANAGER.queueDownload("./img/UI/StaminaBarLight.png");
 ASSET_MANAGER.queueDownload("./img/UI/Platform.png");
 
 ASSET_MANAGER.downloadAll(function () {
@@ -813,5 +861,6 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.setPlayer1(character);
     gameEngine.setBoss(reksai);
     gameEngine.setMap(map1);
+    gameEngine.setUI(ui);
     gameEngine.start();
 });
