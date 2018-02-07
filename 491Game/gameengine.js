@@ -11,7 +11,6 @@ window.requestAnimFrame = (function () {
             };
 })();
 
-
 function Timer() {
     this.gameTime = 0;
     this.maxStep = 0.05;
@@ -32,11 +31,6 @@ function GameEngine() {
     this.entities = [];
     this.showOutlines = false;
     this.ctx = null;
-    this.click = null;
-    this.mouse = null;
-    this.wheel = null;
-    this.surfaceWidth = null;
-    this.surfaceHeight = null;
 }
 
 GameEngine.prototype.init = function (ctx) {
@@ -46,24 +40,17 @@ GameEngine.prototype.init = function (ctx) {
     this.startInput();
     this.timer = new Timer();
     this.player1 = null;
-	this.player1Right = false;
-	this.player1Left = false;
-	this.player1RightUp = true;
-	this.player1LeftUp = true;
-	this.player1Jump = false;
-	this.player1JumpUp = true;
-	this.player1LastDirection = "Right";
 	this.player1AttackIndex = 0; //the actual skill being used
 	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
 	this.currentBoss = null;
     this.currentMap = null;
     this.UI = null;
-    console.log('game initialized');
+    console.log("Game initialized");
 };
 
 GameEngine.prototype.start = function () {
-    console.log("starting game");
+    console.log("Starting game");
     var that = this;
     (function gameLoop() {
         that.loop();
@@ -72,60 +59,46 @@ GameEngine.prototype.start = function () {
 };
 
 GameEngine.prototype.startInput = function () {
-    console.log('Starting input');
+    console.log("Starting input");
     var that = this;
 
-    this.ctx.canvas.addEventListener("keydown", function (e) {
-        if (String.fromCharCode(e.which) === ' ') {
-			that.space = true;
-		}	
-		
+    this.ctx.canvas.addEventListener("keydown", function (e) {		
 		if (String.fromCharCode(e.which) === 'D') { 
-			that.player1Right = true;
-			that.player1RightUp = false;
-			that.player1LastDirection = "Right";
+			that.player1.rightDown = true;
 		} else if (String.fromCharCode(e.which) === 'A') {
-			that.player1Left = true;
-			that.player1LeftUp = false;
-			that.player1LastDirection = "Left";
+			that.player1.leftDown = true;
 		} else if (String.fromCharCode(e.which) === 'W') {
-			that.player1Jump = true;
+			that.player1.jumpDown = true;
 		} else if (String.fromCharCode(e.which) === 'Y') {
-			that.player1AttackInput = 1;
+			that.player1.attackInput = 1;
 		} else if (String.fromCharCode(e.which) === 'U') {
-			that.player1AttackInput = 2;
+			that.player1.attackInput = 2;
 		}
         if (String.fromCharCode(e.which) === 'R') {
 			that.r = true;
 		}
-        //console.log("Key: "+String.fromCharCode(e.which));
         e.preventDefault();
     }, false);
     this.ctx.canvas.addEventListener("keyup", function (e) {
         if (String.fromCharCode(e.which) === 'D') {
-			that.player1Right = false;
-			that.player1RightUp = true;
+			that.player1.rightDown = false;
 		}
         if (String.fromCharCode(e.which) === 'A') {
-			that.player1Left = false;
-			that.player1LeftUp = true;
+			that.player1.leftDown = false;
 		}
         if (String.fromCharCode(e.which) === 'W') {
-			that.player1Jump = false;
+			that.player1.jumpDown = false;
 		}
-        if (String.fromCharCode(e.which) === 'Y' ||
-        		String.fromCharCode(e.which) === 'U') {
-			that.player1AttackInput = 0;
+        if (String.fromCharCode(e.which) === 'Y' || String.fromCharCode(e.which) === 'U') {
+			that.player1.attackInput = 0;
 		}
-        //console.log("KeyUP: "+String.fromCharCode(e.which));
         e.preventDefault();
     }, false);
-
     console.log('Input started');
 };
 
 GameEngine.prototype.addEntity = function (entity) {
-    console.log('added entity');
+    console.log('Added Entity');
     this.entities.push(entity);
 };
 
@@ -156,15 +129,12 @@ GameEngine.prototype.draw = function () {
 
 GameEngine.prototype.update = function () {
     var entitiesCount = this.entities.length;
-
     for (var i = 0; i < entitiesCount; i++) {
         var entity = this.entities[i];
-
         if (!entity.removeFromWorld) {
             entity.update();
         }
     }
-
     for (var i = this.entities.length - 1; i >= 0; --i) {
         if (this.entities[i].removeFromWorld) {
             this.entities.splice(i, 1);
