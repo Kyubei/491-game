@@ -21,6 +21,25 @@ function isPlaying(audio) {
     return !audio.paused;
 }
 
+/**
+ * Checks a collision between two entities, adding a bonus X or Y value to the
+ * hitboxes of entity 1 if applicable.
+ */
+function checkCollision(entity1, entity2, bonusX, bonusY) {
+	this.bonusX = bonusX || 0;
+	this.bonusY = bonusY || 0;
+    if ((entity1.hitBox.x + entity1.hitBox.width + this.bonusX) > entity2.hitBox.x) {
+        if (entity1.hitBox.x < (entity2.hitBox.x + entity2.hitBox.width)) {
+            if (entity1.hitBox.y < entity2.hitBox.y + entity2.hitBox.height) {
+                if (entity1.hitBox.y + entity1.hitBox.height + this.bonusY > entity2.hitBox.y) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 function getXDistance(entity1, entity2) {
     var distance = 0;
     if (entity1.hitBox.x + entity1.hitBox.width < entity2.hitBox.x) {
@@ -397,6 +416,8 @@ Arrow.prototype.draw = function (ctx) {
 };
 
 function Reksai(game) {
+    this.solid = true;
+    this.attackable = true;
     this.state = "idle";
     this.walkSpeed = 2;
 	this.lastDirection = "Left";
@@ -419,6 +440,12 @@ function Reksai(game) {
 		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
 		height: this.hitBoxDef.height
 	};
+}
+
+Reksai.prototype.handleCollision = function(entity) {
+	if (entity.attacking) {
+		console.log("HIT!");		
+	}
 }
 
 Reksai.prototype.update = function() {
@@ -560,6 +587,7 @@ Character.prototype = new Entity();
 Character.prototype.constructor = Character;
 
 Character.prototype.update = function () {
+	var that = this;
 	if (this.game.r) { // Arrow thing temporary
 		if (!this.attacking) {
 			//this.attacking = true;
@@ -724,14 +752,38 @@ Character.prototype.update = function () {
             this.currentTime = 0;
         }
     }
+    var collision = false;
 	if ((this.attackIndex >= 1 && this.attackIndex <= 3) && this.attackAnimation.elapsedTime <= 0.5) { // Q first part - has movement on first half
 		if (this.lastDirection === "Right") {
-			this.x += this.runSpeed;
+		    this.game.entities.forEach(function(entity) {
+		    	if (entity.solid) {
+			        if (checkCollision(that, entity, that.runSpeed)) {
+			        	collision = true;
+			        }
+		    	}
+		    });
+		    if (!collision)
+		    	this.x += this.runSpeed;
 		} else {
-			this.x -= this.runSpeed;
+		    this.game.entities.forEach(function(entity) {
+		    	if (entity.solid) {
+			        if (checkCollision(that, entity, -1 * that.runSpeed)) {
+			        	collision = true;
+			        }
+		    	}
+		    });
+		    if (!collision)
+		    	this.x -= this.runSpeed;
 		}
 	}
 	if (this.attacking) {
+	    this.game.entities.forEach(function(entity) {
+	    	if (entity.attackable) {
+		        if (checkCollision(that, entity)) {
+		        	entity.handleCollision(that);
+		        }
+	    	}
+	    });
 		if (this.attackIndex >= 1 && this.attackIndex <= 6 && this.attackAnimation.elapsedTime <= 0.5) {
 			if (this.lastDirection === "Right") {
 	            this.hitBoxDef.growthX += 1.6;
@@ -746,10 +798,8 @@ Character.prototype.update = function () {
             this.hitBoxDef.growthX = 0; //reset
         }
 	}
-    
-    
-    var that = this;
-    var platformFound = false;
+	
+    var platformFound = false; 
     this.game.currentMap.platforms.forEach(function(currentPlatform) {
         if ((that.hitBox.x + that.hitBox.width) > currentPlatform.hitBox.x) {
             if (that.hitBox.x < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
