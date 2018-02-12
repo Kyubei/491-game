@@ -69,6 +69,8 @@ GameEngine.prototype.startInput = function () {
 			that.player1.leftDown = true;
 		} else if (String.fromCharCode(e.which) === 'W') {
 			that.player1.jumpDown = true;
+		} else if (String.fromCharCode(e.which) === 'S') {
+			that.player1.downDown = true;
 		} else if (String.fromCharCode(e.which) === 'Y') {
 			that.player1.attackInput = 1;
 		} else if (String.fromCharCode(e.which) === 'U') {
@@ -88,6 +90,9 @@ GameEngine.prototype.startInput = function () {
 		}
         if (String.fromCharCode(e.which) === 'W') {
 			that.player1.jumpDown = false;
+		} 
+        if (String.fromCharCode(e.which) === 'S') {
+			that.player1.downDown = false;
 		}
         if (String.fromCharCode(e.which) === 'Y' || String.fromCharCode(e.which) === 'U') {
 			that.player1.attackInput = 0;
@@ -161,13 +166,14 @@ Entity.prototype.update = function () {
 };
 
 Entity.prototype.draw = function (ctx) {
+	/*
     if (this.game.showOutlines && this.radius) {
         this.game.ctx.beginPath();
         this.game.ctx.strokeStyle = "green";
         this.game.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         this.game.ctx.stroke();
         this.game.ctx.closePath();
-    }
+    }*/
 };
 
 Entity.prototype.rotateAndCache = function (image, angle) {
