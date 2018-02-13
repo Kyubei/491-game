@@ -536,9 +536,9 @@ Reksai.prototype.update = function() {
                 if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
                     if (this.game.player1.vulnerable) {
                         this.game.player1.vulnerable = false;
-                        var damageParticle = new Particle(TEXT_PART, this.game.player1.x, this.game.player1.y, 
+                        var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
                     			0.2, -0.2, -3, -3, 0, 0.5, 0, 5, 10, 50, 1, 0, false, this.game);
-                        var damageText = new TextElement("", "Lucida Console", 25, "#ffcccc", "black");
+                        var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
                         var damage = this.autoDamage;
                     	damageText.text = damage;
                         damageParticle.text = damageText;
@@ -1009,7 +1009,7 @@ Character.prototype.update = function () {
 	if (this.attacking) {
         if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
             this.attackHit = true;
-            var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.x, this.game.currentBoss.y, 
+            var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + 20, this.game.currentBoss.hitBox.y, 
         			0.2, -0.2, -3, -3, 0, 0.5, 0, 5, 10, 50, 1, 0, false, this.game);
             var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
             var damage = 0;
