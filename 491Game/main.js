@@ -640,6 +640,15 @@ function Character(game) {
     this.autoSound = new Audio("./sounds/rivenAuto.mp3");
     this.autoSound.volume = 0.1;
     
+    this.q1Sound = new Audio("./sounds/Q1.mp3");
+    this.q1Sound.volume = 0.1;
+    
+    this.q2Sound = new Audio("./sounds/Q2.mp3");
+    this.q2Sound.volume = 0.1;
+    
+    this.q3Sound = new Audio("./sounds/Q3.mp3");
+    this.q3Sound.volume = 0.1;
+    
     // Animations    	
 	this.idleAnimation = null;
     this.idleAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
@@ -860,6 +869,19 @@ Character.prototype.update = function () {
                                 this.attackIndex = this.lastComboStage + 1;
                             else
                                 this.attackIndex = 1;
+                            
+                            if (soundOn) {
+                                if (this.attackIndex == 1) {
+                                    this.q1Sound.currentTime = 0;
+                                    this.q1Sound.play();
+                                } else if (this.attackIndex == 2) {
+                                    this.q2Sound.currentTime = 0;
+                                    this.q2Sound.play();
+                                } else if (this.attackIndex == 3) {
+                                    this.q3Sound.currentTime = 0;
+                                    this.q3Sound.play();
+                                }
+                            }
                             this.lastComboType = this.attackInput;
                             this.lastComboStage = this.attackIndex;
                             this.comboTime = COMBO_DROPOFF_TIME;
