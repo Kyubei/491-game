@@ -1,4 +1,4 @@
-var soundOn = false;
+var soundOn = true;
 var showHitBox = true;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
@@ -527,7 +527,7 @@ Reksai.prototype.update = function() {
             this.attackable = true;
             this.game.player1.hitByAttack = false;
         } else { 
-            if (this.attackAnimation.currentFrame() >= 4 && this.attackAnimation.currentFrame() <= this.attackAnimation.frames - 6) {
+            if (this.attackAnimation.currentFrame() >= 4 && this.attackAnimation.currentFrame() <= this.attackAnimation.frames - 8) {
                 if (this.attackAnimation.currentFrame() < 6) {
                     this.hitBoxDef.growthY = -20;
                 } else {
@@ -637,6 +637,9 @@ function Character(game) {
         this.footsteps.play();
     }
     
+    this.autoSound = new Audio("./sounds/rivenAuto.mp3");
+    this.autoSound.volume = 0.1;
+    
     // Animations    	
 	this.idleAnimation = null;
     this.idleAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
@@ -665,13 +668,13 @@ function Character(game) {
     this.attackAnimation3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Right.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -20, -30);
     this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -65, -30);
     
-    //down skill (E)
+    // Down Skill (E)
     this.attackAnimationDownRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -9);
     this.attackAnimationDownLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -50, -9);
     
-    //no directional skill (W)
-    this.attackAnimationStillRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Right.png"), 0, 0, 94, 110, 0.06, 12, false, false, 4, 8 + 6);
-    this.attackAnimationStillLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Left.png"), 0, 0, 94, 110, 0.06, 12, false, false, -35, 8 + 2);
+    // No Directional Skill (W)
+    this.attackAnimationStillRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/WRight.png"), 0, 0, 64, 125, 0.06, 9, false, false, 0, -40);
+    this.attackAnimationStillLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/WLeft.png"), 0, 0, 64, 125, 0.06, 9, false, false, 0, -40);
     
     // Hurt
     this.hurtAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/HurtRight.png"), 0, 0, 47, 80, 1, 1, false, false, 0, 10);
@@ -689,8 +692,10 @@ function Character(game) {
     this.jumpYVelocity = 9; // Max Y upwards velocity when jumping
     this.gravity = 0.55;
     this.strongAttackCost = 20; // Stamina cost of strong attacks
+    this.wCost = 30;
+    this.eCost = 40;
 	this.lastDirection = "Right";
-    this.staminaRegen = 2; //0.2;
+    this.staminaRegen = 0.2; //0.2;
     
     this.maxHealth = 100.0;
     this.currentHealth = this.maxHealth;
@@ -823,6 +828,10 @@ Character.prototype.update = function () {
 	    			if (this.lastComboType != this.attackInput) { // Last Combo was different (e.g. AA vs Q) - drop combo
 	    				this.lastComboStage = 0;		    				
 	    			}
+                    if (soundOn) {
+                        this.autoSound.currentTime = 0;
+                        this.autoSound.play();
+                    }
                     this.attackHit = false;
 		    		this.attacking = true;
 		    		// AA will take attack indexes 4-6
@@ -856,8 +865,8 @@ Character.prototype.update = function () {
                             this.comboTime = COMBO_DROPOFF_TIME;
                         }
 		    		} else if ((!this.attacking || (this.canCancel() && this.attackIndex != 7)) && this.downDown) { //E
-                        if (this.currentStamina >= this.strongAttackCost) {
-                            this.currentStamina -= this.strongAttackCost;
+                        if (this.currentStamina >= this.eCost) {
+                            this.currentStamina -= this.eCost;
                             this.attacking = true;
                             this.attackHit = true; //to prevent a 0 hit if you attacked before
                             this.invulnTimer = 40;
@@ -866,8 +875,8 @@ Character.prototype.update = function () {
                         }
 		    		} else if ((!this.attacking || (this.canCancel() && this.attackIndex != 8)) 
 		    				&& !(this.rightDown || this.leftDown)) { //W
-                        if (this.currentStamina >= this.strongAttackCost) {
-                            this.currentStamina -= this.strongAttackCost;
+                        if (this.currentStamina >= this.wCost) {
+                            this.currentStamina -= this.wCost;
                             this.attackHit = false;
                             this.attacking = true;
                             this.attackIndex = 8;
@@ -972,7 +981,7 @@ Character.prototype.update = function () {
         }
         if (this.footsteps.volume <= 0.05) {
             this.footsteps.volume = 0;
-            this.currentTime = 0;
+            this.footsteps.currentTime = 0;
         }
     }
     var collision = false;
@@ -1164,6 +1173,8 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenAA3Left.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenAA3Right.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpRight.png");
+ASSET_MANAGER.queueDownload("./img/Riven/WRight.png");
+ASSET_MANAGER.queueDownload("./img/Riven/WLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/HurtLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/HurtRight.png");
 
