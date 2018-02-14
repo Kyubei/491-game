@@ -1,5 +1,5 @@
 var soundOn = true;
-var showHitBox = true;
+var showHitBox = false;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -317,12 +317,94 @@ Map1.prototype.draw = function (ctx) {
 var COMBO_DROPOFF_TIME = 5;
 
 var ARROW_PART_MAIN = 1;
-var ARROW_PART_SECONDARY = 2;
+var PART_SECONDARY = 2;
 var TEXT_PART = 3;
+var SHAPE_PART = 4;
+var VOID_BALL = 5;
+
+/**
+ * Returns the RGB of a hex color (e.g. #FFFFFF)
+ */
+function rgb(color) {
+    return color.match(/\w\w/g).map(function(b){
+    	return parseInt(b,16)
+    });
+}
+
+/**
+ * Returns a random color, in hex, of two other hex colors.
+ */
+function getRandomColor(color1, color2) {
+	var rgb1 = color1.match(/\w\w/g).map(function(b){
+    	return parseInt(b,16)
+    });
+	var rgb2 = color2.match(/\w\w/g).map(function(b){
+    	return parseInt(b,16)
+    });
+	var rgb = []; //the returning rgb
+	for (var i = 0; i < 3; i++) {
+		rgb[i] = rgb1[i] + Math.random()*(rgb2[i]-rgb1[i]) | 0;
+	}
+	return '#' + rgb
+		.map(function(n){ return n.toString(16) })
+	    .map(function(s){ return "00".slice(s.length)+s}).join(''); 
+}
+
+/**
+ * A shape element which is attached to a particle.
+ * If the particle.other is not null, the shape is drawn instead of an image.
+ */
+function SquareElement(width, height, color1, color2) {
+	this.width = width;
+	this.height = height;
+	var color1 = color1;
+	var color2 = color2 || null;
+	if (color2 != null) {
+		this.color = getRandomColor(color1, color2);
+	} else {
+		this.color = color1;
+	}
+}
+
+SquareElement.prototype.draw = function(ctx, x, y, sizeScale) {
+    var tempColor = ctx.fillStyle;
+    var trueWidth = this.width * sizeScale;
+    var trueHeight = this.height * sizeScale;
+    ctx.fillStyle = this.color;
+    ctx.fillRect(x - trueWidth / 2, y - trueHeight / 2, trueWidth, trueHeight);
+    ctx.fillStyle = tempColor;
+    Entity.prototype.draw.call(this);
+}
+
+/**
+ * A shape element which is attached to a particle.
+ * If the particle.other is not null, the shape is drawn instead of an image.
+ */
+function CircleElement(radius, color1, color2) {
+	this.radius = radius;
+	var color1 = color1;
+	var color2 = color2 || null;
+	if (color2 != null) {
+		this.color = getRandomColor(color1, color2);
+	} else {
+		this.color = color1;
+	}
+}
+
+CircleElement.prototype.draw = function(ctx, x, y, sizeScale) {
+    var tempColor = ctx.fillStyle;
+    var trueRadius = this.radius * sizeScale;
+    ctx.beginPath();
+    ctx.fillStyle = this.color;
+    ctx.arc(x, y, trueRadius, 0, 2 * Math.PI, false);
+    ctx.fill();
+    ctx.fillStyle = tempColor;
+    Entity.prototype.draw.call(this);
+}
 
 /**
  * A text element which is attached to a particle.
- * If the particle.text is not null, the text is drawn instead of an image.
+ * If the particle.other is not null, the text is drawn instead of an image.
  */
 function TextElement(text, font, size, color, shadowColor) {
 	this.text = text;
@@ -334,7 +416,7 @@ function TextElement(text, font, size, color, shadowColor) {
 
 TextElement.prototype.draw = function(ctx, x, y, sizeScale) {
     var tempColor = ctx.fillStyle;
-    var trueSize = this.size * Number(sizeScale);
+    var trueSize = this.size * sizeScale;
     var trueFont = "" + trueSize + "px " + this.font;
     ctx.textAlign = "center";
     ctx.font = trueFont;
@@ -363,12 +445,20 @@ function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
 	this.fadeOut = fadeOut;
 	this.shrink = shrink;
 	this.sizeScale = 1;
+	this.width = width;
 	this.maxAlpha = maxAlpha + Math.random() * (alphaVariance * 2) - alphaVariance;
-	this.text = null;
+	this.other = null;
+	this.attackId = -1;
 	if (fadeIn > 0)
 		this.alpha = 0;
 	else
 		this.alpha = maxAlpha;
+    this.hitBox = {
+    	x: this.x - this.width / 2 + this.width, 
+		y: this.y - this.width / 2 + this.width,
+		width: this.width, 
+		height: this.width
+	};
     Entity.call(this, game, x + Math.random() * (width * 2) - width, y + Math.random() * (width * 2) - width);
 }
 
@@ -377,9 +467,16 @@ Particle.prototype.constructor = Particle;
 
 Particle.prototype.update = function() {
 	if (this.particleId === ARROW_PART_MAIN) {
-		/*this.game.addEntity(new Particle(ARROW_PART_SECONDARY, this.x + 20, this.y + 20, 3, -3, 3, 0,
+		/*this.game.addEntity(new Particle(PART_SECONDARY, this.x + 20, this.y + 20, 3, -3, 3, 0,
 			0, 0, 0, 10, 10, 10, 1, 0, true, this.game,
 		new Animation(ASSET_MANAGER.getAsset("./img/small_flare.png"), 0, 0, 12, 12, 1, 1, false, false, 0, 0)));*/
+	}
+	if (this.particleId === VOID_BALL && this.life % 2 === 0) {
+	    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
+				-2, 2, -2, 2, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game);
+	    var element = new CircleElement(10 + Math.random() * 4, "#240340", "#131d4f");
+	   	newParticle.other = element;
+	    this.game.addEntity(newParticle);
 	}
 	if (this.life < this.fadeIn) {
 		this.alpha = this.life / this.fadeIn;
@@ -403,6 +500,16 @@ Particle.prototype.update = function() {
 		if (this.hSpeed >= 0)
 			this.hSpeed = 0;
 	}
+	if (this.vSpeed > 0) {
+		this.vSpeed -= this.friction;
+		if (this.vSpeed <= 0)
+			this.vSpeed = 0;
+	}
+	if (this.vSpeed < 0) {
+		this.vSpeed += this.friction;
+		if (this.vSpeed >= 0)
+			this.vSpeed = 0;
+	}
 	this.vSpeed += this.gravity;
 	if (this.vSpeed > this.GRAVITY_CAP)
 		this.vSpeed = this.GRAVITY_CAP;
@@ -411,16 +518,52 @@ Particle.prototype.update = function() {
 	if (this.y >= 600)
 		this.removeFromWorld = true;
 	this.life++;
+
+    this.hitBox = { //update hitbox as we move
+    	x: this.x - this.width / 2 + this.width, 
+		y: this.y - this.width / 2 + this.width,
+		width: this.width, 
+		height: this.width
+	};
+    //console.log("hitbox of particle "+this.attackId+": "+this.hitBox.x+","+this.hitBox.y+", width: "+this.hitBox.width);
+    if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
+    	console.log("particle id "+this.attackId+" collision");
+    	if (this.attackId === 1) { //reksai void ball
+            if (this.game.player1.vulnerable) {
+                this.game.player1.vulnerable = false;
+                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+            			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                var damage = 40;
+            	damageText.text = damage;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                this.game.player1.currentHealth -= 40;
+                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                this.game.player1.hitByAttack = true;
+                if (this.hSpeed < 0) {
+                    this.game.player1.xVelocity = -3;
+                    this.game.player1.lastDirection = "Right";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                } else {
+                    this.game.player1.xVelocity = 3;
+                    this.game.player1.lastDirection = "Left";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                }
+            }
+    	}
+    }
+    
     Entity.prototype.update.call(this);
 };
 
 Particle.prototype.draw = function (ctx) {
 	ctx.globalAlpha = this.alpha * this.maxAlpha;
-	if (this.text == null) {
+	if (this.other == null) {
 	    this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX,
 			this.y + this.animation.offsetY, this.sizeScale, this.sizeScale);
 	} else {
-		this.text.draw(ctx, this.x, this.y, this.sizeScale);
+		this.other.draw(ctx, this.x, this.y, this.sizeScale);
 	}
     Entity.prototype.draw.call(this);
 	ctx.globalAlpha = 1;
@@ -468,12 +611,29 @@ Arrow.prototype.draw = function (ctx) {
 };
 
 function Reksai(game) {
+	this.step = 0;
+	
     this.solid = true;
     this.attackable = true;
     this.state = "idle";
     this.walkSpeed = 2;
 	this.lastDirection = "Left";
     this.autoDamage = 30;
+    
+    this.destinationX = -1;
+    this.walkToDestination = false;
+    
+    this.attackIndex = 0;
+    this.attackCount = 0;
+    this.energy = 0; //denotes if an attack is charged
+    
+    /**
+     * Initial cooldowns of skills.
+     * Skill ids:
+     * 1) Walk to nearest edge, scream, and throw a barrage of void balls.
+     * 2) Undefined...
+     */
+    this.cooldown = [250, 0, 0, 0];
     
 	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleRight.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
 	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleLeft.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
@@ -489,6 +649,9 @@ function Reksai(game) {
     this.attackAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/AttackRight.png"), 0, 0, 198, 135, 0.1, 13, false, false, 0, -40);
     this.attackAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/AttackLeft.png"), 0, 0, 198, 135, 0.1, 13, false, false, -50, -40);
     this.attackAnimation = this.attackAnimationLeft;  
+
+    this.screamAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamRight.png"), 0, 0, 177, 180, 0.1, 17, false, true, -40, -80);
+    this.screamAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamLeft.png"), 0, 0, 177, 180, 0.1, 17, false, true, 0, -80);
 
     this.maxHealth = 100.0;
     this.currentHealth = this.maxHealth;
@@ -516,11 +679,31 @@ Reksai.prototype.handleCollision = function(entity) {
 }*/
 
 Reksai.prototype.update = function() {
+	this.step++;
+	for (i = 0; i < this.cooldown.length; i++) {
+		if (this.cooldown[i] > 0)
+			this.cooldown[i]--;
+	}
+	if (this.energy === 3 && this.attackCount > 0 && this.step % 5 === 0) {
+        var originX = this.lastDirection === "Right" ? this.x + this.hitBox.width : this.x;
+        var originY = this.y + 50;
+		var speed = this.lastDirection === "Left" ? -10 : 10;
+    	var particle = new Particle(VOID_BALL, originX, originY, 
+    			speed, speed, -1.5 * this.attackCount, -1.5 * this.attackCount, 0.3, 0, 0, 100, 0, 10, 1, 0, false, this.game);
+        var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
+       	particle.other = element;
+       	particle.attackId = 1; //void ball
+        this.game.addEntity(particle);
+    	this.attackCount--;
+    	if (this.attackCount === 0)
+    		this.energy = 0;
+    }
     if (this.state == "attacking") {
         this.attackable = false;
         if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
             this.state = "idle";
-            this.idleTimer = this.idleTimerMax;   
+            if (this.attackIndex != 2) //no delay after scream
+            	this.idleTimer = this.idleTimerMax;   
             this.attackAnimation.elapsedTime = 0;
 	        this.hitBoxDef.growthX = 0;
             this.hitBoxDef.growthY = 0;
@@ -534,28 +717,30 @@ Reksai.prototype.update = function() {
                     this.hitBoxDef.growthY = 0;
                 }
                 if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
-                    if (this.game.player1.vulnerable) {
-                        this.game.player1.vulnerable = false;
-                        var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-                    			0.2, -0.2, -3, -3, 0, 0.5, 0, 5, 10, 50, 1, 0, false, this.game);
-                        var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                        var damage = this.autoDamage;
-                    	damageText.text = damage;
-                        damageParticle.text = damageText;
-                        this.game.addEntity(damageParticle);
-                        this.game.player1.currentHealth -= this.autoDamage;
-                        this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
-                        this.game.player1.hitByAttack = true;
-                        if (this.lastDirection == "Left") {
-                            this.game.player1.xVelocity = -2;
-                            this.game.player1.lastDirection = "Right";
-                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
-                        } else if (this.lastDirection == "Right") {
-                            this.game.player1.xVelocity = 2;
-                            this.game.player1.lastDirection = "Left";
-                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
-                        }
-                    }
+                	if (this.attackIndex === 1) { //basic attack
+	                    if (this.game.player1.vulnerable) {
+	                        this.game.player1.vulnerable = false;
+	                        var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+	                    			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+	                        var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+	                        var damage = this.autoDamage;
+	                    	damageText.text = damage;
+	                        damageParticle.other = damageText;
+	                        this.game.addEntity(damageParticle);
+	                        this.game.player1.currentHealth -= this.autoDamage;
+	                        this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+	                        this.game.player1.hitByAttack = true;
+	                        if (this.lastDirection == "Left") {
+	                            this.game.player1.xVelocity = -2;
+	                            this.game.player1.lastDirection = "Right";
+	                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+	                        } else if (this.lastDirection == "Right") {
+	                            this.game.player1.xVelocity = 2;
+	                            this.game.player1.lastDirection = "Left";
+	                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+	                        }
+	                    }
+                	}
                 }
             }
             if (this.lastDirection == "Left") {
@@ -575,18 +760,72 @@ Reksai.prototype.update = function() {
             }
         } else {
             var distance = getXDistance(this.game.player1, this);
-            if (distance < 0) {
+            if (this.cooldown[0] == 0 && !this.walkToDestination) {
+            	this.energy = 1;
+            	this.walkToDestination = true;
+            	if (this.x < 325) {
+            		this.destinationX = 50;
+            	} else {
+            		this.destinationX = 600;
+            	}
+            	this.cooldown[0] = 1000;
+            }
+            if (this.walkToDestination)
+            	distance = this.destinationX - this.x;
+            if (distance === 0) { //destination must be the same as current location
+            	this.destinationX = -1;
+            	this.walkToDestination = false;
+            }
+            if (this.energy === 1 && !this.walkToDestination) { //destination reached!
+            	this.energy = 2; //screaming
+                this.state = "attacking";
+                this.attackIndex = 2; //scream - this doesn't actually do any damage.
+                if (this.x < 325) {
+                    this.lastDirection = "Right";
+                } else {
+                    this.lastDirection = "Left";
+                }
+                if (this.lastDirection == "Left") {
+                    this.attackAnimation = this.screamAnimationLeft;
+                } else {
+                    this.attackAnimation = this.screamAnimationRight;
+                }
+            } else if (this.energy === 2) {
+                this.state = "attacking";
+                this.attackIndex = 3; //another attack that doesn't actually hit
+                if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
+                    this.lastDirection = "Right";
+                } else {
+                    this.lastDirection = "Left";
+                }
+                if (this.lastDirection == "Left") {
+                    this.attackAnimation = this.attackAnimationLeft;
+                } else {
+                    this.attackAnimation = this.attackAnimationRight;
+                }
+            	this.energy = 3; //start swipe
+            	this.attackCount = 10;
+            } else if (distance < 0) {
                 this.state = "walking";
                 this.lastDirection = "Left";
                 this.walkAnimation = this.walkAnimationLeft;
                 this.x -= this.walkSpeed;
+                if (this.walkToDestination && this.x <= this.destinationX) { //destination reached
+                	this.destinationX = -1;
+                	this.walkToDestination = false;
+                }
             } else if (distance > 0) {
                 this.state = "walking";
                 this.lastDirection = "Right";
                 this.walkAnimation = this.walkAnimationRight;
                 this.x += this.walkSpeed;
-            } else {
+                if (this.walkToDestination && this.x >= this.destinationX) { //destination reached
+                	this.destinationX = -1;
+                	this.walkToDestination = false;
+                }
+            } else if (distance === 0 && !this.walkToDestination && this.energy === 0) { //attack if not walking or charging attack
                 this.state = "attacking";
+                this.attackIndex = 1; //basic attack
                 if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
                     this.lastDirection = "Right";
                 } else {
@@ -902,6 +1141,15 @@ Character.prototype.update = function () {
                             this.attackHit = false;
                             this.attacking = true;
                             this.attackIndex = 8;
+                            for (i = 0; i < 10; i++) {
+	                            var particle = new Particle(SHAPE_PART,
+	                            		this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
+	                            		this.game.player1.hitBox.y + this.game.player1.hitBox.height / 2 - 10 + Math.random() * 20, 
+	                        			3, -3, 3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+	                            var element = new SquareElement(4 + Math.random() * 4, 4 + Math.random() * 4, "#00f6cb", "#70fe37");
+	                           	particle.other = element;
+	                            this.game.addEntity(particle);
+                            }
                         }
 		    		}
 		    	}
@@ -1041,7 +1289,7 @@ Character.prototype.update = function () {
         if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
             this.attackHit = true;
             var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + 20, this.game.currentBoss.hitBox.y, 
-        			0.2, -0.2, -3, -3, 0, 0.5, 0, 5, 10, 50, 1, 0, false, this.game);
+        			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
             var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
             var damage = 0;
             if (this.attackIndex >= 1 && this.attackIndex <= 3) {
@@ -1053,7 +1301,7 @@ Character.prototype.update = function () {
             }
             this.game.currentBoss.currentHealth -= damage;
         	damageText.text = damage;
-            damageParticle.text = damageText;
+            damageParticle.other = damageText;
             this.game.addEntity(damageParticle);
         }
         /*
@@ -1207,6 +1455,8 @@ ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiWalkRight.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ReksaiPortrait.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/AttackLeft.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/AttackRight.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ScreamRight.png");
 
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
