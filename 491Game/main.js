@@ -1,5 +1,5 @@
 var soundOn = true;
-var showHitBox = false;
+var showHitBox = true;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -541,6 +541,10 @@ Particle.prototype.update = function() {
                 this.game.player1.currentHealth -= 40;
                 this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
                 this.game.player1.hitByAttack = true;
+                var hitSound = new Audio("./sounds/rekProjHit.wav");
+                hitSound.volume = 0.1;
+                hitSound.currentTime = 0;
+                hitSound.play();
                 if (this.hSpeed < 0) {
                     this.game.player1.xVelocity = -3;
                     this.game.player1.lastDirection = "Right";
@@ -611,6 +615,13 @@ Arrow.prototype.draw = function (ctx) {
 };
 
 function Reksai(game) {
+
+    this.screamSound = new Audio("./sounds/rekScream.wav");
+    this.screamSound.volume = 0.1;
+
+    this.shootSound = new Audio("./sounds/rekShoot.wav");
+    this.shootSound.volume = 0.1;
+    
 	this.step = 0;
 	
     this.solid = true;
@@ -697,6 +708,8 @@ Reksai.prototype.update = function() {
     	this.attackCount--;
     	if (this.attackCount === 0)
     		this.energy = 0;
+        this.shootSound.currentTime = 0;
+        this.shootSound.play();
     }
     if (this.state == "attacking") {
         this.attackable = false;
@@ -780,6 +793,8 @@ Reksai.prototype.update = function() {
             	this.energy = 2; //screaming
                 this.state = "attacking";
                 this.attackIndex = 2; //scream - this doesn't actually do any damage.
+                this.screamSound.currentTime = 0;
+                this.screamSound.play();
                 if (this.x < 325) {
                     this.lastDirection = "Right";
                 } else {
@@ -900,21 +915,21 @@ function Character(game) {
     this.jumpAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenJumpLeft.png"), 0, 0, 72, 90, 0.1, 3, false, false, -20, 0);
 
     // Light Attack
-    this.attackAnimationLight1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA1Right.png"), 0, 0, 109, 110, 0.06, 16, false, false, 2, -20);
-    this.attackAnimationLight1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA1Left.png"), 0, 0, 109, 110, 0.06, 16, false, false, -45, -25 + 2);
-    this.attackAnimationLight2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Right.png"), 0, 0, 94, 110, 0.06, 12, false, false, 4, 8 + 6);
-    this.attackAnimationLight2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Left.png"), 0, 0, 94, 110, 0.06, 12, false, false, -35, 8 + 2);
-    this.attackAnimationLight3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA3Right.png"), 0, 0, 128, 110, 0.06, 13, false, false, -20, -12);
-    this.attackAnimationLight3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA3Left.png"), 0, 0, 138, 110, 0.06, 13, false, false, -55, -17);
+    this.attackAnimationLight1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA1Right.png"), 0, 0, 109, 110, 0.05, 16, false, false, 2, -20);
+    this.attackAnimationLight1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA1Left.png"), 0, 0, 109, 110, 0.05, 16, false, false, -45, -25 + 2);
+    this.attackAnimationLight2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Right.png"), 0, 0, 94, 110, 0.05, 12, false, false, 4, 8 + 6);
+    this.attackAnimationLight2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA2Left.png"), 0, 0, 94, 110, 0.05, 12, false, false, -35, 8 + 2);
+    this.attackAnimationLight3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA3Right.png"), 0, 0, 128, 110, 0.05, 13, false, false, -20, -12);
+    this.attackAnimationLight3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenAA3Left.png"), 0, 0, 138, 110, 0.05, 13, false, false, -55, -17);
     
     // Strong Side Attacks
     this.attackAnimation = null;
-    this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
-    this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.08, 10, false, false, -18, -29);
-    this.attackAnimation2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -9);
-    this.attackAnimation2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -50, -9);
-    this.attackAnimation3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Right.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -20, -30);
-    this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.08, 12, false, false, -65, -30);
+    this.attackAnimation1Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Right.png"), 0, 0, 92, 110, 0.06, 10, false, false, -18, -29);
+    this.attackAnimation1Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ1Left.png"), 0, 0, 92, 110, 0.06, 10, false, false, -18, -29);
+    this.attackAnimation2Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.06, 9, false, false, -20, -9);
+    this.attackAnimation2Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.06, 9, false, false, -50, -9);
+    this.attackAnimation3Right = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Right.png"), 0, 0, 141.665, 123, 0.06, 12, false, false, -20, -30);
+    this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.06, 12, false, false, -65, -30);
     
     // Down Skill (E)
     this.attackAnimationDownRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -9);
