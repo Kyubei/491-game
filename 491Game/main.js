@@ -1,5 +1,5 @@
 var soundOn = true;
-var showHitBox = true;
+var showHitBox = false;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -316,7 +316,7 @@ Map1.prototype.draw = function (ctx) {
 
 var COMBO_DROPOFF_TIME = 5;
 
-var ARROW_PART_MAIN = 1;
+var IMG_PART = 1;
 var PART_SECONDARY = 2;
 var TEXT_PART = 3;
 var SHAPE_PART = 4;
@@ -448,6 +448,7 @@ function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
 	this.width = width;
 	this.maxAlpha = maxAlpha + Math.random() * (alphaVariance * 2) - alphaVariance;
 	this.other = null;
+	this.snapEntity = null;
 	this.attackId = -1;
 	if (fadeIn > 0)
 		this.alpha = 0;
@@ -466,7 +467,7 @@ Particle.prototype = new Entity();
 Particle.prototype.constructor = Particle;
 
 Particle.prototype.update = function() {
-	if (this.particleId === ARROW_PART_MAIN) {
+	if (this.particleId === IMG_PART) {
 		/*this.game.addEntity(new Particle(PART_SECONDARY, this.x + 20, this.y + 20, 3, -3, 3, 0,
 			0, 0, 0, 10, 10, 10, 1, 0, true, this.game,
 		new Animation(ASSET_MANAGER.getAsset("./img/small_flare.png"), 0, 0, 12, 12, 1, 1, false, false, 0, 0)));*/
@@ -518,6 +519,11 @@ Particle.prototype.update = function() {
 	if (this.y >= 600)
 		this.removeFromWorld = true;
 	this.life++;
+	
+	if (this.snapEntity != null) {
+		this.x = this.snapEntity.x;
+		this.y = this.snapEntity.y;
+	}
 
     this.hitBox = { //update hitbox as we move
     	x: this.x - this.width / 2 + this.width, 
@@ -593,7 +599,7 @@ Arrow.prototype.update = function() {
         }
 	}
 	
-	this.game.addEntity(new Particle(ARROW_PART_MAIN, this.x + this.travelX, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
+	this.game.addEntity(new Particle(IMG_PART, this.x + this.travelX, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
 		new Animation(ASSET_MANAGER.getAsset("./img/pink_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
 	if (!this.starting) {
 		this.x += 12;
@@ -808,11 +814,6 @@ Reksai.prototype.update = function() {
             } else if (this.energy === 2) {
                 this.state = "attacking";
                 this.attackIndex = 3; //another attack that doesn't actually hit
-                if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
-                    this.lastDirection = "Right";
-                } else {
-                    this.lastDirection = "Left";
-                }
                 if (this.lastDirection == "Left") {
                     this.attackAnimation = this.attackAnimationLeft;
                 } else {
@@ -1148,6 +1149,17 @@ Character.prototype.update = function () {
                             this.invulnTimer = 40;
                             this.vulnerable = false;
                             this.attackIndex = 7;
+                            var particle;
+                            if (this.lastDirection === "Left")
+                                particle = new Particle(IMG_PART, this.x, this.y, 0, 0,
+                            			0, 0, 0, 0, 0, 5, 5, 30, 0.5, 0, false, this.game,
+                            		new Animation(ASSET_MANAGER.getAsset("./img/Particle/bubbleleft.png"), 0, 0, 47, 94, 1, 1, true, false, 0, 0));
+                            else
+                                particle = new Particle(IMG_PART, this.x, this.y, 0, 0,
+                            			0, 0, 0, 0, 0, 5, 5, 30, 0.5, 0, false, this.game,
+                            		new Animation(ASSET_MANAGER.getAsset("./img/Particle/bubbleright.png"), 0, 0, 47, 94, 1, 1, true, false, 0, 0));
+                            particle.snapEntity = this;
+                            this.game.addEntity(particle);
                         }
 		    		} else if ((!this.attacking || (this.canCancel() && this.attackIndex != 8)) 
 		    				&& !(this.rightDown || this.leftDown)) { //W
@@ -1438,6 +1450,9 @@ ASSET_MANAGER.queueDownload("./img/arrow.png");
 ASSET_MANAGER.queueDownload("./img/arrow_start.png");
 ASSET_MANAGER.queueDownload("./img/pink_flare.png");
 ASSET_MANAGER.queueDownload("./img/small_flare.png");
+
+ASSET_MANAGER.queueDownload("./img/Particle/bubbleleft.png");
+ASSET_MANAGER.queueDownload("./img/Particle/bubbleright.png");
 
 ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleRight.png");
