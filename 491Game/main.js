@@ -127,6 +127,8 @@ Background.prototype.draw = function (ctx) {
 };
 
 function UI(game) {
+    this.gameOverTransparency = 0;
+    
 	this.bottomX = 0;
 	this.bottomY = 380;
 	this.bottomWidth = 800;
@@ -256,12 +258,37 @@ UI.prototype.draw = function (ctx) {
     var tempColor = ctx.fillStyle;
     ctx.font = "30px Calibri";
     ctx.fillStyle = "white";
-    ctx.fillText("Rek'sai",this.bossPortraitX + 80,45);
+    ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     ctx.font = "20px Calibri";
-    ctx.fillText("Player1",this.portraitX + 90,this.portraitY + 30);
-    ctx.fillText("Player1",this.game.player1.x + 5,this.game.player1.y + 0);
-    ctx.fillText("Rek'sai",this.game.currentBoss.x + 50,this.game.currentBoss.y - 5);
+    ctx.fillText("Player1  " + this.game.player1.currentHealth + " / " + this.game.player1.maxHealth,this.portraitX + 90,this.portraitY + 30);
+    if (!this.game.player1.dead) {
+        ctx.fillText("Player1",this.game.player1.x + 5,this.game.player1.y + 0);
+    }
+    if (!this.game.currentBoss.dead) {
+        ctx.fillText("Rek'sai",this.game.currentBoss.x + 50,this.game.currentBoss.y - 5);
+    }
     ctx.fillStyle = tempColor;
+    if (this.game.player1.dead) {
+        if (this.gameOverTransparency < 1) {
+            this.gameOverTransparency += 0.025;
+            ctx.globalAlpha = this.gameOverTransparency;
+        }
+        ctx.font = "100px Calibri";
+        ctx.fillStyle = "white";
+        ctx.textAlign="center"; 
+        ctx.fillText("Defeat",400,250);
+        ctx.globalAlpha = 1.0;
+    } else if (this.game.currentBoss.dead) {
+        if (this.gameOverTransparency < 1) {
+            this.gameOverTransparency += 0.025;
+            ctx.globalAlpha = this.gameOverTransparency;
+        }
+        ctx.font = "100px Calibri";
+        ctx.fillStyle = "white";
+        ctx.textAlign="center"; 
+        ctx.fillText("Victory!",400,250);
+        ctx.globalAlpha = 1.0;
+    }
     Entity.prototype.draw.call(this);	
 };
 
@@ -297,8 +324,8 @@ Platform.prototype.draw = function (ctx) {
 function Map1(game) {
     Entity.call(this, game, 0, 0);
     this.platforms = [];
-    this.platforms.push(new Platform(game, 150, 315));
-    this.platforms.push(new Platform(game, 400, 315));
+    this.platforms.push(new Platform(game, 200, 315));
+    this.platforms.push(new Platform(game, 500, 315));
 }
 
 Map1.prototype = new Entity();
@@ -627,9 +654,13 @@ function Reksai(game) {
 
     this.shootSound = new Audio("./sounds/rekShoot.wav");
     this.shootSound.volume = 0.1;
+
+    this.punchSound = new Audio("./sounds/punch.mp3");
+    this.punchSound.volume = 0.5;
     
 	this.step = 0;
-	
+    
+    this.dead = false;
     this.solid = true;
     this.attackable = true;
     this.state = "idle";
@@ -670,7 +701,7 @@ function Reksai(game) {
     this.screamAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamRight.png"), 0, 0, 177, 180, 0.1, 17, false, true, -40, -80);
     this.screamAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamLeft.png"), 0, 0, 177, 180, 0.1, 17, false, true, 0, -80);
 
-    this.maxHealth = 100.0;
+    this.maxHealth = 10.0;
     this.currentHealth = this.maxHealth;
     this.currentHealthTemp = this.currentHealth;    
         
@@ -688,32 +719,30 @@ function Reksai(game) {
 	};
 }
 
-/*
-Reksai.prototype.handleCollision = function(entity) {
-	if (entity.attacking) {
-		console.log("HIT!");		
-	}
-}*/
-
 Reksai.prototype.update = function() {
 	this.step++;
-	for (i = 0; i < this.cooldown.length; i++) {
-		if (this.cooldown[i] > 0)
-			this.cooldown[i]--;
-	}
-	if (this.energy === 3 && this.attackCount > 0 && this.step % 5 === 0) {
+    if (this.currentHealth <= 0) {
+        this.dead = true;
+        this.attackable = false;
+        this.solid = false;
+    }
+    for (i = 0; i < this.cooldown.length; i++) {
+        if (this.cooldown[i] > 0)
+            this.cooldown[i]--;
+    }
+    if (this.energy === 3 && this.attackCount > 0 && this.step % 5 === 0) {
         var originX = this.lastDirection === "Right" ? this.x + this.hitBox.width : this.x;
         var originY = this.y + 50;
-		var speed = this.lastDirection === "Left" ? -10 : 10;
-    	var particle = new Particle(VOID_BALL, originX, originY, 
-    			speed, speed, -1.5 * this.attackCount, -1.5 * this.attackCount, 0.3, 0, 0, 100, 0, 10, 1, 0, false, this.game);
+        var speed = this.lastDirection === "Left" ? -10 : 10;
+        var particle = new Particle(VOID_BALL, originX, originY, 
+                speed, speed, -1.5 * this.attackCount, -1.5 * this.attackCount, 0.3, 0, 0, 100, 0, 10, 1, 0, false, this.game);
         var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
-       	particle.other = element;
-       	particle.attackId = 1; //void ball
+        particle.other = element;
+        particle.attackId = 1; //void ball
         this.game.addEntity(particle);
-    	this.attackCount--;
-    	if (this.attackCount === 0)
-    		this.energy = 0;
+        this.attackCount--;
+        if (this.attackCount === 0)
+            this.energy = 0;
         this.shootSound.currentTime = 0;
         this.shootSound.play();
     }
@@ -722,9 +751,9 @@ Reksai.prototype.update = function() {
         if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
             this.state = "idle";
             if (this.attackIndex != 2) //no delay after scream
-            	this.idleTimer = this.idleTimerMax;   
+                this.idleTimer = this.idleTimerMax;   
             this.attackAnimation.elapsedTime = 0;
-	        this.hitBoxDef.growthX = 0;
+            this.hitBoxDef.growthX = 0;
             this.hitBoxDef.growthY = 0;
             this.attackable = true;
             this.game.player1.hitByAttack = false;
@@ -736,30 +765,34 @@ Reksai.prototype.update = function() {
                     this.hitBoxDef.growthY = 0;
                 }
                 if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
-                	if (this.attackIndex === 1) { //basic attack
-	                    if (this.game.player1.vulnerable) {
-	                        this.game.player1.vulnerable = false;
-	                        var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-	                    			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-	                        var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-	                        var damage = this.autoDamage;
-	                    	damageText.text = damage;
-	                        damageParticle.other = damageText;
-	                        this.game.addEntity(damageParticle);
-	                        this.game.player1.currentHealth -= this.autoDamage;
-	                        this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
-	                        this.game.player1.hitByAttack = true;
-	                        if (this.lastDirection == "Left") {
-	                            this.game.player1.xVelocity = -2;
-	                            this.game.player1.lastDirection = "Right";
-	                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
-	                        } else if (this.lastDirection == "Right") {
-	                            this.game.player1.xVelocity = 2;
-	                            this.game.player1.lastDirection = "Left";
-	                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
-	                        }
-	                    }
-                	}
+                    if (this.attackIndex === 1) { //basic attack
+                        if (this.game.player1.vulnerable) {
+                            this.game.player1.vulnerable = false;
+                            var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                                    0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                            var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                            var damage = this.autoDamage;
+                            damageText.text = damage;
+                            damageParticle.other = damageText;
+                            this.game.addEntity(damageParticle);
+                            this.game.player1.currentHealth -= this.autoDamage;
+                            this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                            this.game.player1.hitByAttack = true;
+                            if (soundOn) {
+                                this.punchSound.currentTime = 0;
+                                this.punchSound.play();
+                            }
+                            if (this.lastDirection == "Left") {
+                                this.game.player1.xVelocity = -2;
+                                this.game.player1.lastDirection = "Right";
+                                this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                            } else if (this.lastDirection == "Right") {
+                                this.game.player1.xVelocity = 2;
+                                this.game.player1.lastDirection = "Left";
+                                this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                            }
+                        }
+                    }
                 }
             }
             if (this.lastDirection == "Left") {
@@ -768,6 +801,11 @@ Reksai.prototype.update = function() {
                 this.hitBoxDef.growthX += 1.3;
             }
         }
+    }
+    if (this.walkToDestination) {
+        this.walkSpeed = 4;
+    } else {
+        this.walkSpeed = 2;
     }
     if (this.state != "attacking") {
         if (this.idleTimer > 0) {
@@ -780,23 +818,23 @@ Reksai.prototype.update = function() {
         } else {
             var distance = getXDistance(this.game.player1, this);
             if (this.cooldown[0] == 0 && !this.walkToDestination) {
-            	this.energy = 1;
-            	this.walkToDestination = true;
-            	if (this.x < 325) {
-            		this.destinationX = 50;
-            	} else {
-            		this.destinationX = 600;
-            	}
-            	this.cooldown[0] = 1000;
+                this.energy = 1;
+                this.walkToDestination = true;
+                if (this.x < 325) {
+                    this.destinationX = 50;
+                } else {
+                    this.destinationX = 600;
+                }
+                this.cooldown[0] = 1000;
             }
             if (this.walkToDestination)
-            	distance = this.destinationX - this.x;
+                distance = this.destinationX - this.x;
             if (distance === 0) { //destination must be the same as current location
-            	this.destinationX = -1;
-            	this.walkToDestination = false;
+                this.destinationX = -1;
+                this.walkToDestination = false;
             }
-            if (this.energy === 1 && !this.walkToDestination) { //destination reached!
-            	this.energy = 2; //screaming
+            if (this.energy === 1 && !this.walkToDestination && !this.dead) { //destination reached!
+                this.energy = 2; //screaming
                 this.state = "attacking";
                 this.attackIndex = 2; //scream - this doesn't actually do any damage.
                 this.screamSound.currentTime = 0;
@@ -819,16 +857,16 @@ Reksai.prototype.update = function() {
                 } else {
                     this.attackAnimation = this.attackAnimationRight;
                 }
-            	this.energy = 3; //start swipe
-            	this.attackCount = 10;
+                this.energy = 3; //start swipe
+                this.attackCount = 10;
             } else if (distance < 0) {
                 this.state = "walking";
                 this.lastDirection = "Left";
                 this.walkAnimation = this.walkAnimationLeft;
                 this.x -= this.walkSpeed;
                 if (this.walkToDestination && this.x <= this.destinationX) { //destination reached
-                	this.destinationX = -1;
-                	this.walkToDestination = false;
+                    this.destinationX = -1;
+                    this.walkToDestination = false;
                 }
             } else if (distance > 0) {
                 this.state = "walking";
@@ -836,8 +874,8 @@ Reksai.prototype.update = function() {
                 this.walkAnimation = this.walkAnimationRight;
                 this.x += this.walkSpeed;
                 if (this.walkToDestination && this.x >= this.destinationX) { //destination reached
-                	this.destinationX = -1;
-                	this.walkToDestination = false;
+                    this.destinationX = -1;
+                    this.walkToDestination = false;
                 }
             } else if (distance === 0 && !this.walkToDestination && this.energy === 0) { //attack if not walking or charging attack
                 this.state = "attacking";
@@ -859,15 +897,17 @@ Reksai.prototype.update = function() {
 }
 
 Reksai.prototype.draw = function (ctx) {
-    if (this.state === "idle") {
-        this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
-        this.currentAnimation = this.idleAnimation;
-    } else if (this.state === "walking") {
-        this.walkAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimation.offsetX, this.y + this.walkAnimation.offsetY);
-        this.currentAnimation = this.walkAnimation;
-    } else if (this.state === "attacking") {
-        this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
-        this.currentAnimation = this.attackAnimation;
+    if (!this.dead) {
+        if (this.state === "idle") {
+            this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
+            this.currentAnimation = this.idleAnimation;
+        } else if (this.state === "walking") {
+            this.walkAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimation.offsetX, this.y + this.walkAnimation.offsetY);
+            this.currentAnimation = this.walkAnimation;
+        } else if (this.state === "attacking") {
+            this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
+            this.currentAnimation = this.attackAnimation;
+        }
     }
     
     this.hitBox = {
@@ -904,6 +944,12 @@ function Character(game) {
     this.q3Sound = new Audio("./sounds/Q3.mp3");
     this.q3Sound.volume = 0.1;
     
+    this.eSound = new Audio("./sounds/E.mp3");
+    this.eSound.volume = 0.1;
+    
+    this.wSound = new Audio("./sounds/W.mp3");
+    this.wSound.volume = 0.1;
+    
     // Animations    	
 	this.idleAnimation = null;
     this.idleAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
@@ -933,8 +979,8 @@ function Character(game) {
     this.attackAnimation3Left = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ3Left.png"), 0, 0, 141.665, 123, 0.06, 12, false, false, -65, -30);
     
     // Down Skill (E)
-    this.attackAnimationDownRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Right.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -20, -9);
-    this.attackAnimationDownLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenQ2Left.png"), 0, 0, 123.887, 97, 0.08, 9, false, false, -50, -9);
+    this.attackAnimationDownRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/ERight.png"), 0, 0, 87, 70, 0.08, 6, false, false, 0, 0);
+    this.attackAnimationDownLeft = new Animation(ASSET_MANAGER.getAsset("./img/Riven/ELeft.png"), 0, 0, 87, 70, 0.08, 6, false, false, 0, 0);
     
     // No Directional Skill (W)
     this.attackAnimationStillRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/WRight.png"), 0, 0, 64, 125, 0.06, 9, false, false, 0, -40);
@@ -976,6 +1022,7 @@ function Character(game) {
     this.comboTime = 0; // The timer before the combo drops off
     
 	this.running = false;
+    this.dead = false;
     this.jumping = false;
     this.falling = true;
 	this.attacking = false;
@@ -1019,345 +1066,365 @@ Character.prototype.constructor = Character;
  * You can animation cancel any skill with W and E, except themself (W can cancel E or Q, it can't cancel itself).
  */
 Character.prototype.canCancel = function() {
-	return (this.attacking && this.attackAnimation.elapsedTime >= 0.5);
+	return (this.attacking && this.attackAnimation.elapsedTime >= 0.25);
 }
 
 Character.prototype.update = function () {
 	var that = this;
-    if (!this.vulnerable) {
-        this.canControl = false;
-        if (this.attackIndex !== 7) { //E doesn't count
-        	this.hurt = true;
-        	this.attacking = false;
-    	}
-        this.running = false;
-        this.jumpSpeed = 0;
-        this.hitBoxDef.growthX = 0;
+    if (this.currentHealth <= 0) {
+        this.dead = true;
+        this.vulnerable = false;
     }
-    if (!this.vulnerable && this.invulnTimer > 0) {
-        this.invulnTimer--;
-        if (this.invulnTimer <= 0) {
-            this.vulnerable = true;
-            this.canControl = true;
-            this.xVelocity = 0;
-            this.hurt = false;
+    if (!this.dead) {
+        if (!this.vulnerable) {
+            this.canControl = false;
+            if (this.attackIndex !== 7) { //E doesn't count
+                this.attacking = false;
+                this.hurt = true;
+            }
+            this.running = false;
+            this.jumpSpeed = 0;
+            this.hitBoxDef.growthX = 0;
         }
-    }
-    if (!this.canControl && !this.vulnerable) {
-        this.x += this.xVelocity;
-    }
-    
-	if (this.game.r) { // Arrow thing temporary
-		if (!this.attacking) {
-			//this.attacking = true;
-			this.running = false;
-			this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
-		}
-	}
-    if (this.jumpDown && !this.attacking && !this.jumping && !this.falling) {
-    	this.jumping = true;
-        this.yVelocity = this.jumpYVelocity;
-		if (this.rightDown) {
-			this.lastDirection = "Right";
-			this.jumpSpeed = this.runSpeed;
-		} else if (this.leftDown) {
-			this.lastDirection = "Left";
-			this.jumpSpeed = -this.runSpeed;
-		} else {
-			this.jumpSpeed = 0;
-		}
-	}	
-    if ((this.rightDown || this.leftDown) && !this.attacking && !this.jumping && !this.falling && this.canControl) {
-		this.running = true;
-		if (this.rightDown) {
-			this.lastDirection = "Right";
-		} else if (this.leftDown) {
-			this.lastDirection = "Left";
-		}
-	} else {
-		this.running = false;
-	}
+        if (!this.vulnerable && this.invulnTimer > 0) {
+            this.invulnTimer--;
+            if (this.invulnTimer <= 0) {
+                this.vulnerable = true;
+                this.canControl = true;
+                this.xVelocity = 0;
+                this.hurt = false;
+            }
+        }
+        if (!this.canControl && !this.vulnerable) {
+            this.x += this.xVelocity;
+        }
+        
+        if (this.game.r) { // Arrow thing temporary
+            if (!this.attacking) {
+                //this.attacking = true;
+                this.running = false;
+                this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
+            }
+        }
+        if (this.jumpDown && !this.attacking && !this.jumping && !this.falling) {
+            this.jumping = true;
+            this.yVelocity = this.jumpYVelocity;
+            if (this.rightDown) {
+                this.lastDirection = "Right";
+                this.jumpSpeed = this.runSpeed;
+            } else if (this.leftDown) {
+                this.lastDirection = "Left";
+                this.jumpSpeed = -this.runSpeed;
+            } else {
+                this.jumpSpeed = 0;
+            }
+        }	
+        if ((this.rightDown || this.leftDown) && !this.attacking && !this.jumping && !this.falling && this.canControl) {
+            this.running = true;
+            if (this.rightDown) {
+                this.lastDirection = "Right";
+            } else if (this.leftDown) {
+                this.lastDirection = "Left";
+            }
+        } else {
+            this.running = false;
+        }
 
-    this.comboTime -= this.game.clockTick; // Combo Timer
-    if (this.comboTime <= 0 && this.lastComboStage > 0) {
-    	console.log("Combo stage "+this.lastComboStage+" has dropped off!");
-    	this.lastComboStage = 0;
-    }
-    
-    // Process the raw attack input into the appropriate skill
-    if (this.attackInput > 0 && this.canControl) { 
-		switch(this.attackInput) {
-			case 1: // Light attack
-		    	if (!this.attacking && !this.jumping && !this.falling) {
-	    			if (this.lastComboType != this.attackInput) { // Last Combo was different (e.g. AA vs Q) - drop combo
-	    				this.lastComboStage = 0;		    				
-	    			}
-                    if (soundOn) {
-                        this.autoSound.currentTime = 0;
-                        this.autoSound.play();
+        this.comboTime -= this.game.clockTick; // Combo Timer
+        if (this.comboTime <= 0 && this.lastComboStage > 0) {
+            console.log("Combo stage "+this.lastComboStage+" has dropped off!");
+            this.lastComboStage = 0;
+        }
+        
+        // Process the raw attack input into the appropriate skill
+        if (this.attackInput > 0 && this.canControl) { 
+            switch(this.attackInput) {
+                case 1: // Light attack
+                    if (!this.attacking && !this.jumping && !this.falling) {
+                        if (this.lastComboType != this.attackInput) { // Last Combo was different (e.g. AA vs Q) - drop combo
+                            this.lastComboStage = 0;		    				
+                        }
+                        if (soundOn) {
+                            this.autoSound.currentTime = 0;
+                            this.autoSound.play();
+                        }
+                        this.attackHit = false;
+                        this.attacking = true;
+                        // AA will take attack indexes 4-6
+                        if (this.lastComboStage < 3) {
+                            this.attackIndex = this.lastComboStage + 4;
+                        } else {
+                            this.attackIndex = 4;
+                        }
+                        this.lastComboType = this.attackInput;
+                        this.lastComboStage = this.attackIndex - 3;
+                        this.comboTime = COMBO_DROPOFF_TIME;
                     }
-                    this.attackHit = false;
-		    		this.attacking = true;
-		    		// AA will take attack indexes 4-6
-		    		if (this.lastComboStage < 3) {
-		    			this.attackIndex = this.lastComboStage + 4;
-		    		} else {
-		    			this.attackIndex = 4;
-                    }
-		    		this.lastComboType = this.attackInput;
-		    		this.lastComboStage = this.attackIndex - 3;
-		    		this.comboTime = COMBO_DROPOFF_TIME;
-		    	}
-	    	break;
-			case 2: // Strong attack
-		    	if (!this.jumping && !this.falling) {
-		    		if (!this.attacking && (this.rightDown || this.leftDown)) {
-                        if (this.currentStamina >= this.strongAttackCost) {
-                            this.currentStamina -= this.strongAttackCost;
-                            if (this.lastComboType != this.attackInput) { // Last Combo was different (e.g. AA vs Q) - drop combo
-                                this.lastComboStage = 0;		    				
+                break;
+                case 2: // Strong attack
+                    if (!this.jumping && !this.falling) {
+                        if (!this.attacking && (this.rightDown || this.leftDown)) {
+                            if (this.currentStamina >= this.strongAttackCost) {
+                                this.currentStamina -= this.strongAttackCost;
+                                if (this.lastComboType != this.attackInput) { // Last Combo was different (e.g. AA vs Q) - drop combo
+                                    this.lastComboStage = 0;		    				
+                                }
+                                this.attackHit = false;
+                                this.attacking = true;
+                                // Q will take attack indexes 1, 2, and 3
+                                if (this.lastComboStage < 3)
+                                    this.attackIndex = this.lastComboStage + 1;
+                                else
+                                    this.attackIndex = 1;
+                                if (soundOn) {
+                                    if (this.attackIndex == 1) {
+                                        this.q1Sound.currentTime = 0;
+                                        this.q1Sound.play();
+                                    } else if (this.attackIndex == 2) {
+                                        this.q2Sound.currentTime = 0;
+                                        this.q2Sound.play();
+                                    } else if (this.attackIndex == 3) {
+                                        this.q3Sound.currentTime = 0;
+                                        this.q3Sound.play();
+                                    }
+                                }
+                                this.lastComboType = this.attackInput;
+                                this.lastComboStage = this.attackIndex;
+                                this.comboTime = COMBO_DROPOFF_TIME;
                             }
-                            this.attackHit = false;
-                            this.attacking = true;
-                            // Q will take attack indexes 1, 2, and 3
-                            if (this.lastComboStage < 3)
-                                this.attackIndex = this.lastComboStage + 1;
-                            else
-                                this.attackIndex = 1;
-                            
-                            if (soundOn) {
-                                if (this.attackIndex == 1) {
-                                    this.q1Sound.currentTime = 0;
-                                    this.q1Sound.play();
-                                } else if (this.attackIndex == 2) {
-                                    this.q2Sound.currentTime = 0;
-                                    this.q2Sound.play();
-                                } else if (this.attackIndex == 3) {
-                                    this.q3Sound.currentTime = 0;
-                                    this.q3Sound.play();
+                        } else if ((!this.attacking || (this.canCancel() && this.attackIndex != 7)) && this.downDown) { //E
+                            if (this.currentStamina >= this.eCost) {
+                                this.currentStamina -= this.eCost;
+                                this.attacking = true;
+                                this.attackHit = true; //to prevent a 0 hit if you attacked before
+                                this.invulnTimer = 40;
+                                this.vulnerable = false;
+                                this.attackIndex = 7;
+                                var particle;
+                                if (soundOn) {
+                                    this.eSound.currentTime = 0;
+                                    this.eSound.play();
+                                }
+                                if (this.lastDirection === "Left") {
+                                    this.hurtAnimation = this.hurtAnimationLeft;
+                                    particle = new Particle(IMG_PART, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 5, 5, 30, 0.5, 0, false, this.game,
+                                        new Animation(ASSET_MANAGER.getAsset("./img/Particle/bubbleleft.png"), 0, 0, 47, 94, 1, 1, true, false, -30, 0));
+                                } else {
+                                    this.hurtAnimation = this.hurtAnimationRight;
+                                    particle = new Particle(IMG_PART, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 5, 5, 30, 0.5, 0, false, this.game,
+                                        new Animation(ASSET_MANAGER.getAsset("./img/Particle/bubbleright.png"), 0, 0, 47, 94, 1, 1, true, false, 60, 0));
+                                }
+                                particle.snapEntity = this;
+                                this.game.addEntity(particle);
+                            }
+                        } else if ((!this.attacking || (this.canCancel() && this.attackIndex != 8)) 
+                                && !(this.rightDown || this.leftDown)) { //W
+                            if (this.currentStamina >= this.wCost) {
+                                this.currentStamina -= this.wCost;
+                                this.attackHit = false;
+                                this.attacking = true;
+                                this.attackIndex = 8;
+                                if (soundOn) {
+                                    this.wSound.currentTime = 0;
+                                    this.wSound.play();
+                                }
+                                for (i = 0; i < 10; i++) {
+                                    var particle = new Particle(SHAPE_PART,
+                                            this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
+                                            this.game.player1.hitBox.y + this.game.player1.hitBox.height / 2 - 10 + Math.random() * 20, 
+                                            3, -3, 3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                                    var element = new SquareElement(4 + Math.random() * 4, 4 + Math.random() * 4, "#00f6cb", "#70fe37");
+                                    particle.other = element;
+                                    this.game.addEntity(particle);
                                 }
                             }
-                            this.lastComboType = this.attackInput;
-                            this.lastComboStage = this.attackIndex;
-                            this.comboTime = COMBO_DROPOFF_TIME;
                         }
-		    		} else if ((!this.attacking || (this.canCancel() && this.attackIndex != 7)) && this.downDown) { //E
-                        if (this.currentStamina >= this.eCost) {
-                            this.currentStamina -= this.eCost;
-                            this.attacking = true;
-                            this.attackHit = true; //to prevent a 0 hit if you attacked before
-                            this.invulnTimer = 40;
-                            this.vulnerable = false;
-                            this.attackIndex = 7;
-                            var particle;
-                            if (this.lastDirection === "Left")
-                                particle = new Particle(IMG_PART, this.x, this.y, 0, 0,
-                            			0, 0, 0, 0, 0, 5, 5, 30, 0.5, 0, false, this.game,
-                            		new Animation(ASSET_MANAGER.getAsset("./img/Particle/bubbleleft.png"), 0, 0, 47, 94, 1, 1, true, false, 0, 0));
-                            else
-                                particle = new Particle(IMG_PART, this.x, this.y, 0, 0,
-                            			0, 0, 0, 0, 0, 5, 5, 30, 0.5, 0, false, this.game,
-                            		new Animation(ASSET_MANAGER.getAsset("./img/Particle/bubbleright.png"), 0, 0, 47, 94, 1, 1, true, false, 0, 0));
-                            particle.snapEntity = this;
-                            this.game.addEntity(particle);
-                        }
-		    		} else if ((!this.attacking || (this.canCancel() && this.attackIndex != 8)) 
-		    				&& !(this.rightDown || this.leftDown)) { //W
-                        if (this.currentStamina >= this.wCost) {
-                            this.currentStamina -= this.wCost;
-                            this.attackHit = false;
-                            this.attacking = true;
-                            this.attackIndex = 8;
-                            for (i = 0; i < 10; i++) {
-	                            var particle = new Particle(SHAPE_PART,
-	                            		this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
-	                            		this.game.player1.hitBox.y + this.game.player1.hitBox.height / 2 - 10 + Math.random() * 20, 
-	                        			3, -3, 3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-	                            var element = new SquareElement(4 + Math.random() * 4, 4 + Math.random() * 4, "#00f6cb", "#70fe37");
-	                           	particle.other = element;
-	                            this.game.addEntity(particle);
-                            }
-                        }
-		    		}
-		    	}
-	    	break;
-		}
-    }
-	
-	if (this.attackIndex > 0 && this.canControl) {
-		switch(this.attackIndex) {
-			case 1: // Strong side attack
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimation1Right;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimation1Left;
-				}
-			break;
-			case 2:
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimation2Right;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimation2Left;
-				}
-			break;
-			case 3:
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimation3Right;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimation3Left;
-				}
-			break;
-			case 4: // Light attack
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimationLight1Right;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimationLight1Left;
-				}
-			break;
-			case 5:
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimationLight2Right;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimationLight2Left;
-				}
-			break;
-			case 6:
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimationLight3Right;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimationLight3Left;
-				}
-			break;
-			case 7:
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimationDownRight;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimationDownLeft;
-				}
-			break;
-			case 8:
-		    	if (this.lastDirection === "Right") {
-		    		this.attackAnimation = this.attackAnimationStillRight;
-		    	} else {
-		    		this.attackAnimation = this.attackAnimationStillLeft;
-				}
-			break;
-		}
-    	if (this.lastDirection === "Right") {
-			this.lastDirection = "Right";
-    	} else {
-			this.lastDirection = "Left";
-		}
-	}
-	
-	// Animation Direction Control
-	if (this.lastDirection === "Right") {
-    	this.jumpAnimation = this.jumpAnimationRight;
-		this.idleAnimation = this.idleAnimationRight;
-		this.runAnimation = this.runAnimationRight;
-	} else {
-		this.jumpAnimation = this.jumpAnimationLeft;
-		this.idleAnimation = this.idleAnimationLeft;
-		this.runAnimation = this.runAnimationLeft;
-	}
-	
-	if (this.running) {
-        this.footsteps.volume = 0.8;
-		if (this.lastDirection === "Right") {
-			this.x += this.runSpeed;
-		} else if (this.lastDirection === "Left") {
-			this.x -= this.runSpeed;
-		}
-	} else if ((this.jumping || this.falling) && !this.attacking) {
-		this.x += this.jumpSpeed;
-	}
-    
-    if (!this.running) {
-        if (this.footsteps.volume > 0.05) {
-            this.footsteps.volume -= 0.05;
-        }
-        if (this.footsteps.volume <= 0.05) {
-            this.footsteps.volume = 0;
-            this.footsteps.currentTime = 0;
-        }
-    }
-    var collision = false;
-	if (this.attackIndex == 7 || //e
-			((this.attackIndex >= 1 && this.attackIndex <= 3) && this.attackAnimation.elapsedTime <= 0.5)) { // Q first part - has movement on first half
-		if (this.lastDirection === "Right") {
-		    this.game.entities.forEach(function(entity) {
-		    	if (entity.solid) {
-			        if (checkCollision(that, entity)) {
-			        	collision = true;
-			        }
-		    	}
-		    });
-            if (this.attacking) {
-                if (!collision || (collision && this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
-                    this.x += this.runSpeed;
-                } 
+                    }
+                break;
             }
-		} else {
-		    this.game.entities.forEach(function(entity) {
-		    	if (entity.solid) {
-			        if (checkCollision(that, entity)) {
-			        	collision = true;
-			        }
-		    	}
-		    });
-            if (this.attacking) {
-                if (!collision || (collision && this.hitBox.x < this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
-                    this.x -= this.runSpeed;
+        }
+        
+        if (this.attackIndex > 0 && this.canControl) {
+            switch(this.attackIndex) {
+                case 1: // Strong side attack
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimation1Right;
+                    } else {
+                        this.attackAnimation = this.attackAnimation1Left;
+                    }
+                break;
+                case 2:
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimation2Right;
+                    } else {
+                        this.attackAnimation = this.attackAnimation2Left;
+                    }
+                break;
+                case 3:
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimation3Right;
+                    } else {
+                        this.attackAnimation = this.attackAnimation3Left;
+                    }
+                break;
+                case 4: // Light attack
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimationLight1Right;
+                    } else {
+                        this.attackAnimation = this.attackAnimationLight1Left;
+                    }
+                break;
+                case 5:
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimationLight2Right;
+                    } else {
+                        this.attackAnimation = this.attackAnimationLight2Left;
+                    }
+                break;
+                case 6:
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimationLight3Right;
+                    } else {
+                        this.attackAnimation = this.attackAnimationLight3Left;
+                    }
+                break;
+                case 7:
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimationDownRight;
+                    } else {
+                        this.attackAnimation = this.attackAnimationDownLeft;
+                    }
+                break;
+                case 8:
+                    if (this.lastDirection === "Right") {
+                        this.attackAnimation = this.attackAnimationStillRight;
+                    } else {
+                        this.attackAnimation = this.attackAnimationStillLeft;
+                    }
+                break;
+            }
+            if (this.lastDirection === "Right") {
+                this.lastDirection = "Right";
+            } else {
+                this.lastDirection = "Left";
+            }
+        }
+        
+        // Animation Direction Control
+        if (this.lastDirection === "Right") {
+            this.jumpAnimation = this.jumpAnimationRight;
+            this.idleAnimation = this.idleAnimationRight;
+            this.runAnimation = this.runAnimationRight;
+        } else {
+            this.jumpAnimation = this.jumpAnimationLeft;
+            this.idleAnimation = this.idleAnimationLeft;
+            this.runAnimation = this.runAnimationLeft;
+        }
+        
+        if (this.running) {
+            this.footsteps.volume = 0.8;
+            if (this.lastDirection === "Right") {
+                this.x += this.runSpeed;
+            } else if (this.lastDirection === "Left") {
+                this.x -= this.runSpeed;
+            }
+        } else if ((this.jumping || this.falling) && !this.attacking) {
+            this.x += this.jumpSpeed;
+        }
+        
+        if (!this.running) {
+            if (this.footsteps.volume > 0.05) {
+                this.footsteps.volume -= 0.05;
+            }
+            if (this.footsteps.volume <= 0.05) {
+                this.footsteps.volume = 0;
+                this.footsteps.currentTime = 0;
+            }
+        }
+        var collision = false;
+        if (this.attackIndex == 7 || //e
+                ((this.attackIndex >= 1 && this.attackIndex <= 3) && this.attackAnimation.elapsedTime <= 0.5)) { // Q first part - has movement on first half
+            if (this.lastDirection === "Right") {
+                this.game.entities.forEach(function(entity) {
+                    if (entity.solid) {
+                        if (checkCollision(that, entity)) {
+                            collision = true;
+                        }
+                    }
+                });
+                if (this.attacking) {
+                    if (!collision || (collision && this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
+                        this.x += this.runSpeed;
+                    } 
                 }
-            }            
-		}
-	}
-	if (this.attacking) {
-        if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
-            this.attackHit = true;
-            var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + 20, this.game.currentBoss.hitBox.y, 
-        			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-            var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
-            var damage = 0;
-            if (this.attackIndex >= 1 && this.attackIndex <= 3) {
-               damage = this.attackIndex * this.qScaling + this.qDamage;
-            } else if (this.attackIndex >= 4 && this.attackIndex <= 6) {
-            	damage = (this.attackIndex - 3) * this.autoScaling + this.autoDamage;
-            } else if (this.attackIndex == 8) {
-            	damage = this.wDamage;
+            } else {
+                this.game.entities.forEach(function(entity) {
+                    if (entity.solid) {
+                        if (checkCollision(that, entity)) {
+                            collision = true;
+                        }
+                    }
+                });
+                if (this.attacking) {
+                    if (!collision || (collision && this.hitBox.x < this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
+                        this.x -= this.runSpeed;
+                    }
+                }            
             }
-            this.game.currentBoss.currentHealth -= damage;
-        	damageText.text = damage;
-            damageParticle.other = damageText;
-            this.game.addEntity(damageParticle);
         }
-        /*
-	    this.game.entities.forEach(function(entity) {
-	    	if (entity.attackable) {
-		        if (checkCollision(that, entity)) {
-		        	entity.handleCollision(that);
-		        }
-	    	}
-	    });*/
-		if (this.attackIndex >= 1 && this.attackIndex <= 6 && this.attackAnimation.elapsedTime <= 0.5) {
-			if (this.lastDirection === "Right") {
-	            this.hitBoxDef.growthX += 1.6;
-			} else {
-	            this.hitBoxDef.growthX -= 1.6;
-			}
-		}
-		if (this.attackIndex == 8 && this.attackAnimation.elapsedTime <= 0.5) { //E
-			this.hitBoxDef.offsetX -= 0.4;
-			this.hitBoxDef.growthX += 0.8;
-		}
-        if (this.attackAnimation != null && this.attackAnimation.isDone()) {
-            this.attackAnimation.elapsedTime = 0;
-            this.attacking = false;
-			this.attackIndex = 0;
-            this.hitBoxDef.growthX = 0; //reset
-            this.hitBoxDef.offsetX = this.hitBoxDef.originalOffsetX;
+        if (this.attacking) {
+            if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
+                this.attackHit = true;
+                var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + this.game.currentBoss.hitBox.width / 2    , this.game.currentBoss.hitBox.y, 
+                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
+                var damage = 0;
+                if (this.attackIndex >= 1 && this.attackIndex <= 3) {
+                   damage = this.attackIndex * this.qScaling + this.qDamage;
+                } else if (this.attackIndex >= 4 && this.attackIndex <= 6) {
+                    damage = (this.attackIndex - 3) * this.autoScaling + this.autoDamage;
+                } else if (this.attackIndex == 8) {
+                    damage = this.wDamage;
+                }
+                this.game.currentBoss.currentHealth -= damage;
+                damageText.text = damage;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                if (this.game.currentBoss.currentHealth <= 0) {
+                    this.game.currentBoss.screamSound.currentTime = 0;
+                    this.game.currentBoss.screamSound.play();
+                }
+            }
+            /*
+            this.game.entities.forEach(function(entity) {
+                if (entity.attackable) {
+                    if (checkCollision(that, entity)) {
+                        entity.handleCollision(that);
+                    }
+                }
+            });*/
+            if (this.attackIndex >= 1 && this.attackIndex <= 6 && this.attackAnimation.elapsedTime <= 0.5) {
+                if (this.lastDirection === "Right") {
+                    this.hitBoxDef.growthX += 1.6;
+                } else {
+                    this.hitBoxDef.growthX -= 1.6;
+                }
+            }
+            if (this.attackIndex == 8 && this.attackAnimation.elapsedTime <= 0.5) { //E
+                this.hitBoxDef.offsetX -= 0.4;
+                this.hitBoxDef.growthX += 0.8;
+            }
+            if (this.attackAnimation != null && this.attackAnimation.isDone()) {
+                this.attackAnimation.elapsedTime = 0;
+                this.attacking = false;
+                this.attackIndex = 0;
+                this.hitBoxDef.growthX = 0; //reset
+                this.hitBoxDef.offsetX = this.hitBoxDef.originalOffsetX;
+            }
         }
-	}
+    }
 	
     var platformFound = false; 
     this.game.currentMap.platforms.forEach(function(currentPlatform) {
@@ -1429,8 +1496,8 @@ Character.prototype.draw = function (ctx) {
         this.currentAnimation = this.runAnimation;
     } else if (this.hurt) {
 		this.hurtAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.hurtAnimation.offsetX, this.y + this.hurtAnimation.offsetY, 1, true);
-        this.currentAnimation = this.hurtAnimation;        
-    } else { // Idle
+        this.currentAnimation = this.hurtAnimation;  
+    } else if (!this.dead) { // Idle
 		this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
         this.currentAnimation = this.idleAnimation;
     }
@@ -1475,6 +1542,8 @@ ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenJumpRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/WRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/WLeft.png");
+ASSET_MANAGER.queueDownload("./img/Riven/ELeft.png");
+ASSET_MANAGER.queueDownload("./img/Riven/ERight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/HurtLeft.png");
 ASSET_MANAGER.queueDownload("./img/Riven/HurtRight.png");
 
@@ -1509,10 +1578,10 @@ ASSET_MANAGER.downloadAll(function () {
     var map1 = new Map1(gameEngine);
 
     gameEngine.addEntity(bg);
-    gameEngine.addEntity(ui);
     gameEngine.addEntity(map1);
     gameEngine.addEntity(character);
     gameEngine.addEntity(reksai);
+    gameEngine.addEntity(ui);
  
     gameEngine.init(ctx);
     gameEngine.setPlayer1(character);
