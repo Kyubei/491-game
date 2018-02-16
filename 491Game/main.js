@@ -701,7 +701,7 @@ function Reksai(game) {
     this.screamAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamRight.png"), 0, 0, 177, 180, 0.1, 17, false, true, -40, -80);
     this.screamAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamLeft.png"), 0, 0, 177, 180, 0.1, 17, false, true, 0, -80);
 
-    this.maxHealth = 10.0;
+    this.maxHealth = 100.0;
     this.currentHealth = this.maxHealth;
     this.currentHealthTemp = this.currentHealth;    
         
