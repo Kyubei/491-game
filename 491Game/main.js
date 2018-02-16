@@ -348,6 +348,7 @@ var PART_SECONDARY = 2;
 var TEXT_PART = 3;
 var SHAPE_PART = 4;
 var VOID_BALL = 5;
+var PART_GENERATOR = 6;
 
 /**
  * Returns the RGB of a hex color (e.g. #FFFFFF)
@@ -505,6 +506,17 @@ Particle.prototype.update = function() {
 	    var element = new CircleElement(10 + Math.random() * 4, "#240340", "#131d4f");
 	   	newParticle.other = element;
 	    this.game.addEntity(newParticle);
+	}
+	/**
+	 * particle generators create particles similar to whatever they were initialized with
+	 */
+	if (this.particleId === PART_GENERATOR) {
+        var particle = new Particle(SHAPE_PART,
+            this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
+            this.game.player1.hitBox.y + this.game.player1.hitBox.height / 2 - 10 + Math.random() * 20, 
+            4, -4, 2, -6, 0.15, 0.05, 0, 5, 10, 50, 1, 0, false, this.game);
+        particle.other = this.other;
+        this.game.addEntity(particle);
 	}
 	if (this.life < this.fadeIn) {
 		this.alpha = this.life / this.fadeIn;
@@ -721,10 +733,17 @@ function Reksai(game) {
 
 Reksai.prototype.update = function() {
 	this.step++;
-    if (this.currentHealth <= 0) {
+    if (this.currentHealth <= 0 && !this.dead) {
         this.dead = true;
         this.attackable = false;
         this.solid = false;
+        var particle = new Particle(PART_GENERATOR,
+                this.x + this.hitBox.width / 2,
+                this.y + this.hitBox.height / 2, 
+                0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, false, this.game);
+        var element = new CircleElement(8 + Math.random() * 6, "#290d4c", "#160f3d");
+        particle.other = element;
+        this.game.addEntity(particle);
     }
     for (i = 0; i < this.cooldown.length; i++) {
         if (this.cooldown[i] > 0)
@@ -1071,9 +1090,16 @@ Character.prototype.canCancel = function() {
 
 Character.prototype.update = function () {
 	var that = this;
-    if (this.currentHealth <= 0) {
+    if (this.currentHealth <= 0 && !this.dead) {
         this.dead = true;
         this.vulnerable = false;
+        var particle = new Particle(PART_GENERATOR,
+                this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2,
+                this.game.player1.hitBox.y + this.game.player1.hitBox.height / 2, 
+                0, 0, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, false, this.game);
+        var element = new SquareElement(6 + Math.random() * 4, 6 + Math.random() * 4, "#00f6cb", "#70fe37");
+        particle.other = element;
+        this.game.addEntity(particle);
     }
     if (!this.dead) {
         if (!this.vulnerable) {
@@ -1485,25 +1511,25 @@ Character.prototype.update = function () {
 };
 
 Character.prototype.draw = function (ctx) {
-	if ((this.jumping || this.falling) && !this.attacking && !this.hurt) { // Jumping
-		this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY, 1, true);
-        this.currentAnimation = this.jumpAnimation;        
-    } else if (this.attacking && this.attackAnimation != null) { // Attacking
-        this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
-        this.currentAnimation = this.attackAnimation;
-    } else if (this.running) { // Running
-		this.runAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimation.offsetX, this.y + this.runAnimation.offsetY);	
-        this.currentAnimation = this.runAnimation;
-    } else if (this.hurt) {
-		this.hurtAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.hurtAnimation.offsetX, this.y + this.hurtAnimation.offsetY, 1, true);
-        this.currentAnimation = this.hurtAnimation;  
-    } else if (!this.dead) { // Idle
-		this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
-        this.currentAnimation = this.idleAnimation;
-    }
-    
-    drawHitBox(this, ctx);
-    
+	if (!this.dead) {
+		if ((this.jumping || this.falling) && !this.attacking && !this.hurt) { // Jumping
+			this.jumpAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.jumpAnimation.offsetX, this.y + this.jumpAnimation.offsetY, 1, true);
+	        this.currentAnimation = this.jumpAnimation;        
+	    } else if (this.attacking && this.attackAnimation != null) { // Attacking
+	        this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
+	        this.currentAnimation = this.attackAnimation;
+	    } else if (this.running) { // Running
+			this.runAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.runAnimation.offsetX, this.y + this.runAnimation.offsetY);	
+	        this.currentAnimation = this.runAnimation;
+	    } else if (this.hurt) {
+			this.hurtAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.hurtAnimation.offsetX, this.y + this.hurtAnimation.offsetY, 1, true);
+	        this.currentAnimation = this.hurtAnimation;  
+	    } else if (!this.dead) { // Idle
+			this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
+	        this.currentAnimation = this.idleAnimation;
+	    }
+	    drawHitBox(this, ctx);
+	}
     Entity.prototype.draw.call(this);
 };
 
