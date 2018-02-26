@@ -1,5 +1,5 @@
 var soundOn = true;
-var showHitBox = false;
+var showHitBox = true;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -279,17 +279,26 @@ UI.prototype.draw = function (ctx) { //draw ui
     ctx.font = "20px Calibri";
     ctx.fillText("Player1  " + this.game.player1.currentHealth + " / " + this.game.player1.maxHealth,this.portraitX + 90 + this.game.liveCamera.x,this.portraitY + 30 + this.game.liveCamera.y);
     if (this.game.currentPhase === 0) {
-    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
+    } else if (this.game.currentPhase === 1 && this.game.currentBoss.active) {
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/Malzahar/MalzaharPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
+        ctx.fillText("Malzahar                       " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80 + this.game.liveCamera.x,45+this.game.liveCamera.y);        
     }
     if (!this.game.player1.dead) {
         ctx.fillText("Player1", this.game.player1.x + 5,this.game.player1.y + 0);
     }
     if (this.game.currentPhase === 0) {
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
+    }
+    if (this.game.currentPhase === 1 && this.game.cameraLock) {
+        ctx.fillText("Malzahar", this.game.currentBoss.x + 10, this.game.currentBoss.y - 5);
     }
     ctx.fillStyle = tempColor;
     if (this.game.player1.dead) {
@@ -604,7 +613,7 @@ Particle.prototype.update = function() {
 	};
     //console.log("hitbox of particle "+this.attackId+": "+this.hitBox.x+","+this.hitBox.y+", width: "+this.hitBox.width);
     if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
-    	console.log("particle id "+this.attackId+" collision");
+    	//console.log("particle id "+this.attackId+" collision");
     	if (this.attackId === 1) { //reksai void ball
             if (this.game.player1.vulnerable) {
                 this.game.player1.vulnerable = false;
@@ -776,6 +785,7 @@ Reksai.prototype.update = function() {
         var element = new CircleElement(8 + Math.random() * 6, "#290d4c", "#160f3d");
         particle.other = element;
         this.game.addEntity(particle);
+        this.removeFromWorld = true;
     }
     for (i = 0; i < this.cooldown.length; i++) {
         if (this.cooldown[i] > 0)
@@ -958,6 +968,76 @@ Reksai.prototype.draw = function (ctx) {
         } else if (this.state === "attacking") {
             this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
             this.currentAnimation = this.attackAnimation;
+        }
+    }
+    
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
+		y: this.y + this.hitBoxDef.offsetY + (this.hitBoxDef.growthY < 0 ? this.hitBoxDef.growthY : 0),
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
+	};
+    
+    drawHitBox(this, ctx);
+    
+    Entity.prototype.draw.call(this);
+};
+
+function Malzahar(game) {
+    
+	this.step = 0;
+    
+    this.active = false;
+    this.dead = false;
+    this.solid = true;
+    this.attackable = true;
+    this.state = "idle";
+    this.walkSpeed = 2;
+	this.lastDirection = "Left";
+    
+    this.destinationX = -1;
+    this.walkToDestination = false;
+    
+    this.attackIndex = 0;
+    this.attackCount = 0;
+    this.energy = 0; //denotes if an attack is charged
+    
+    this.cooldown = [250, 0, 0, 0];
+    
+	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, 0);
+	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, 0);
+    this.idleAnimation = this.idleLeft;
+    
+    this.idleTimerMax = 110;
+    this.idleTimer = this.idleTimerMax;
+
+    this.maxHealth = 100.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;    
+        
+    Entity.call(this, game, 1400, 200);
+    
+    this.currentAnimation = this.idleLeft;
+    this.hitBoxDef = {
+    	width: 70, height: 150, offsetX: 10, offsetY: 5, growthX: 0, growthY: 0
+    };
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
+	};
+}
+
+Malzahar.prototype.update = function() {
+    Entity.prototype.update.call(this);
+}
+
+Malzahar.prototype.draw = function (ctx) {
+    if (!this.dead) {
+        if (this.state === "idle") {
+            this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
+            this.currentAnimation = this.idleAnimation;
         }
     }
     
@@ -1190,7 +1270,7 @@ Character.prototype.update = function () {
 
         this.comboTime -= this.game.clockTick; // Combo Timer
         if (this.comboTime <= 0 && this.lastComboStage > 0) {
-            console.log("Combo stage "+this.lastComboStage+" has dropped off!");
+            //console.log("Combo stage "+this.lastComboStage+" has dropped off!");
             this.lastComboStage = 0;
         }
         
@@ -1539,6 +1619,11 @@ Character.prototype.update = function () {
     if (this.hitBox.x + this.hitBox.width - this.hitBoxDef.width <= 0 && (this.lastDirection === "Left" || this.hurt)) {
         this.x = 0 - this.hitBoxDef.offsetX;
     }
+    if (this.game.cameraLock && this.game.liveCamera.x >= 800) {
+        if (this.hitBox.x + this.hitBox.width - this.hitBoxDef.width <= 800 && (this.lastDirection === "Left" || this.hurt)) {
+            this.x = 800 - this.hitBoxDef.offsetX;
+        }
+    }
     Entity.prototype.update.call(this);
 };
 
@@ -1615,6 +1700,10 @@ ASSET_MANAGER.queueDownload("./img/Reksai/AttackRight.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamRight.png");
 
+ASSET_MANAGER.queueDownload("./img/Malzahar/IdleLeft.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/IdleRight.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/MalzaharPortrait.png");
+
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/UI/BarBack.png");
@@ -1630,7 +1719,8 @@ ASSET_MANAGER.downloadAll(function () {
 
     var gameEngine = new GameEngine();
     var bg = new Background(gameEngine);
-	var reksai = new Reksai(gameEngine);
+    var reksai = new Reksai(gameEngine);
+    var malzahar = new Malzahar(gameEngine);
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
     var map1 = new Map1(gameEngine);
@@ -1639,10 +1729,13 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.addEntity(map1);
     gameEngine.addEntity(character);
     gameEngine.addEntity(reksai);
+    gameEngine.addEntity(malzahar);
     gameEngine.addEntity(ui);
  
     gameEngine.init(ctx);
     gameEngine.setPlayer1(character);
+    gameEngine.addBoss(reksai);
+    gameEngine.addBoss(malzahar);
     gameEngine.setBoss(reksai);
     gameEngine.setMap(map1);
     gameEngine.setUI(ui);
