@@ -123,6 +123,7 @@ Background.prototype.update = function () {
 
 Background.prototype.draw = function (ctx) {
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 0, 0);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 800, 0);
     Entity.prototype.draw.call(this);
 };
 
@@ -179,6 +180,7 @@ function UI(game) {
     this.map1BGMusic = new Audio("./sounds/map1BGMusic.mp3");
     this.map1BGMusic.loop = true;
     this.map1BGMusic.volume = 0.1;
+    this.fading = false;
     if (soundOn) {
         this.map1BGMusic.play();
     }
@@ -188,6 +190,21 @@ function UI(game) {
 
 UI.prototype = new Entity();
 UI.prototype.constructor = UI;
+
+fadeMusic = function(ui) {
+    if(ui.map1BGMusic.volume > 0) {
+    	ui.map1BGMusic.volume = Math.max(0, ui.map1BGMusic.volume - 0.005);
+        if (ui.map1BGMusic.volume === 0) {
+        	ui.map1BGMusic.pause();
+        	ui.fading = false;
+        } else {
+            setTimeout(fadeMusic(ui), 2);
+    	}
+    } else {
+    	ui.map1BGMusic.pause();
+    	ui.fading = false;
+    }
+}
 
 function updatePlayerResources(entity, ui) {
     if (entity.currentHealth < 0) {
@@ -238,34 +255,41 @@ function updateBossResources(entity, ui) {
 }
 
 UI.prototype.update = function () {  
+	if (this.game.currentPhase === 1 && !this.fading) {
+		this.fading = true;
+		fadeMusic(this);
+	}
     updatePlayerResources(this.game.player1, this);
     updateBossResources(this.game.currentBoss, this);
 };
 
-UI.prototype.draw = function (ctx) {
+UI.prototype.draw = function (ctx) { //draw ui
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/Bottom.png"), this.bottomX, this.bottomY, this.bottomWidth, this.bottomHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar1X, this.bar1Y, this.bar1Width, this.bar1Height);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.healthX, this.healthY, this.healthWidth * (this.game.player1.currentHealthTemp / this.game.player1.maxHealth), this.healthHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.healthX, this.healthY, this.healthWidth * (this.game.player1.currentHealth / this.game.player1.maxHealth), this.healthHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar2X, this.bar2Y, this.bar2Width, this.bar2Height);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBarLight.png"), this.staminaX, this.staminaY, this.staminaWidth * (this.game.player1.currentStaminaTemp / this.game.player1.maxStamina), this.staminaHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBar.png"), this.staminaX, this.staminaY, this.staminaWidth * (this.game.player1.currentStamina / this.game.player1.maxStamina), this.staminaHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Riven/RivenPortrait.png"), this.portraitX, this.portraitY, this.portraitWidth, this.portraitHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX, this.bossBarY, this.bossBarWidth, this.bossBarHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX, this.bossHealthY, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX, this.bossHealthY, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
-    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX, this.bossPortraitY, this.bossPortraitWidth, this.bossPortraitHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/Bottom.png"), this.bottomX + 800, this.bottomY, this.bottomWidth, this.bottomHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar1X + this.game.liveCamera.x, this.bar1Y + this.game.liveCamera.y, this.bar1Width, this.bar1Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.healthX + this.game.liveCamera.x, this.healthY + this.game.liveCamera.y, this.healthWidth * (this.game.player1.currentHealthTemp / this.game.player1.maxHealth), this.healthHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.healthX + this.game.liveCamera.x, this.healthY + this.game.liveCamera.y, this.healthWidth * (this.game.player1.currentHealth / this.game.player1.maxHealth), this.healthHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bar2X + this.game.liveCamera.x, this.bar2Y + this.game.liveCamera.y, this.bar2Width, this.bar2Height);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBarLight.png"), this.staminaX + this.game.liveCamera.x, this.staminaY + this.game.liveCamera.y, this.staminaWidth * (this.game.player1.currentStaminaTemp / this.game.player1.maxStamina), this.staminaHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/StaminaBar.png"), this.staminaX + this.game.liveCamera.x, this.staminaY + this.game.liveCamera.y, this.staminaWidth * (this.game.player1.currentStamina / this.game.player1.maxStamina), this.staminaHeight);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Riven/RivenPortrait.png"), this.portraitX + this.game.liveCamera.x, this.portraitY + this.game.liveCamera.y, this.portraitWidth, this.portraitHeight);
     var tempColor = ctx.fillStyle;
     ctx.font = "30px Calibri";
     ctx.fillStyle = "white";
-    ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     ctx.font = "20px Calibri";
-    ctx.fillText("Player1  " + this.game.player1.currentHealth + " / " + this.game.player1.maxHealth,this.portraitX + 90,this.portraitY + 30);
-    if (!this.game.player1.dead) {
-        ctx.fillText("Player1",this.game.player1.x + 5,this.game.player1.y + 0);
+    ctx.fillText("Player1  " + this.game.player1.currentHealth + " / " + this.game.player1.maxHealth,this.portraitX + 90 + this.game.liveCamera.x,this.portraitY + 30 + this.game.liveCamera.y);
+    if (this.game.currentPhase === 0) {
+    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+        ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
-    if (!this.game.currentBoss.dead) {
-        ctx.fillText("Rek'sai",this.game.currentBoss.x + 50,this.game.currentBoss.y - 5);
+    if (!this.game.player1.dead) {
+        ctx.fillText("Player1", this.game.player1.x + 5,this.game.player1.y + 0);
+    }
+    if (this.game.currentPhase === 0) {
+        ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
     ctx.fillStyle = tempColor;
     if (this.game.player1.dead) {
@@ -286,7 +310,13 @@ UI.prototype.draw = function (ctx) {
         ctx.font = "100px Calibri";
         ctx.fillStyle = "white";
         ctx.textAlign="center"; 
-        ctx.fillText("Victory!",400,250);
+        ctx.fillText("Go ->",400,250);
+        if (this.game.currentPhase === 0) {
+	        this.game.cameraLock = false;
+	        this.game.camera.maxX = 800;
+	        this.game.surfaceWidth = 1600;
+	        this.game.currentPhase = 1;
+        }
         ctx.globalAlpha = 1.0;
     }
     Entity.prototype.draw.call(this);	
@@ -326,6 +356,8 @@ function Map1(game) {
     this.platforms = [];
     this.platforms.push(new Platform(game, 200, 315));
     this.platforms.push(new Platform(game, 500, 315));
+    this.platforms.push(new Platform(game, 1100, 315));
+    this.platforms.push(new Platform(game, 1200, 315));
 }
 
 Map1.prototype = new Entity();
@@ -1057,7 +1089,7 @@ function Character(game) {
     this.autoScaling = 1;
     this.qDamage = 4;
     this.qScaling = 2;
-    this.wDamage = 7;
+    this.wDamage = 700; //TEMP
     
     this.leftDown = false;
     this.rightDown = false;

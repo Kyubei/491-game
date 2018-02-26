@@ -43,9 +43,28 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1AttackIndex = 0; //the actual skill being used
 	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
+	this.currentPhase = 0;
 	this.currentBoss = null;
     this.currentMap = null;
     this.UI = null;
+    this.cameraLock = true;
+    this.cameraSpeed = 5;
+    this.camera = { //where the camera wants to be
+    	x: 0,
+    	y: 0,
+    	minX: 0,
+    	maxX: 0,
+    	minY: 0,
+    	maxY: 0,
+    	width: 800,
+    	height: 600
+    };
+    this.liveCamera = { //where the camera actually is
+    	x: 0,
+    	y: 0,
+    	width: 800,
+    	height: 600
+    };
     console.log("Game initialized");
 };
 
@@ -126,6 +145,7 @@ GameEngine.prototype.setUI = function (entity) {
 GameEngine.prototype.draw = function () {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     this.ctx.save();
+    this.ctx.translate(-this.liveCamera.x, -this.liveCamera.y);
     for (var i = 0; i < this.entities.length; i++) {
         this.entities[i].draw(this.ctx);
     }
@@ -133,6 +153,37 @@ GameEngine.prototype.draw = function () {
 };
 
 GameEngine.prototype.update = function () {
+	if (!this.cameraLock) {
+		this.camera.x = this.player1.x - 200;
+		this.camera.y = this.player1.y;
+		//console.log("Updating camera coords to (" + this.camera.x+", "+this.camera.y+")");
+		if (this.camera.x < this.camera.minX) {
+			this.camera.x = this.camera.minX;
+		}
+		if (this.camera.y < this.camera.minY) {
+			this.camera.y = this.camera.minY;
+		}
+		if (this.camera.x > this.camera.maxX) {
+			this.camera.x = this.camera.maxX;
+		}
+		if (this.camera.y > this.camera.maxY) {
+			this.camera.y = this.camera.maxY;
+		}
+	    if (this.liveCamera.x != this.camera.x) {
+	    	if (this.liveCamera.x < this.camera.x) {
+	    		this.liveCamera.x = Math.min(this.camera.x, this.liveCamera.x + this.cameraSpeed);
+	    	} else {
+	    		this.liveCamera.x = Math.max(this.camera.x, this.liveCamera.x - this.cameraSpeed);	    		
+	    	}
+	    }
+	    if (this.liveCamera.y != this.camera.y) {
+	    	if (this.liveCamera.y < this.camera.y) {
+	    		this.liveCamera.y = Math.min(this.camera.y, this.liveCamera.y + this.cameraSpeed);
+	    	} else {
+	    		this.liveCamera.y = Math.max(this.camera.y, this.liveCamera.y - this.cameraSpeed);	    		
+	    	}
+	    }
+	}
     var entitiesCount = this.entities.length;
     for (var i = 0; i < entitiesCount; i++) {
         var entity = this.entities[i];
