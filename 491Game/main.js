@@ -285,11 +285,21 @@ UI.prototype.draw = function (ctx) { //draw ui
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
+    if (this.game.currentPhase === 2) {
+    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+        ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+        ctx.fillText("Malzahar                      " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
+    }
     if (!this.game.player1.dead) {
         ctx.fillText("Player1", this.game.player1.x + 5,this.game.player1.y + 0);
     }
     if (this.game.currentPhase === 0) {
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
+    }
+    if (this.game.currentPhase === 2) {
+        ctx.fillText("Malzahar", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
     ctx.fillStyle = tempColor;
     if (this.game.player1.dead) {
@@ -314,7 +324,6 @@ UI.prototype.draw = function (ctx) { //draw ui
         if (this.game.currentPhase === 0) {
 	        this.game.cameraLock = false;
 	        this.game.camera.maxX = 800;
-	        this.game.surfaceWidth = 1600;
 	        this.game.currentPhase = 1;
         }
         ctx.globalAlpha = 1.0;
@@ -408,6 +417,91 @@ function getRandomColor(color1, color2) {
 	return '#' + rgb
 		.map(function(n){ return n.toString(16) })
 	    .map(function(s){ return "00".slice(s.length)+s}).join(''); 
+}
+
+/**
+ * A shape element which is attached to a particle.
+ * If the particle.other is not null, the shape is drawn instead of an image.
+ */
+function TextBox(game, image, text) {
+	this.image = image;
+	this.text = text;
+	this.showText = "";
+	this.progress = 0;
+	this.step = 0;
+	this.life = -1;
+    Entity.call(this, game, 0, 0);
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    var words = text.split(' ');
+    var line = '';
+
+    for(var n = 0; n < words.length; n++) {
+      var testLine = line + words[n] + ' ';
+      var metrics = context.measureText(testLine);
+      var testWidth = metrics.width;
+      if (testWidth > maxWidth && n > 0) {
+        context.fillText(line, x, y);
+        line = words[n] + ' ';
+        y += lineHeight;
+      }
+      else {
+        line = testLine;
+      }
+    }
+    context.fillText(line, x, y);
+}
+
+TextBox.prototype.update = function() {
+	this.step++;
+	if (this.life > 0) {
+		this.life--;
+		if (this.life === 0) {
+			this.removeFromWorld = true;
+		}
+	}
+	if (this.step % 9 === 0) {
+		this.progress++;
+		if (this.progress >= this.text.length) {
+			this.showText = this.text;
+			if (this.life === -1) {
+				this.life = 100;
+			}
+		} else {
+			this.showText = this.text.substring(0, this.progress);
+			var c = this.showText.charAt(this.progress - 1);
+			console.log("char: "+c);
+			if (c.toLowerCase() != c.toUpperCase()) { //it's a character
+			    var sound = new Audio("./sounds/chat.wav");
+			    sound.volume = 0.5;
+			    sound.play();
+			}
+		}
+	}
+    Entity.prototype.update.call(this);
+}
+
+TextBox.prototype.draw = function(ctx) {
+    var tempColor = ctx.fillStyle;
+    var trueWidth = 220;
+    var trueHeight = 64;
+    ctx.fillStyle = "#452a84";
+	ctx.globalAlpha = 0.5;
+    ctx.fillRect(285 + 64 + this.game.liveCamera.x, 420 + this.game.liveCamera.y, trueWidth, trueHeight);
+    ctx.fillStyle = tempColor;
+	ctx.globalAlpha = 1;
+	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Chat/ChatSquare.png"), 285 + this.game.liveCamera.x, 
+			420 + this.game.liveCamera.y, 64, 64);
+	ctx.drawImage(ASSET_MANAGER.getAsset(this.image), 285 + this.game.liveCamera.x, 
+			420 + this.game.liveCamera.y, 64, 64);
+	
+    ctx.font = "16px Lucida Console";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "left";
+    wrapText(ctx, this.showText, 285 + 64 + this.game.liveCamera.x + 12, 420 + this.game.liveCamera.y + 12, 196, 20);
+    //ctx.fillText(this.showText, 285 + 64 + this.game.liveCamera.x + 12, 420 + this.game.liveCamera.y + 12);
+    Entity.prototype.draw.call(this);
 }
 
 /**
@@ -543,6 +637,7 @@ Particle.prototype.update = function() {
 	 * particle generators create particles similar to whatever they were initialized with
 	 */
 	if (this.particleId === PART_GENERATOR) {
+		
         var particle = new Particle(SHAPE_PART,
             this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
             this.game.player1.hitBox.y + this.game.player1.hitBox.height / 2 - 10 + Math.random() * 20, 
@@ -688,6 +783,120 @@ Arrow.prototype.draw = function (ctx) {
     } else {
         //this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX, this.y + this.animation.offsetY);
     }
+    Entity.prototype.draw.call(this);
+};
+
+function Malzahar(game) {
+
+    this.screamSound = new Audio("./sounds/rekScream.wav");
+    this.screamSound.volume = 0.1;
+
+    this.shootSound = new Audio("./sounds/rekShoot.wav");
+    this.shootSound.volume = 0.1;
+
+    this.punchSound = new Audio("./sounds/punch.mp3");
+    this.punchSound.volume = 0.5;
+    
+	this.step = 0;
+    
+    this.dead = false;
+    this.solid = true;
+    this.attackable = true;
+    this.state = "idle";
+    this.walkSpeed = 2;
+	this.lastDirection = "Left";
+    this.autoDamage = 30;
+    
+    this.destinationX = -1;
+    this.walkToDestination = false;
+    
+    this.attackIndex = 0;
+    this.attackCount = 0;
+    this.energy = 0; //denotes if an attack is charged
+    
+    /**
+     * Initial cooldowns of skills.
+     * Skill ids:
+     * 1) Walk to nearest edge, scream, and throw a barrage of void balls.
+     * 2) Undefined...
+     */
+    this.cooldown = [250, 0, 0, 0];
+    
+	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, 0);
+	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, 0);
+    this.idleAnimation = this.idleLeft;
+    
+    this.idleTimerMax = 110;
+    this.idleTimer = this.idleTimerMax;
+
+    this.walkAnimationRight = this.idleRight;
+    this.walkAnimationLeft = this.idleLeft;
+    this.walkAnimation = this.walkAnimationLeft;
+
+    this.attackAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ERight.png"), 0, 0, 114, 180, 0.1, 9, false, false, 0, -30);
+    this.attackAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ELeft.png"), 0, 0, 114, 180, 0.1, 9, false, 30, -30);
+    this.attackAnimation = this.attackAnimationLeft;  
+
+    this.maxHealth = 40.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;    
+
+    Entity.call(this, game, 1400, 235);
+    
+    this.currentAnimation = this.idleLeft;
+    this.hitBoxDef = {
+    	width: 130, height: 150, offsetX: 5, offsetY: 0, growthX: 0, growthY: 0
+    };
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
+	};
+}
+
+Malzahar.prototype.update = function() {
+    if (this.game.currentPhase === 1) {
+    	this.game.currentBoss = this;
+    }
+    if (this.state == "attacking") {
+        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
+            this.state = "idle";
+            if (this.attackIndex != 2) //no delay after scream
+                this.idleTimer = this.idleTimerMax;   
+            this.attackAnimation.elapsedTime = 0;
+            this.hitBoxDef.growthX = 0;
+            this.hitBoxDef.growthY = 0;
+            this.attackable = true;
+            this.game.player1.hitByAttack = false;
+        }
+    }
+    Entity.prototype.update.call(this);
+}
+
+Malzahar.prototype.draw = function (ctx) {
+    if (!this.dead) {
+        if (this.state === "idle") {
+            this.idleAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.idleAnimation.offsetX, this.y + this.idleAnimation.offsetY);
+            this.currentAnimation = this.idleAnimation;
+        } else if (this.state === "walking") {
+            this.walkAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimation.offsetX, this.y + this.walkAnimation.offsetY);
+            this.currentAnimation = this.walkAnimation;
+        } else if (this.state === "attacking") {
+            this.attackAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.attackAnimation.offsetX, this.y + this.attackAnimation.offsetY);
+            this.currentAnimation = this.attackAnimation;
+        }
+    }
+    
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
+		y: this.y + this.hitBoxDef.offsetY + (this.hitBoxDef.growthY < 0 ? this.hitBoxDef.growthY : 0),
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
+	};
+    
+    drawHitBox(this, ctx);
+    
     Entity.prototype.draw.call(this);
 };
 
@@ -1259,6 +1468,10 @@ Character.prototype.update = function () {
                                 this.vulnerable = false;
                                 this.attackIndex = 7;
                                 var particle;
+                                
+                        		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "Come, hero, and witness your demise. HEhHehEEhHe...");
+                        		this.game.addEntity(chat);
+                        		
                                 if (soundOn) {
                                     this.eSound.currentTime = 0;
                                     this.eSound.play();
@@ -1433,28 +1646,30 @@ Character.prototype.update = function () {
             }
         }
         if (this.attacking) {
-            if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
-                this.attackHit = true;
-                var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + this.game.currentBoss.hitBox.width / 2    , this.game.currentBoss.hitBox.y, 
-                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-                var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
-                var damage = 0;
-                if (this.attackIndex >= 1 && this.attackIndex <= 3) {
-                   damage = this.attackIndex * this.qScaling + this.qDamage;
-                } else if (this.attackIndex >= 4 && this.attackIndex <= 6) {
-                    damage = (this.attackIndex - 3) * this.autoScaling + this.autoDamage;
-                } else if (this.attackIndex == 8) {
-                    damage = this.wDamage;
-                }
-                this.game.currentBoss.currentHealth -= damage;
-                damageText.text = damage;
-                damageParticle.other = damageText;
-                this.game.addEntity(damageParticle);
-                if (this.game.currentBoss.currentHealth <= 0) {
-                    this.game.currentBoss.screamSound.currentTime = 0;
-                    this.game.currentBoss.screamSound.play();
-                }
-            }
+        	if (this.game.currentBoss != null) {
+	            if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
+	                this.attackHit = true;
+	                var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + this.game.currentBoss.hitBox.width / 2    , this.game.currentBoss.hitBox.y, 
+	                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+	                var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
+	                var damage = 0;
+	                if (this.attackIndex >= 1 && this.attackIndex <= 3) {
+	                   damage = this.attackIndex * this.qScaling + this.qDamage;
+	                } else if (this.attackIndex >= 4 && this.attackIndex <= 6) {
+	                    damage = (this.attackIndex - 3) * this.autoScaling + this.autoDamage;
+	                } else if (this.attackIndex == 8) {
+	                    damage = this.wDamage;
+	                }
+	                this.game.currentBoss.currentHealth -= damage;
+	                damageText.text = damage;
+	                damageParticle.other = damageText;
+	                this.game.addEntity(damageParticle);
+	                if (this.game.currentBoss.currentHealth <= 0) {
+	                    this.game.currentBoss.screamSound.currentTime = 0;
+	                    this.game.currentBoss.screamSound.play();
+	                }
+	            }
+        	}
             /*
             this.game.entities.forEach(function(entity) {
                 if (entity.attackable) {
@@ -1533,11 +1748,21 @@ Character.prototype.update = function () {
         this.y = this.ground - this.hitBox.height;
     }
     
-    if (this.hitBox.x + this.hitBoxDef.width >= this.game.surfaceWidth && (this.lastDirection === "Right" || this.hurt)) {
-        this.x = this.game.surfaceWidth - this.hitBoxDef.width - this.hitBoxDef.offsetX;
+    if (this.hitBox.x + this.hitBoxDef.width >= this.game.camera.maxX + this.game.surfaceWidth && (this.lastDirection === "Right" || this.hurt)) {
+        this.x = this.game.camera.maxX + this.game.surfaceWidth - this.hitBoxDef.width - this.hitBoxDef.offsetX;
     }
-    if (this.hitBox.x + this.hitBox.width - this.hitBoxDef.width <= 0 && (this.lastDirection === "Left" || this.hurt)) {
-        this.x = 0 - this.hitBoxDef.offsetX;
+    if (this.hitBox.x + this.hitBox.width - this.hitBoxDef.width <= this.game.camera.minX && (this.lastDirection === "Left" || this.hurt)) {
+        this.x = this.game.camera.minX + 0 - this.hitBoxDef.offsetX;
+    }
+    if (this.x >= 800) {
+        if (this.game.currentPhase === 1) {
+        	this.game.currentPhase = 2;
+	        this.game.cameraLock = false;
+	        this.game.camera.minX = 800;
+	        this.game.camera.maxX = 800;
+    		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "I have been expecting you.");
+    		this.game.addEntity(chat);
+        }
     }
     Entity.prototype.update.call(this);
 };
@@ -1615,6 +1840,12 @@ ASSET_MANAGER.queueDownload("./img/Reksai/AttackRight.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamRight.png");
 
+
+ASSET_MANAGER.queueDownload("./img/Malzahar/IdleRight.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/IdleLeft.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/ERight.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/ELeft.png");
+
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/UI/BarBack.png");
@@ -1623,6 +1854,9 @@ ASSET_MANAGER.queueDownload("./img/UI/HealthBarLight.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBar.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBarLight.png");
 ASSET_MANAGER.queueDownload("./img/UI/Platform.png");
+ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
+ASSET_MANAGER.queueDownload("./img/Chat/ChatSquare.png");
+ASSET_MANAGER.queueDownload("./img/Chat/MalzSquare.png");
 
 ASSET_MANAGER.downloadAll(function () {
     var canvas = document.getElementById('gameWorld');
@@ -1631,6 +1865,7 @@ ASSET_MANAGER.downloadAll(function () {
     var gameEngine = new GameEngine();
     var bg = new Background(gameEngine);
 	var reksai = new Reksai(gameEngine);
+	var malzahar = new Malzahar(gameEngine);
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
     var map1 = new Map1(gameEngine);
@@ -1639,6 +1874,7 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.addEntity(map1);
     gameEngine.addEntity(character);
     gameEngine.addEntity(reksai);
+    gameEngine.addEntity(malzahar);
     gameEngine.addEntity(ui);
  
     gameEngine.init(ctx);
