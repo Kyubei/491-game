@@ -44,7 +44,6 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
 	this.currentPhase = 0;
-    this.bosses = [];
 	this.currentBoss = null;
     this.currentMap = null;
     this.UI = null;
@@ -131,10 +130,6 @@ GameEngine.prototype.setPlayer1 = function (entity) {
     this.player1 = entity;
 };
 
-GameEngine.prototype.addBoss = function (entity) {
-    this.bosses.push(entity);
-};
-
 GameEngine.prototype.setBoss = function (entity) {
     this.currentBoss = entity;
 };
@@ -188,11 +183,6 @@ GameEngine.prototype.update = function () {
 	    		this.liveCamera.y = Math.max(this.camera.y, this.liveCamera.y - this.cameraSpeed);	    		
 	    	}
 	    }
-        if (this.liveCamera.x >= 800 && !this.cameraLock) {
-            this.cameraLock = true;
-            this.bosses[1].active = true;
-            this.setBoss(this.bosses[1]);
-        }
 	}
     var entitiesCount = this.entities.length;
     for (var i = 0; i < entitiesCount; i++) {
