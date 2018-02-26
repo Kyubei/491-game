@@ -822,8 +822,8 @@ function Malzahar(game) {
      */
     this.cooldown = [250, 0, 0, 0];
     
-	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, 0);
-	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, 0);
+	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, -20);
+	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, -20);
     this.idleAnimation = this.idleLeft;
     
     this.idleTimerMax = 110;
@@ -833,8 +833,8 @@ function Malzahar(game) {
     this.walkAnimationLeft = this.idleLeft;
     this.walkAnimation = this.walkAnimationLeft;
 
-    this.attackAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ERight.png"), 0, 0, 114, 180, 0.1, 9, false, false, 0, -30);
-    this.attackAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ELeft.png"), 0, 0, 114, 180, 0.1, 9, false, 30, -30);
+    this.attackAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ERight.png"), 0, 0, 114, 180, 0.1, 9, false, false, -10, -40);
+    this.attackAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ELeft.png"), 0, 0, 114, 180, 0.1, 9, false, false, 0, -40);
     this.attackAnimation = this.attackAnimationLeft;  
 
     this.maxHealth = 40.0;
@@ -859,17 +859,79 @@ Malzahar.prototype.update = function() {
     if (this.game.currentPhase === 1) {
     	this.game.currentBoss = this;
     }
-    if (this.state == "attacking") {
-        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
-            this.state = "idle";
-            if (this.attackIndex != 2) //no delay after scream
-                this.idleTimer = this.idleTimerMax;   
-            this.attackAnimation.elapsedTime = 0;
-            this.hitBoxDef.growthX = 0;
-            this.hitBoxDef.growthY = 0;
-            this.attackable = true;
-            this.game.player1.hitByAttack = false;
-        }
+    if (this.game.currentPhase === 2) { //malz attack code
+	    if (this.state == "attacking") {
+	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
+	            this.state = "idle";
+	            if (this.attackIndex != 2) //no delay after scream
+	                this.idleTimer = this.idleTimerMax;   
+	            this.attackAnimation.elapsedTime = 0;
+	            this.hitBoxDef.growthX = 0;
+	            this.hitBoxDef.growthY = 0;
+	            this.attackable = true;
+	            this.game.player1.hitByAttack = false;
+	        }
+	    }
+	    if (this.state != "attacking") {
+	        if (this.idleTimer > 0) {
+	            this.idleTimer--;
+	            if (this.lastDirection == "Left") {
+	                this.idleAnimation = this.idleLeft;
+	            } else {
+	                this.idleAnimation = this.idleRight;
+	            }
+	        } else {
+	            var distance = getXDistance(this.game.player1, this);
+	            if (this.cooldown[0] == 0 && !this.walkToDestination) {
+	                this.energy = 1;
+	                this.walkToDestination = true;
+	                if (this.x < 325) {
+	                    this.destinationX = 50;
+	                } else {
+	                    this.destinationX = 600;
+	                }
+	                this.cooldown[0] = 1000;
+	            }
+	            if (this.walkToDestination)
+	                distance = this.destinationX - this.x;
+	            if (distance === 0) { //destination must be the same as current location
+	                this.destinationX = -1;
+	                this.walkToDestination = false;
+	            }
+	            if (distance < 0) {
+	                this.state = "walking";
+	                this.lastDirection = "Left";
+	                this.walkAnimation = this.walkAnimationLeft;
+	                this.x -= this.walkSpeed;
+	                if (this.walkToDestination && this.x <= this.destinationX) { //destination reached
+	                    this.destinationX = -1;
+	                    this.walkToDestination = false;
+	                }
+	            } else if (distance > 0) {
+	                this.state = "walking";
+	                this.lastDirection = "Right";
+	                this.walkAnimation = this.walkAnimationRight;
+	                this.x += this.walkSpeed;
+	                if (this.walkToDestination && this.x >= this.destinationX) { //destination reached
+	                    this.destinationX = -1;
+	                    this.walkToDestination = false;
+	                }
+	            } else if (distance === 0 && !this.walkToDestination && this.energy === 0) { //attack if not walking or charging attack
+	                this.state = "attacking";
+	                this.attackIndex = 1; //basic attack
+	                if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
+	                    this.lastDirection = "Right";
+	                } else {
+	                    this.lastDirection = "Left";
+	                }
+	                if (this.lastDirection == "Left") {
+	                    this.attackAnimation = this.attackAnimationLeft;
+	                } else {
+	                    this.attackAnimation = this.attackAnimationRight;
+	                }
+	            }
+	        }
+	    }
     }
     Entity.prototype.update.call(this);
 }
