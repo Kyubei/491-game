@@ -322,11 +322,13 @@ UI.prototype.draw = function (ctx) { //draw ui
         ctx.font = "100px Calibri";
         ctx.fillStyle = "white";
         ctx.textAlign="center"; 
-        ctx.fillText("Go ->",400,250);
+        //ctx.fillText("Go ->",400,250);
         if (this.game.currentPhase === 0) {
 	        this.game.cameraLock = false;
 	        this.game.camera.maxX = 800;
 	        this.game.currentPhase = 1;
+     		this.game.addEntity(new Particle(IMG_FLASH_PART, 600, 250, 0, 0, 0, 0, 0, 0, 0, 500, 0, 0, 1, 0, false, this.game,
+     				new Animation(ASSET_MANAGER.getAsset("./img/ArrowGoRight.png"), 0, 0, 269, 83, 1, 1, true, false, 0, 0)));
         }
         ctx.globalAlpha = 1.0;
     }
@@ -416,6 +418,7 @@ var VOID_BALL = 5;
 var PART_GENERATOR = 6;
 var VOID_PORTAL = 7;
 var VOID_ERUPTION = 8;
+var IMG_FLASH_PART = 9;
 
 /**
  * Returns the RGB of a hex color (e.g. #FFFFFF)
@@ -546,6 +549,8 @@ TextBox.prototype.update = function() {
          		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "Not good! Better get out of here!");
          		this.game.addEntity(chat);
          		this.game.currentPhase = 9;
+         		this.game.addEntity(new Particle(IMG_FLASH_PART, 1200, 300, 0, 0, 0, 0, 0, 0, 0, 500, 0, 0, 1, 0, false, this.game,
+         				new Animation(ASSET_MANAGER.getAsset("./img/ArrowGoUp.png"), 0, 0, 269, 83, 1, 1, true, false, 0, 0)));
         	} else if (this.game.currentPhase === 9) {
          		this.game.currentPhase = 10;
         		this.game.step = 0;
@@ -869,6 +874,11 @@ Particle.prototype.update = function() {
 };
 
 Particle.prototype.draw = function (ctx) {
+	if (this.particleId === IMG_FLASH_PART) {
+		this.sizeScale = 0.4;
+	    if (this.life % 30 === 0)
+	    	this.alpha = this.alpha === 1 ? 0 : 1;
+	}
 	ctx.globalAlpha = this.alpha * this.maxAlpha;
 	if (this.other == null) {
 	    this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX,
@@ -2095,6 +2105,8 @@ ASSET_MANAGER.queueDownload("./img/Malzahar/MalzaharPortrait.png");
 ASSET_MANAGER.queueDownload("./img/Background.png");
 ASSET_MANAGER.queueDownload("./img/Background2.png");
 ASSET_MANAGER.queueDownload("./img/Background3.png");
+ASSET_MANAGER.queueDownload("./img/ArrowGoUp.png");
+ASSET_MANAGER.queueDownload("./img/ArrowGoRight.png");
 ASSET_MANAGER.queueDownload("./img/UI/Bottom.png");
 ASSET_MANAGER.queueDownload("./img/UI/BarBack.png");
 ASSET_MANAGER.queueDownload("./img/UI/HealthBar.png");
