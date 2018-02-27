@@ -1,5 +1,5 @@
 var soundOn = true;
-var showHitBox = false;
+var showHitBox = true;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -183,6 +183,7 @@ function UI(game) {
     this.map1BGMusic.loop = true;
     this.map1BGMusic.volume = 0.1;
     this.fading = false;
+    this.fadingIn = false;
     if (soundOn) {
         this.map1BGMusic.play();
     }
@@ -195,16 +196,32 @@ UI.prototype.constructor = UI;
 
 fadeMusic = function(ui) {
     if(ui.map1BGMusic.volume > 0) {
-    	ui.map1BGMusic.volume = Math.max(0, ui.map1BGMusic.volume - 0.005);
-        if (ui.map1BGMusic.volume === 0) {
-        	ui.map1BGMusic.pause();
+    	ui.map1BGMusic.volume = Math.max(0, ui.map1BGMusic.volume - 0.01);
+        if (ui.map1BGMusic.volume <= 0) {
         	ui.fading = false;
+            ui.map1BGMusic.pause();
+            ui.map1BGMusic.currentTime = 0;
         } else {
             setTimeout(fadeMusic(ui), 2);
     	}
     } else {
-    	ui.map1BGMusic.pause();
     	ui.fading = false;
+        ui.map1BGMusic.currentTime = 0;
+        ui.map1BGMusic.pause();
+    }
+}
+
+fadeMusicIn = function(ui) {
+    ui.map1BGMusic.play();
+    if(ui.map1BGMusic.volume < 0.1) {
+    	ui.map1BGMusic.volume = Math.min(0.1, ui.map1BGMusic.volume + 0.01);
+        if (ui.map1BGMusic.volume >= 0.1) {
+        	ui.fadingIn = false;
+        } else {
+            setTimeout(fadeMusicIn(ui), 2);
+    	}
+    } else {
+        ui.fadingIn = false;
     }
 }
 
@@ -260,7 +277,13 @@ UI.prototype.update = function () {
 	if (this.game.currentPhase === 1 && !this.fading) {
 		this.fading = true;
 		fadeMusic(this);
-	}
+	} else if (this.game.currentPhase === 2 && this.game.currentBoss.attackEnabled && !this.fadingIn) {
+        this.fadingIn = true;
+        fadeMusicIn(this);
+    } else if (this.game.currentPhase === 3 && !this.fading) {
+        this.fading = true;
+        fadeMusic(this);
+    }
     updatePlayerResources(this.game.player1, this);
     updateBossResources(this.game.currentBoss, this);
 };
@@ -281,18 +304,18 @@ UI.prototype.draw = function (ctx) { //draw ui
     ctx.font = "20px Calibri";
     ctx.fillText("Player1  " + this.game.player1.currentHealth + " / " + this.game.player1.maxHealth,this.portraitX + 90 + this.game.liveCamera.x,this.portraitY + 30 + this.game.liveCamera.y);
     if (this.game.currentPhase === 0) {
-    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
+    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
     if (this.game.currentPhase === 2) {
-    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Malzahar/MalzaharPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
-        ctx.fillText("Malzahar                      " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
+    	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Malzahar/MalzaharPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
+        ctx.fillText("Malzahar                      " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80 + this.game.liveCamera.x,45);
     }
     if (!this.game.player1.dead) {
         ctx.fillText("Player1", this.game.player1.x + 5,this.game.player1.y + 0);
@@ -301,7 +324,7 @@ UI.prototype.draw = function (ctx) { //draw ui
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
     if (this.game.currentPhase === 2) {
-        ctx.fillText("Malzahar", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
+        ctx.fillText("Malzahar", this.game.currentBoss.x + 10, this.game.currentBoss.y - 15);
     }
     ctx.fillStyle = tempColor;
     if (this.game.player1.dead) {
@@ -312,7 +335,7 @@ UI.prototype.draw = function (ctx) { //draw ui
         ctx.font = "100px Calibri";
         ctx.fillStyle = "white";
         ctx.textAlign="center"; 
-        ctx.fillText("Defeat",400,250);
+        ctx.fillText("Defeat",400 + this.game.liveCamera.x,250 + this.game.liveCamera.y);
         ctx.globalAlpha = 1.0;
     } else if (this.game.currentBoss.dead) {
         if (this.gameOverTransparency < 1) {
@@ -465,6 +488,7 @@ function TextBox(game, image, text) {
 function wrapText(context, text, x, y, maxWidth, lineHeight) {
     var words = text.split(' ');
     var line = '';
+    y += 5;
 
     for(var n = 0; n < words.length; n++) {
       var testLine = line + words[n] + ' ';
@@ -515,7 +539,7 @@ function createPlatforms(game) {
 	];
 	for (i = 0; i < platforms.length; i++) {
 		var p = platforms[i];
-		console.log("adding new platform: "+p.x+","+p.y);
+		//console.log("adding new platform: "+p.x+","+p.y);
 		game.currentMap.platforms.push(p);
 	}
 }
@@ -524,9 +548,12 @@ TextBox.prototype.update = function() {
 	this.step++;
 	if (this.life > 0) {
 		this.life--;
-		if (this.life === 0) {
+		if (this.life <= 0) {
 			this.removeFromWorld = true;
-        	if (this.game.currentPhase === 3) {
+            if (this.game.currentPhase === 2) {
+                this.game.currentBoss.attackEnabled = true;
+                this.game.player1.canControl = true;
+        	} else if (this.game.currentPhase === 3) {
         	    var music = new Audio("./sounds/malz.mp3");
         	    music.loop = true;
         	    music.volume = 0.2;
@@ -559,7 +586,7 @@ TextBox.prototype.update = function() {
         	}
 		}
 	}
-	if (this.step % 9 === 0) {
+	if (this.step % 8 === 0) {
 		this.progress++;
 		if (this.progress >= this.text.length) {
 			this.showText = this.text;
@@ -571,10 +598,11 @@ TextBox.prototype.update = function() {
 			var c = this.showText.charAt(this.progress - 1);
 			if (c === '?' || (c.toLowerCase() != c.toUpperCase())) { //it's a character
 			    var sound = new Audio("./sounds/chat.wav");
+			    sound.volume = 0.5;
 			    if (this.image.indexOf("Riven") !== -1) {
 			    	sound = new Audio("./sounds/chat2.wav");
+                    sound.volume = 0.2;
 			    }
-			    sound.volume = 0.5;
 			    sound.play();
 			}
 		}
@@ -946,6 +974,7 @@ function Malzahar(game) {
     
 	this.step = 0;
     
+    this.attackEnabled = false;
     this.dead = false;
     this.solid = true;
     this.attackable = true;
@@ -969,8 +998,8 @@ function Malzahar(game) {
      */
     this.cooldown = [250, 0, 0, 0];
     
-	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, -20);
-	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.1, 12, true, false, 0, -20);
+	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, -20);
+	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, -20);
     this.idleAnimation = this.idleLeft;
     
     this.idleTimerMax = 110;
@@ -992,7 +1021,7 @@ function Malzahar(game) {
     
     this.currentAnimation = this.idleLeft;
     this.hitBoxDef = {
-    	width: 130, height: 150, offsetX: 5, offsetY: 0, growthX: 0, growthY: 0
+    	width: 80, height: 150, offsetX: 5, offsetY: -5, growthX: 0, growthY: 0
     };
     this.hitBox = {
     	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
@@ -1020,7 +1049,7 @@ Malzahar.prototype.update = function() {
     	    }
     	}
     }
-    if (this.game.currentPhase === 2) { //malz attack code
+    if (this.game.currentPhase === 2 && this.attackEnabled) { //malz attack code
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
@@ -1223,6 +1252,7 @@ Reksai.prototype.update = function() {
         var element = new CircleElement(8 + Math.random() * 6, "#290d4c", "#160f3d");
         particle.other = element;
         this.game.addEntity(particle);
+        this.removeFromWorld = true;
     }
     for (i = 0; i < this.cooldown.length; i++) {
         if (this.cooldown[i] > 0)
@@ -1574,7 +1604,17 @@ Character.prototype.update = function () {
  		this.game.addEntity(chat);
  		this.game.currentPhase = 8;
 	}
+    if (this.game.currentPhase === 10) {
+        if (this.game.liveCamera.y <= -120 && this.game.liveCamera.y > -500 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
+            this.currentHealth = 0;
+        }
+    }
     if (this.currentHealth <= 0 && !this.dead) {
+        var hitSound = new Audio("./sounds/lightning.wav");
+        hitSound.volume = 0.1;
+        hitSound.currentTime = 0;
+        hitSound.play();
+        
         this.dead = true;
         this.vulnerable = false;
         var particle = new Particle(PART_GENERATOR,
@@ -1616,7 +1656,7 @@ Character.prototype.update = function () {
                 this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
             }
         }
-        if (this.jumpDown && !this.attacking && !this.jumping && !this.falling) {
+        if (this.jumpDown && !this.attacking && !this.jumping && !this.falling && this.canControl) {
             this.jumping = true;
             this.yVelocity = this.jumpYVelocity;
             if (this.rightDown) {
@@ -1642,7 +1682,7 @@ Character.prototype.update = function () {
 
         this.comboTime -= this.game.clockTick; // Combo Timer
         if (this.comboTime <= 0 && this.lastComboStage > 0) {
-            console.log("Combo stage "+this.lastComboStage+" has dropped off!");
+            //console.log("Combo stage "+this.lastComboStage+" has dropped off!");
             this.lastComboStage = 0;
         }
         
@@ -1830,7 +1870,9 @@ Character.prototype.update = function () {
             this.runAnimation = this.runAnimationRight;
         } else {
             this.jumpAnimation = this.jumpAnimationLeft;
-            this.idleAnimation = this.idleAnimationLeft;
+            if (this.canControl) {
+                this.idleAnimation = this.idleAnimationLeft;
+            }
             this.runAnimation = this.runAnimationLeft;
         }
         
@@ -1866,7 +1908,7 @@ Character.prototype.update = function () {
                     }
                 });
                 if (this.attacking) {
-                    if (!collision || (collision && this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
+                    if ((collision && this.game.currentPhase != 0) || !collision || (collision && this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
                         this.x += this.runSpeed;
                     } 
                 }
@@ -1957,7 +1999,7 @@ Character.prototype.update = function () {
                 if ((that.hitBox.y + that.hitBox.height) <= currentPlatform.hitBox.y) {
                     if ((that.hitBox.y + that.hitBox.height - (that.yVelocity - that.gravity )) - currentPlatform.vSpeed >= currentPlatform.hitBox.y) {
                         platformFound = true;
-                    	console.log("plateform");
+                    	//console.log("platform");
                     	that.x += currentPlatform.hSpeed;
                     	that.y += currentPlatform.vSpeed;
                         if (that.falling) {
@@ -1973,7 +2015,7 @@ Character.prototype.update = function () {
     
     if (!platformFound && !this.jumping) {
         if (!this.falling) {
-        	console.log("FALLING!@!");
+        	//console.log("FALLING!@!");
             this.falling = true;
             if (!this.attacking) {
                 if (this.rightDown) {
@@ -2009,7 +2051,7 @@ Character.prototype.update = function () {
     if (this.hitBox.x + this.hitBox.width - this.hitBoxDef.width <= this.game.camera.minX && (this.lastDirection === "Left" || this.hurt)) {
         this.x = this.game.camera.minX + 0 - this.hitBoxDef.offsetX;
     }
-    if (this.x >= 800) {
+    if (this.x >= 820) {
         if (this.game.currentPhase === 1) {
         	this.game.currentPhase = 2;
 	        this.game.cameraLock = false;
@@ -2017,6 +2059,7 @@ Character.prototype.update = function () {
 	        this.game.camera.maxX = 800;
     		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "I have been expecting you.");
     		this.game.addEntity(chat);
+            this.game.player1.canControl = false;
         }
     }
     Entity.prototype.update.call(this);
