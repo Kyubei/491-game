@@ -47,6 +47,7 @@ GameEngine.prototype.init = function (ctx) {
 	this.currentBoss = null;
     this.currentMap = null;
     this.UI = null;
+    this.step = 0;
     this.cameraLock = true;
     this.cameraSpeed = 5;
     this.camera = { //where the camera wants to be
@@ -153,6 +154,12 @@ GameEngine.prototype.draw = function () {
 };
 
 GameEngine.prototype.update = function () {
+	this.step++;
+	if (this.currentPhase === 6) {
+		if (this.step == 100) {
+			this.currentPhase = 7;
+		}
+	}
 	if (!this.cameraLock) {
 		this.camera.x = this.player1.x - 200;
 		this.camera.y = this.player1.y;
@@ -169,6 +176,11 @@ GameEngine.prototype.update = function () {
 		if (this.camera.y > this.camera.maxY) {
 			this.camera.y = this.camera.maxY;
 		}
+		if (this.currentPhase === 10) {
+			if (this.step >= 100) {
+				this.camera.y = 0 - (this.step - 100) / 2;
+			}
+		}
 	    if (this.liveCamera.x != this.camera.x) {
 	    	if (this.liveCamera.x < this.camera.x) {
 	    		this.liveCamera.x = Math.min(this.camera.x, this.liveCamera.x + this.cameraSpeed);
@@ -183,6 +195,11 @@ GameEngine.prototype.update = function () {
 	    		this.liveCamera.y = Math.max(this.camera.y, this.liveCamera.y - this.cameraSpeed);	    		
 	    	}
 	    }
+	}
+	//CAMERA SHAKE
+	if (this.currentPhase >= 6 && this.currentPhase <= 10) {
+		this.liveCamera.x += -5 + Math.random() * 10;
+		this.liveCamera.y += -5 + Math.random() * 10;
 	}
     var entitiesCount = this.entities.length;
     for (var i = 0; i < entitiesCount; i++) {
