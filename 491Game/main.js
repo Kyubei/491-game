@@ -358,13 +358,17 @@ UI.prototype.draw = function (ctx) { //draw ui
     Entity.prototype.draw.call(this);	
 };
 
-function Platform(game, x, y, hSpeed, vSpeed, switchDelay) {
-    this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/Platform.png");
+function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId) {
     this.width = 63;
     this.height = 16;
     this.hSpeed = hSpeed || 0;
     this.vSpeed = vSpeed || 0;
     this.switchDelay = switchDelay || 0;
+	this.specialId = specialId || 0;
+    this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/Platform.png");
+    if (this.specialId === 1) {
+        this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/PlatformBouncy.png");    	
+    }
     this.step = 0;
     this.x = x;
     this.y = y;
@@ -386,23 +390,27 @@ Platform.prototype = new Entity();
 Platform.prototype.constructor = Platform;
 
 Platform.prototype.update = function () {
-	this.step++;
-	if (this.switchDelay > 0 && this.step % this.switchDelay === 0) {
-		this.hSpeed *= -1;
-		this.vSpeed *= -1;
+	//only update when in the screen
+	if (this.x >= this.game.liveCamera.x - 50 && this.x <= this.game.liveCamera.x + this.game.liveCamera.width + 50
+			&& this.y >= this.game.liveCamera.y -50 && this.y <= this.game.liveCamera.y + this.game.liveCamera.height + 50) {
+		this.step++;
+		if (this.switchDelay > 0 && this.step % this.switchDelay === 0) {
+			this.hSpeed *= -1;
+			this.vSpeed *= -1;
+		}
+	    this.x += this.hSpeed;
+	    this.y += this.vSpeed;
+	    
+	    this.hitBoxDef = {
+	    	width: this.width, height: this.height, offsetX: 0, offsetY: 0, growthX: 0
+	    };
+	    this.hitBox = {
+	    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
+			y: this.y + this.hitBoxDef.offsetY,
+			width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+			height: this.hitBoxDef.height
+		};
 	}
-    this.x += this.hSpeed;
-    this.y += this.vSpeed;
-    
-    this.hitBoxDef = {
-    	width: this.width, height: this.height, offsetX: 0, offsetY: 0, growthX: 0
-    };
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
-		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height
-	};
     Entity.prototype.update.call(this);
 };
 
@@ -414,7 +422,7 @@ Platform.prototype.draw = function (ctx) {
 function Map1(game) {
     Entity.call(this, game, 0, 0);
     this.platforms = [];
-	this.platforms.push(new Platform(game, 200, 315));
+	this.platforms.push(new Platform(game, 200, 315, 1, 0, 64));
 	this.platforms.push(new Platform(game, 500, 315));
 }
 
@@ -507,40 +515,101 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
 }
 
 function createPlatforms(game) {
-	var platforms = [
-		new Platform(game, 800, 616),
-		new Platform(game, 800, 568),		
-		new Platform(game, 800, 520),		
-		new Platform(game, 800, 472),		
-		new Platform(game, 1536, 472),		
-		new Platform(game, 1536, 520),		
-		new Platform(game, 1536, 568),		
-		new Platform(game, 1536, 616),		
-		new Platform(game, 880, 424),		
-		new Platform(game, 1456, 424),		
-		new Platform(game, 976, 376),		
-		new Platform(game, 1360, 376),		
-		new Platform(game, 1072, 328),		
-		new Platform(game, 1264, 328),		
-		new Platform(game, 1168, 280),		
-		new Platform(game, 1104, 232),		
-		new Platform(game, 1040, 184),		
-		new Platform(game, 976, 136),		
-		new Platform(game, 912, 88),		
-		new Platform(game, 832, 40),		
-		new Platform(game, 768, 40),		
-		new Platform(game, 912, -8, 1, 0, 250), //HORIZONTAL		
-		new Platform(game, 1168, -56),		
-		new Platform(game, 1232, -104),		
-		new Platform(game, 1296, -152),		
-		new Platform(game, 1360, -152),		
-		new Platform(game, 1424, -152),		
-		new Platform(game, 1488, -152, 0, -1, 150) //VERTICAL
+	var voidlings = [
+		new Voidling(game, 944, -208),
+		new Voidling(game, 992, -704),
+		new Voidling(game, 1152, -704),
+		new Voidling(game, 1312, -704)
+	];
+	var platforms = [new Platform(game, 800, 272),
+		new Platform(game, 800, 224),
+		new Platform(game, 1536, 272),
+		new Platform(game, 1536, 224),
+		new Platform(game, 864, 80),
+		new Platform(game, 928, 32),
+		new Platform(game, 992, -16),
+		new Platform(game, 1072, -64),
+		new Platform(game, 1072, -160),
+		new Platform(game, 1008, -160),
+		new Platform(game, 944, -160),
+		new Platform(game, 880, -160),
+		new Platform(game, 816, -160, 0, -1, 32 * 3.5), //VERTICAL
+		new Platform(game, 880, -320),
+		new Platform(game, 944, -320),
+		new Platform(game, 1008, -368),
+		new Platform(game, 1072, -416),
+		new Platform(game, 1136, -464),
+		new Platform(game, 1200, -512),
+		new Platform(game, 1264, -512, 1, 0, 32 * 3.5), //HORIZONTAL
+		new Platform(game, 1536, -512, 0, 0, 0, 1), //BOUNCY
+		new Platform(game, 1360, -656),
+		new Platform(game, 1296, -656),
+		new Platform(game, 1232, -656),
+		new Platform(game, 1168, -656),
+		new Platform(game, 1104, -656),
+		new Platform(game, 1040, -656),
+		new Platform(game, 976, -656),
+		new Platform(game, 912, -656, 0, -1, 32 * 5), //VERTICAL
+		new Platform(game, 848, -864),
+		new Platform(game, 784, -864),
+		new Platform(game, 912, -912),
+		new Platform(game, 976, -912, 1, 0, 32 * 3.5), //HORIZONTAL
+		new Platform(game, 1264, -912),
+		new Platform(game, 1328, -912),
+		new Platform(game, 1392, -912),
+		new Platform(game, 1456, -912),
+		new Platform(game, 1520, -912),
+		new Platform(game, 1584, -912),
+		new Platform(game, 1328, -960),
+		new Platform(game, 1392, -960),
+		new Platform(game, 1456, -960),
+		new Platform(game, 1520, -960),
+		new Platform(game, 1584, -960),
+		new Platform(game, 1392, -1008),
+		new Platform(game, 1456, -1008),
+		new Platform(game, 1520, -1008),
+		new Platform(game, 1584, -1008),
+		new Platform(game, 1456, -1056),
+		new Platform(game, 1520, -1056),
+		new Platform(game, 1584, -1056),
+		new Platform(game, 1520, -1104),
+		new Platform(game, 1584, -1104),
+		new Platform(game, 1536, -1152, 0, 0, 0, 1), //BOUNCY
+		new Platform(game, 800, -1328),
+		new Platform(game, 864, -1328),
+		new Platform(game, 928, -1328),
+		new Platform(game, 992, -1328),
+		new Platform(game, 1056, -1328),
+		new Platform(game, 1120, -1328),
+		new Platform(game, 1184, -1328),
+		new Platform(game, 1248, -1328),
+		new Platform(game, 1312, -1328),
+		new Platform(game, 1376, -1328),
+		new Platform(game, 1440, -1328),
+		new Platform(game, 1504, -1328),
+		new Platform(game, 1568, -1328),
+		new Platform(game, 800, 320),
+		new Platform(game, 1536, 320),
+		new Platform(game, 1536, -704),
+		new Platform(game, 1536, -752),
+		new Platform(game, 864, 176),
+		new Platform(game, 928, 128),
+		new Platform(game, 1472, 176),
+		new Platform(game, 1408, 128),
+		new Platform(game, 1472, 80),
+		new Platform(game, 1408, 32),
+		new Platform(game, 1344, -16),
+		new Platform(game, 1280, -64),
+		new Platform(game, 1174, -110)
 	];
 	for (i = 0; i < platforms.length; i++) {
 		var p = platforms[i];
 		//console.log("adding new platform: "+p.x+","+p.y);
 		game.currentMap.platforms.push(p);
+	}
+	for (i = 0; i < voidlings.length; i++) {
+		var v = voidlings[i];
+		game.addEntity(v);
 	}
 }
 
@@ -959,6 +1028,106 @@ Arrow.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 };
 
+function Voidling(game, x, y) {
+    
+	this.step = 0;
+    
+    this.attackEnabled = true;
+    this.dead = false;
+    this.attackable = true;
+    this.walkSpeed = 2;
+	
+	this.x = x;
+	this.y = y;
+
+    this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingRight.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
+    this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingLeft.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
+    this.walkAnimation = this.walkAnimationLeft;
+
+    this.maxHealth = 4.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;
+
+    this.hitBoxDef = {
+    	width: 97, height: 60, offsetX: 0, offsetY: 0, growthX: 0, growthY: 0
+    };
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
+	};
+    Entity.call(this, game, x, y);
+}
+
+Voidling.prototype.update = function() {
+    if (this.currentHealth <= 0 && !this.dead) {
+        this.dead = true;
+        this.attackable = false;
+        this.solid = false;
+        var particle = new Particle(PART_GENERATOR,
+                this.x + this.hitBox.width / 2,
+                this.y + this.hitBox.height / 2, 
+                0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, false, this.game);
+        var element = new CircleElement(2 + Math.random() * 1, "#290d4c", "#160f3d");
+        particle.other = element;
+        this.game.addEntity(particle);
+        this.removeFromWorld = true;
+    }
+    var that = this;
+    var switchDirection = false;
+    this.game.currentMap.platforms.forEach(function(currentPlatform) {
+    	var platformFound = false;
+        if ((that.hitBox.x + that.hitBox.width) > currentPlatform.hitBox.x) {
+            if (that.hitBox.x < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+                if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed <= currentPlatform.hitBox.y) {
+                    if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed >= currentPlatform.hitBox.y) {
+                        platformFound = true;
+                    }
+                }
+            }
+        }
+        if (platformFound) {
+            switchDirection = true;
+	        if ((that.hitBox.x + that.hitBox.width + that.walkSpeed) > currentPlatform.hitBox.x) {
+	            if (that.hitBox.x + that.walkSpeed < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+	                switchDirection = false;
+	            }
+	        }
+        }
+    });
+    if (this.x + this.walkSpeed <= this.game.liveCamera.x ||
+    		this.x + this.hitBox.width >= this.game.liveCamera.x + this.game.liveCamera.width) {
+    	switchDirection = true;
+    }
+    if (switchDirection) {
+    	console.log("voidling at "+this.x+", "+this.y+" SWAP");
+    	that.walkSpeed *= -1;
+    }
+    this.x += this.walkSpeed;
+	Entity.prototype.update.call(this);
+}
+
+
+Voidling.prototype.draw = function (ctx) {
+	ctx.globalAlpha = 1;
+	if (!this.dead) {
+		if (this.walkSpeed > 0)
+			this.walkAnimation = this.walkAnimationRight;
+		else
+			this.walkAnimation = this.walkAnimationLeft;
+        this.walkAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimation.offsetX, this.y + this.walkAnimation.offsetY);
+	}
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
+		y: this.y + this.hitBoxDef.offsetY + (this.hitBoxDef.growthY < 0 ? this.hitBoxDef.growthY : 0),
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
+	};
+	drawHitBox(this, ctx);
+	Entity.prototype.draw.call(this);
+}
+
 function Malzahar(game) {
 	
 	this.alpha = 1;
@@ -1035,6 +1204,14 @@ Malzahar.prototype.update = function() {
     if (this.game.currentPhase === 1) {
     	this.game.currentBoss = this;
     }
+	if (this.game.currentPhase === 2 && this.currentHealth <= 0) { //phase transition
+		this.game.currentPhase = 3;
+		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "HEhHehEEhHe...");
+		this.game.addEntity(chat);
+	    var music = new Audio("./sounds/disappear.mp3");
+	    music.volume = 1.0;
+	    music.play();
+	}
     if (this.game.currentPhase === 3) {
     	if (this.alpha > 0) {
     		this.alpha -= 0.005;
@@ -1242,6 +1419,10 @@ function Reksai(game) {
 Reksai.prototype.update = function() {
 	this.step++;
     if (this.currentHealth <= 0 && !this.dead) {
+    	if (this.game.currentPhase === 0) {
+            this.game.currentBoss.screamSound.currentTime = 0;
+            this.game.currentBoss.screamSound.play();
+    	}
         this.dead = true;
         this.attackable = false;
         this.solid = false;
@@ -1558,7 +1739,7 @@ function Character(game) {
     this.canControl = true;
     this.hurt = false;
     this.hitByAttack = false;
-    this.attackHit = false; // If your own attack has already hit the boss
+    this.targetHit = []; //the targets you've currently hit with your attack
     this.invulnTimerMax = 20;
     this.invulnTimer = 0;
     this.ground = 370; 
@@ -1698,7 +1879,7 @@ Character.prototype.update = function () {
                             this.autoSound.currentTime = 0;
                             this.autoSound.play();
                         }
-                        this.attackHit = false;
+                        this.targetHit = [];
                         this.attacking = true;
                         // AA will take attack indexes 4-6
                         if (this.lastComboStage < 3) {
@@ -1719,7 +1900,7 @@ Character.prototype.update = function () {
                                 if (this.lastComboType != this.attackInput) { // Last Combo was different (e.g. AA vs Q) - drop combo
                                     this.lastComboStage = 0;		    				
                                 }
-                                this.attackHit = false;
+                                this.targetHit = [];
                                 this.attacking = true;
                                 // Q will take attack indexes 1, 2, and 3
                                 if (this.lastComboStage < 3)
@@ -1746,7 +1927,6 @@ Character.prototype.update = function () {
                             if (this.currentStamina >= this.eCost) {
                                 this.currentStamina -= this.eCost;
                                 this.attacking = true;
-                                this.attackHit = true; //to prevent a 0 hit if you attacked before
                                 this.invulnTimer = 40;
                                 this.vulnerable = false;
                                 this.attackIndex = 7;
@@ -1774,7 +1954,7 @@ Character.prototype.update = function () {
                                 && !(this.rightDown || this.leftDown)) { //W
                             if (this.currentStamina >= this.wCost) {
                                 this.currentStamina -= this.wCost;
-                                this.attackHit = false;
+                                this.targetHit = [];
                                 this.attacking = true;
                                 this.attackIndex = 8;
                                 if (soundOn) {
@@ -1928,7 +2108,7 @@ Character.prototype.update = function () {
             }
         }
         if (this.attacking) {
-        	if (this.game.currentBoss != null) {
+        	/*if (this.game.currentBoss != null) {
 	            if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
 	                this.attackHit = true;
 	                var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + this.game.currentBoss.hitBox.width / 2    , this.game.currentBoss.hitBox.y, 
@@ -1961,15 +2141,31 @@ Character.prototype.update = function () {
 	                	}
 	                }
 	            }
-        	}
-            /*
+        	}*/
+            
             this.game.entities.forEach(function(entity) {
-                if (entity.attackable) {
+                if (entity.attackable && that.targetHit.indexOf(entity) === -1) {
                     if (checkCollision(that, entity)) {
-                        entity.handleCollision(that);
+                        that.targetHit.push(entity);
+    	                var damageParticle = new Particle(TEXT_PART, entity.hitBox.x + entity.hitBox.width / 2, 
+    	                		entity.hitBox.y, 0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, that.game);
+    	                var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
+    	                var damage = 0;
+    	                if (that.attackIndex >= 1 && that.attackIndex <= 3) {
+    	                   damage = that.attackIndex * that.qScaling + that.qDamage;
+    	                } else if (that.attackIndex >= 4 && that.attackIndex <= 6) {
+    	                    damage = (that.attackIndex - 3) * that.autoScaling + that.autoDamage;
+    	                } else if (that.attackIndex == 8) {
+    	                    damage = that.wDamage;
+    	                }
+    	                entity.currentHealth -= damage;
+    	                damageText.text = damage;
+    	                damageParticle.other = damageText;
+    	                if (damage > 0)
+    	                	that.game.addEntity(damageParticle);
                     }
                 }
-            });*/
+            });
             if (this.attackIndex >= 1 && this.attackIndex <= 6 && this.attackAnimation.elapsedTime <= 0.5) {
                 if (this.lastDirection === "Right") {
                     this.hitBoxDef.growthX += 1.6;
@@ -1996,16 +2192,21 @@ Character.prototype.update = function () {
     	currentPlatform.update();
         if ((that.hitBox.x + that.hitBox.width) > currentPlatform.hitBox.x) {
             if (that.hitBox.x < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                if ((that.hitBox.y + that.hitBox.height) <= currentPlatform.hitBox.y) {
-                    if ((that.hitBox.y + that.hitBox.height - (that.yVelocity - that.gravity )) - currentPlatform.vSpeed >= currentPlatform.hitBox.y) {
+                if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed <= currentPlatform.hitBox.y) {
+                    if ((that.hitBox.y + that.hitBox.height - (that.yVelocity - that.gravity )) + currentPlatform.vSpeed >= currentPlatform.hitBox.y) {
                         platformFound = true;
-                    	//console.log("platform");
-                    	that.x += currentPlatform.hSpeed;
-                    	that.y += currentPlatform.vSpeed;
-                        if (that.falling) {
-                            that.falling = false;
-                            that.yVelocity = 0;
-                            that.y = currentPlatform.hitBox.y - that.hitBox.height - that.hitBoxDef.offsetY;
+                        if (currentPlatform.specialId === 1) { //bouncy platform
+                        	that.yVelocity = 15;
+                        	that.jumpSpeed = 0;
+                        } else {
+	                    	that.x += currentPlatform.hSpeed;
+	                    	that.y += currentPlatform.vSpeed;
+	                    	that.yVelocity = 0;
+	                        if (that.falling) {
+	                            that.falling = false;
+	                            that.yVelocity = 0;
+	                            that.y = currentPlatform.hitBox.y - that.hitBox.height - that.hitBoxDef.offsetY;
+	                        }
                         }
                     }
                 }
@@ -2015,7 +2216,6 @@ Character.prototype.update = function () {
     
     if (!platformFound && !this.jumping) {
         if (!this.falling) {
-        	//console.log("FALLING!@!");
             this.falling = true;
             if (!this.attacking) {
                 if (this.rightDown) {
@@ -2143,6 +2343,8 @@ ASSET_MANAGER.queueDownload("./img/Malzahar/IdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/IdleLeft.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/ERight.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/ELeft.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/VoidlingRight.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/VoidlingLeft.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/MalzaharPortrait.png");
 
 ASSET_MANAGER.queueDownload("./img/Background.png");
@@ -2157,6 +2359,7 @@ ASSET_MANAGER.queueDownload("./img/UI/HealthBarLight.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBar.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBarLight.png");
 ASSET_MANAGER.queueDownload("./img/UI/Platform.png");
+ASSET_MANAGER.queueDownload("./img/UI/PlatformBouncy.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
 ASSET_MANAGER.queueDownload("./img/Chat/ChatSquare.png");
 ASSET_MANAGER.queueDownload("./img/Chat/MalzSquare.png");
@@ -2173,6 +2376,8 @@ ASSET_MANAGER.downloadAll(function () {
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
     var map1 = new Map1(gameEngine);
+    var voidling = new Voidling(gameEngine, 313, 336);
+    
 
     gameEngine.addEntity(bg);
     gameEngine.addEntity(map1);
@@ -2180,6 +2385,7 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.addEntity(reksai);
     gameEngine.addEntity(malzahar);
     gameEngine.addEntity(ui);
+    gameEngine.addEntity(voidling);
  
     gameEngine.init(ctx);
     gameEngine.setPlayer1(character);
