@@ -516,92 +516,267 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
 }
 
 function createPlatforms(game) {
+	var powerups = [
+		
+		new Powerup(game, 816, -544, 0), //health powerup
+		
+		new Powerup(game, 816, 0, 0), //health powerup
+		
+		new Powerup(game, 1552, -896, 0), //health powerup
+		
+		new Powerup(game, 1216, -992, 0), //health powerup
+	]
 	var voidlings = [
 		new Voidling(game, 944, -208, "explode"),
+
+		new Voidling(game, 1024, 128, "touch"),
+
+		new Voidling(game, 1248, 128, "touch"),
+
+		new Voidling(game, 976, -1008, "explode"),
+
+		new Voidling(game, 1184, -1008, "touch"),
+
+		new Voidling(game, 1392, -1008, "touch"),
+
+		new Voidling(game, 1056, -1152, "touch"),
+
+		new Voidling(game, 1232, -1152, "touch"),
+
 		new Voidling(game, 992, -704, "touch"),
-		new Voidling(game, 1152, -704, "touch"),
-		new Voidling(game, 1312, -704, "explode")
+
+		new Voidling(game, 1056, -704, "touch"),
+
+		new Voidling(game, 928, -368, "touch"),
+
+		new Voidling(game, 1104, -368, "touch"),
+
+		new Voidling(game, 864, -16, "explode"),
+
+		new Voidling(game, 960, -864, "touch"),
+
+		new Voidling(game, 1120, -864, "touch"),
 	];
-	var platforms = [new Platform(game, 800, 272),
-		new Platform(game, 800, 224),
-		new Platform(game, 1536, 272),
-		new Platform(game, 1536, 224),
-		new Platform(game, 864, 80),
-		new Platform(game, 928, 32),
-		new Platform(game, 992, -16),
-		new Platform(game, 1072, -64),
-		new Platform(game, 1072, -160),
-		new Platform(game, 1008, -160),
-		new Platform(game, 944, -160),
-		new Platform(game, 880, -160),
-		new Platform(game, 816, -160, 0, -1, 32 * 3.5), //VERTICAL
-		new Platform(game, 880, -320),
-		new Platform(game, 944, -320),
-		new Platform(game, 1008, -368),
-		new Platform(game, 1072, -416),
-		new Platform(game, 1136, -464),
-		new Platform(game, 1200, -512),
-		new Platform(game, 1264, -512, 1, 0, 32 * 3.5), //HORIZONTAL
-		new Platform(game, 1536, -512, 0, 0, 0, 1), //BOUNCY
-		new Platform(game, 1360, -656),
-		new Platform(game, 1296, -656),
-		new Platform(game, 1232, -656),
-		new Platform(game, 1168, -656),
-		new Platform(game, 1104, -656),
-		new Platform(game, 1040, -656),
-		new Platform(game, 976, -656),
-		new Platform(game, 912, -656, 0, -1, 32 * 5), //VERTICAL
-		new Platform(game, 848, -864),
-		new Platform(game, 784, -864),
-		new Platform(game, 912, -912),
-		new Platform(game, 976, -912, 1, 0, 32 * 3.5), //HORIZONTAL
-		new Platform(game, 1264, -912),
-		new Platform(game, 1328, -912),
-		new Platform(game, 1392, -912),
-		new Platform(game, 1456, -912),
-		new Platform(game, 1520, -912),
-		new Platform(game, 1584, -912),
-		new Platform(game, 1328, -960),
-		new Platform(game, 1392, -960),
-		new Platform(game, 1456, -960),
-		new Platform(game, 1520, -960),
-		new Platform(game, 1584, -960),
-		new Platform(game, 1392, -1008),
-		new Platform(game, 1456, -1008),
-		new Platform(game, 1520, -1008),
-		new Platform(game, 1584, -1008),
-		new Platform(game, 1456, -1056),
-		new Platform(game, 1520, -1056),
-		new Platform(game, 1584, -1056),
-		new Platform(game, 1520, -1104),
-		new Platform(game, 1584, -1104),
-		new Platform(game, 1536, -1152, 0, 0, 0, 1), //BOUNCY
-		new Platform(game, 800, -1328),
-		new Platform(game, 864, -1328),
-		new Platform(game, 928, -1328),
-		new Platform(game, 992, -1328),
-		new Platform(game, 1056, -1328),
-		new Platform(game, 1120, -1328),
-		new Platform(game, 1184, -1328),
-		new Platform(game, 1248, -1328),
-		new Platform(game, 1312, -1328),
-		new Platform(game, 1376, -1328),
-		new Platform(game, 1440, -1328),
-		new Platform(game, 1504, -1328),
-		new Platform(game, 1568, -1328),
+	var platforms = [
+		
 		new Platform(game, 800, 320),
-		new Platform(game, 1536, 320),
-		new Platform(game, 1536, -704),
-		new Platform(game, 1536, -752),
+		
+		new Platform(game, 800, 272),
+		
+		new Platform(game, 800, 224),
+		
 		new Platform(game, 864, 176),
-		new Platform(game, 928, 128),
-		new Platform(game, 1472, 176),
-		new Platform(game, 1408, 128),
-		new Platform(game, 1472, 80),
-		new Platform(game, 1408, 32),
-		new Platform(game, 1344, -16),
-		new Platform(game, 1280, -64),
-		new Platform(game, 1174, -110)
+		
+		new Platform(game, 928, 176),
+		
+		new Platform(game, 992, 176),
+		
+		new Platform(game, 1056, 176),
+		
+		new Platform(game, 1120, 176),
+		
+		new Platform(game, 1184, 176),
+		
+		new Platform(game, 1248, 176),
+		
+		new Platform(game, 1312, 176),
+		
+		new Platform(game, 1376, 176),
+		
+		new Platform(game, 1440, 176),
+		
+		new Platform(game, 1504, 176, 0, -1, 96), //VERTICAL
+		
+		new Platform(game, 1392, 80),
+		
+		new Platform(game, 1328, 32),
+		
+		new Platform(game, 1072, 32),
+		
+		new Platform(game, 1008, 32),
+		
+		new Platform(game, 944, 32),
+		
+		new Platform(game, 880, 32),
+		
+		new Platform(game, 816, 32),
+		
+		new Platform(game, 752, 32),
+		
+		new Platform(game, 1264, -16),
+		
+		new Platform(game, 1136, -16),
+		
+		new Platform(game, 1200, -64),
+		
+		new Platform(game, 1136, -112),
+		
+		new Platform(game, 1072, -160),
+		
+		new Platform(game, 1008, -160),
+		
+		new Platform(game, 944, -160),
+		
+		new Platform(game, 880, -160),
+		
+		new Platform(game, 816, -160, 0, -1, 160), //VERTICAL
+		
+		new Platform(game, 880, -320),
+		
+		new Platform(game, 944, -320),
+		
+		new Platform(game, 1008, -320),
+		
+		new Platform(game, 1072, -320),
+		
+		new Platform(game, 1136, -320),
+		
+		new Platform(game, 1200, -320),
+		
+		new Platform(game, 1312, -320),
+		
+		new Platform(game, 1424, -368),
+		
+		new Platform(game, 1344, -416),
+		
+		new Platform(game, 1216, -416),
+		
+		new Platform(game, 1088, -416),
+		
+		new Platform(game, 976, -416),
+		
+		new Platform(game, 880, -464),
+		
+		new Platform(game, 1200, -512),
+		
+		new Platform(game, 976, -512),
+		
+		new Platform(game, 1088, -512),
+		
+		new Platform(game, 800, -512),
+		
+		new Platform(game, 1264, -512, 1, 0, 144), //HORIZONTAL
+		
+		new Platform(game, 1536, -512, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 1360, -656),
+		
+		new Platform(game, 1296, -656),
+		
+		new Platform(game, 1232, -656),
+		
+		new Platform(game, 1168, -656),
+		
+		new Platform(game, 1104, -656),
+		
+		new Platform(game, 1040, -656),
+		
+		new Platform(game, 976, -656),
+		
+		new Platform(game, 912, -656, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 1536, -704),
+		
+		new Platform(game, 912, -816),
+		
+		new Platform(game, 976, -816),
+		
+		new Platform(game, 1040, -816),
+		
+		new Platform(game, 1104, -816),
+		
+		new Platform(game, 1168, -816),
+		
+		new Platform(game, 1296, -816),
+		
+		new Platform(game, 1424, -816),
+		
+		new Platform(game, 848, -864),
+		
+		new Platform(game, 784, -864),
+		
+		new Platform(game, 1488, -864),
+		
+		new Platform(game, 1552, -864),
+		
+		new Platform(game, 784, -912),
+		
+		new Platform(game, 784, -960),
+		
+		new Platform(game, 912, -960),
+		
+		new Platform(game, 976, -960),
+		
+		new Platform(game, 1040, -960),
+		
+		new Platform(game, 1104, -960),
+		
+		new Platform(game, 1168, -960),
+		
+		new Platform(game, 1232, -960),
+		
+		new Platform(game, 1296, -960),
+		
+		new Platform(game, 1360, -960),
+		
+		new Platform(game, 1424, -960),
+		
+		new Platform(game, 1488, -960),
+		
+		new Platform(game, 1552, -960),
+		
+		new Platform(game, 1536, -1008),
+		
+		new Platform(game, 1536, -1056),
+		
+		new Platform(game, 1536, -1104),
+		
+		new Platform(game, 1280, -1104),
+		
+		new Platform(game, 1216, -1104),
+		
+		new Platform(game, 1152, -1104),
+		
+		new Platform(game, 1088, -1104),
+		
+		new Platform(game, 1024, -1104),
+		
+		new Platform(game, 1472, -1104, 1, 0, 80), //HORIZONTAL
+		
+		new Platform(game, 960, -1152),
+		
+		new Platform(game, 896, -1200),
+		
+		new Platform(game, 1120, -1200, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 960, -1248),
+		
+		new Platform(game, 800, -1328),
+		
+		new Platform(game, 864, -1328),
+		
+		new Platform(game, 928, -1328),
+		
+		new Platform(game, 992, -1328),
+		
+		new Platform(game, 1056, -1328),
+		
+		new Platform(game, 1120, -1328),
+		
+		new Platform(game, 1184, -1328),
+		
+		new Platform(game, 1248, -1328),
+		
+		new Platform(game, 1312, -1328),
+		
+		new Platform(game, 1376, -1328),
+		
+		new Platform(game, 1440, -1328),
+		
+		new Platform(game, 1504, -1328),
+		
+		new Platform(game, 1568, -1328),
+
 	];
 	for (i = 0; i < platforms.length; i++) {
 		var p = platforms[i];
@@ -610,6 +785,10 @@ function createPlatforms(game) {
 	}
 	for (i = 0; i < voidlings.length; i++) {
 		var v = voidlings[i];
+		game.addEntity(v);
+	}
+	for (i = 0; i < powerups.length; i++) {
+		var v = powerups[i];
 		game.addEntity(v);
 	}
 }
@@ -1029,6 +1208,58 @@ Arrow.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 };
 
+function Powerup(game, x, y, type) {
+	this.step = 0;
+    
+	this.x = x;
+	this.y = y;
+	
+    this.hitBoxDef = {
+    	width: 32, height: 32, offsetX: 0, offsetY: 0, growthX: 0, growthY: 0
+    };
+    this.hitBox = {
+    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
+		y: this.y + this.hitBoxDef.offsetY,
+		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
+		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
+	};
+    Entity.call(this, game, x, y);
+}
+
+Powerup.prototype.update = function () {
+	//only update when in the screen
+	if (this.x >= this.game.liveCamera.x - 50 && this.x <= this.game.liveCamera.x + this.game.liveCamera.width + 50
+			&& this.y >= this.game.liveCamera.y -50 && this.y <= this.game.liveCamera.y + this.game.liveCamera.height + 50) {
+		this.game.addEntity(new Particle(IMG_PART, this.x, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
+			new Animation(ASSET_MANAGER.getAsset("./img/pink_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
+        if (checkCollision(this, this.game.player1)) {
+            var hitSound = new Audio("./sounds/heal.wav");
+            hitSound.volume = 0.1;
+            hitSound.currentTime = 0;
+            hitSound.play();
+            
+            var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                    0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+            var damageText = new TextElement("", "Lucida Console", 25, "green", "black");
+            var damage = 30;
+            damageText.text = damage;
+            damageParticle.other = damageText;
+            this.game.addEntity(damageParticle);
+            this.game.player1.currentHealth += damage;
+            if (this.game.player1.currentHealth >= this.game.player1.maxHealth) {
+            	this.game.player1.currentHealth = this.game.player1.maxHealth;
+            }
+            this.removeFromWorld = true;
+        }
+	}
+    Entity.prototype.update.call(this);
+};
+
+Powerup.prototype.draw = function (ctx) {
+    //ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
+    Entity.prototype.draw.call(this);
+}
+
 function Voidling(game, x, y, voidlingType) {
     
 	this.step = 0;
@@ -1087,7 +1318,9 @@ Voidling.prototype.update = function() {
     }
     
     if (this.attackable) {
-        if (this.type == "explode") {
+    	if (this.game.player1.y >= this.y + 30) {
+    		//don't hit the head
+    	} else if (this.type == "explode") {
             if (checkCollision(this, this.game.player1)) {
                 if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
                     this.currentHealth = 0;
