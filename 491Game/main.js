@@ -1037,6 +1037,7 @@ function Voidling(game, x, y, voidlingType) {
     this.dead = false;
     this.attackable = true;
     this.walkSpeed = 2;
+    this.attackableTimer = 0;
     
     if (voidlingType == "touch") {
         this.walkSpeed = 4;
@@ -1078,70 +1079,78 @@ function Voidling(game, x, y, voidlingType) {
 }
 
 Voidling.prototype.update = function() {
+    if (this.attackableTimer > 0) {
+        this.attackableTimer--;
+        if (this.attackableTimer <= 0) {
+            this.attackable = true;
+        }
+    }
     
-    if (this.type == "explode") {
-        if (checkCollision(this, this.game.player1)) {
-            if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
-                this.currentHealth = 0;
-                var hitSound = new Audio("./sounds/lightning.wav");
-                hitSound.volume = 0.1;
-                hitSound.currentTime = 0;
-                hitSound.play();
-                
-                this.game.player1.vulnerable = false;
-                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                var damage = this.explosionDamage;
-                damageText.text = damage;
-                damageParticle.other = damageText;
-                this.game.addEntity(damageParticle);
-                this.game.player1.currentHealth -= this.explosionDamage;
-                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
-                this.game.player1.hitByAttack = true;   
-                if (this.lastDirection == "Left") {
-                    this.game.player1.xVelocity = -2;
-                    this.game.player1.lastDirection = "Right";
-                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
-                } else if (this.lastDirection == "Right") {
-                    this.game.player1.xVelocity = 2;
-                    this.game.player1.lastDirection = "Left";
-                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+    if (this.attackable) {
+        if (this.type == "explode") {
+            if (checkCollision(this, this.game.player1)) {
+                if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
+                    this.currentHealth = 0;
+                    var hitSound = new Audio("./sounds/lightning.wav");
+                    hitSound.volume = 0.1;
+                    hitSound.currentTime = 0;
+                    hitSound.play();
+                    
+                    this.game.player1.vulnerable = false;
+                    var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                            0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                    var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                    var damage = this.explosionDamage;
+                    damageText.text = damage;
+                    damageParticle.other = damageText;
+                    this.game.addEntity(damageParticle);
+                    this.game.player1.currentHealth -= this.explosionDamage;
+                    this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                    this.game.player1.hitByAttack = true;   
+                    if (this.lastDirection == "Left") {
+                        this.game.player1.xVelocity = -2;
+                        this.game.player1.lastDirection = "Right";
+                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                    } else if (this.lastDirection == "Right") {
+                        this.game.player1.xVelocity = 2;
+                        this.game.player1.lastDirection = "Left";
+                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                    }
                 }
             }
-        }
-    } else if (this.type == "touch") {
-        if (checkCollision(this, this.game.player1)) {
-            if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
-                var hitSound = new Audio("./sounds/punch.mp3");
-                hitSound.volume = 0.5;
-                hitSound.currentTime = 0;
-                hitSound.play();
-                
-                this.game.player1.vulnerable = false;
-                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                var damage = this.touchDamage;
-                damageText.text = damage;
-                this.walkSpeed *= -1;
-                damageParticle.other = damageText;
-                this.game.addEntity(damageParticle);
-                this.game.player1.currentHealth -= this.touchDamage;
-                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
-                this.game.player1.hitByAttack = true;   
-                if (this.lastDirection == "Left") {
-                    this.game.player1.xVelocity = -2;
-                    this.game.player1.lastDirection = "Right";
-                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
-                } else if (this.lastDirection == "Right") {
-                    this.game.player1.xVelocity = 2;
-                    this.game.player1.lastDirection = "Left";
-                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+        } else if (this.type == "touch") {
+            if (checkCollision(this, this.game.player1)) {
+                if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
+                    var hitSound = new Audio("./sounds/punch.mp3");
+                    hitSound.volume = 0.5;
+                    hitSound.currentTime = 0;
+                    hitSound.play();
+                    
+                    this.game.player1.vulnerable = false;
+                    var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                            0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                    var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                    var damage = this.touchDamage;
+                    damageText.text = damage;
+                    this.walkSpeed *= -1;
+                    damageParticle.other = damageText;
+                    this.game.addEntity(damageParticle);
+                    this.game.player1.currentHealth -= this.touchDamage;
+                    this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                    this.game.player1.hitByAttack = true;   
+                    if (this.lastDirection == "Left") {
+                        this.game.player1.xVelocity = -2;
+                        this.game.player1.lastDirection = "Right";
+                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                    } else if (this.lastDirection == "Right") {
+                        this.game.player1.xVelocity = 2;
+                        this.game.player1.lastDirection = "Left";
+                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                    }
                 }
             }
+            
         }
-        
     }
     
     if (this.currentHealth <= 0 && !this.dead) {
@@ -1233,6 +1242,9 @@ Voidling.prototype.update = function() {
 
 Voidling.prototype.draw = function (ctx) {
 	ctx.globalAlpha = 1;
+    if (!this.attackable) {
+        ctx.globalAlpha = 0.5;
+    }
 	if (!this.dead) {
 		if (this.walkSpeed > 0)
 			this.walkAnimation = this.walkAnimationRight;
@@ -1248,6 +1260,7 @@ Voidling.prototype.draw = function (ctx) {
 	};
 	drawHitBox(this, ctx);
 	Entity.prototype.draw.call(this);
+	ctx.globalAlpha = 1;
 }
 
 function Malzahar(game) {
@@ -1338,9 +1351,21 @@ Malzahar.prototype.update = function() {
             var random = Math.floor(Math.random() * 2);
             if (random == 0) {
                 var voidling = new Voidling(this.game, this.hitBox.x, this.hitBox.y + this.hitBox.height - 50, "touch");
+                voidling.attackable = false;
+                if (this.game.player1.hitBox.x + this.game.player1.hitBox.width < this.hitBox.x) {
+                    voidling.lastDirection = "left";
+                    voidling.walkSpeed *= -1;
+                }
+                voidling.attackableTimer = 50;
                 this.game.addEntity(voidling);
             } else {
                 var voidling = new Voidling(this.game, this.hitBox.x, this.hitBox.y + this.hitBox.height - 50, "explode");
+                voidling.attackable = false;
+                if (this.game.player1.hitBox.x + this.game.player1.hitBox.width < this.hitBox.x) {
+                    voidling.lastDirection = "left";
+                    voidling.walkSpeed *= -1;
+                }
+                voidling.attackableTimer = 50;
                 this.game.addEntity(voidling);
             }
             
@@ -2345,7 +2370,7 @@ Character.prototype.update = function () {
         if ((that.hitBox.x + that.hitBox.width) > currentPlatform.hitBox.x) {
             if (that.hitBox.x < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
                 if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed <= currentPlatform.hitBox.y) {
-                    if ((that.hitBox.y + that.hitBox.height - (that.yVelocity - that.gravity )) + currentPlatform.vSpeed >= currentPlatform.hitBox.y) {
+                    if ((that.hitBox.y + that.hitBox.height - (that.yVelocity - that.gravity )) >= currentPlatform.hitBox.y) {
                         platformFound = true;
                         if (currentPlatform.specialId === 1) { //bouncy platform
                         	that.yVelocity = 15;
