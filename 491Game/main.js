@@ -1976,6 +1976,7 @@ Character.prototype.update = function () {
                 this.canControl = true;
                 this.xVelocity = 0;
                 this.hurt = false;
+                this.hitByAttack = false;
             }
         }
         if (!this.canControl && !this.vulnerable) {
