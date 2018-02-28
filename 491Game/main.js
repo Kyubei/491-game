@@ -1,5 +1,6 @@
 var soundOn = true;
-var showHitBox = true;
+var showHitBox = false;
+var speedText = false;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -516,10 +517,10 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
 
 function createPlatforms(game) {
 	var voidlings = [
-		new Voidling(game, 944, -208),
-		new Voidling(game, 992, -704),
-		new Voidling(game, 1152, -704),
-		new Voidling(game, 1312, -704)
+		new Voidling(game, 944, -208, "explode"),
+		new Voidling(game, 992, -704, "explode"),
+		new Voidling(game, 1152, -704, "explode"),
+		new Voidling(game, 1312, -704, "explode")
 	];
 	var platforms = [new Platform(game, 800, 272),
 		new Platform(game, 800, 224),
@@ -655,7 +656,11 @@ TextBox.prototype.update = function() {
         	}
 		}
 	}
-	if (this.step % 8 === 0) {
+    var textSpeed = 8;
+    if (speedText) {
+        textSpeed = 2;
+    }
+	if (this.step % textSpeed === 0) {
 		this.progress++;
 		if (this.progress >= this.text.length) {
 			this.showText = this.text;
@@ -1028,7 +1033,7 @@ Arrow.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 };
 
-function Voidling(game, x, y) {
+function Voidling(game, x, y, voidlingType) {
     
 	this.step = 0;
     
@@ -1036,6 +1041,10 @@ function Voidling(game, x, y) {
     this.dead = false;
     this.attackable = true;
     this.walkSpeed = 2;
+    this.type = voidlingType;
+    this.lastDirection = "Right";
+    
+    this.explosionDamage = 20;
 	
 	this.x = x;
 	this.y = y;
@@ -1061,6 +1070,40 @@ function Voidling(game, x, y) {
 }
 
 Voidling.prototype.update = function() {
+    
+    if (this.type == "explode") {
+        if (checkCollision(this, this.game.player1)) {
+            if (this.game.player1.vulnerable && !this.game.player1.attacking) {
+                this.currentHealth = 0;
+                var hitSound = new Audio("./sounds/lightning.wav");
+                hitSound.volume = 0.1;
+                hitSound.currentTime = 0;
+                hitSound.play();
+                
+                this.game.player1.vulnerable = false;
+                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                var damage = this.explosionDamage;
+                damageText.text = damage;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                this.game.player1.currentHealth -= this.explosionDamage;
+                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                this.game.player1.hitByAttack = true;   
+                if (this.lastDirection == "Left") {
+                    this.game.player1.xVelocity = -2;
+                    this.game.player1.lastDirection = "Right";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                } else if (this.lastDirection == "Right") {
+                    this.game.player1.xVelocity = 2;
+                    this.game.player1.lastDirection = "Left";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                }
+            }
+        }
+    }
+    
     if (this.currentHealth <= 0 && !this.dead) {
         this.dead = true;
         this.attackable = false;
@@ -1076,26 +1119,55 @@ Voidling.prototype.update = function() {
     }
     var that = this;
     var switchDirection = false;
+    
+    var platformFound = false;
     this.game.currentMap.platforms.forEach(function(currentPlatform) {
-    	var platformFound = false;
-        if ((that.hitBox.x + that.hitBox.width) > currentPlatform.hitBox.x) {
-            if (that.hitBox.x < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed <= currentPlatform.hitBox.y) {
-                    if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed >= currentPlatform.hitBox.y) {
-                        platformFound = true;
+        if (currentPlatform.hSpeed == 0 && currentPlatform.vSpeed == 0) {
+            if (that.hitBox.x > currentPlatform.hitBox.x) {
+                if (that.hitBox.x <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+                    if (that.hitBox.y <= currentPlatform.hitBox.y) {
+                        if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
+                            platformFound = true;
+                        }
+                    }
+                }
+            } else {
+                var platformFound2 = false;
+                that.game.currentMap.platforms.forEach(function(currentPlatform2) {
+                    if (currentPlatform.hitBox.x - 2 >= currentPlatform2.hitBox.x) {
+                        if (currentPlatform.hitBox.x - 2 <= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width) {
+                            if (currentPlatform.hitBox.y + 2 >= currentPlatform2.hitBox.y) {
+                                if (currentPlatform.hitBox.y + 2 <= currentPlatform2.hitBox.y + currentPlatform2.hitBox.height) {
+                                    if (currentPlatform2.hSpeed == 0 && currentPlatform2.vSpeed == 0) {
+                                        platformFound2 = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                if (platformFound2) {
+                    if (that.hitBox.x <= currentPlatform.hitBox.x && that.hitBox.x + that.hitBox.width >= currentPlatform.hitBox.x) {
+                        if (that.hitBox.x + that.hitBox.width <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+                            if (that.hitBox.y <= currentPlatform.hitBox.y) {
+                                if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
+                                    platformFound = true;
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        if (platformFound) {
-            switchDirection = true;
-	        if ((that.hitBox.x + that.hitBox.width + that.walkSpeed) > currentPlatform.hitBox.x) {
-	            if (that.hitBox.x + that.walkSpeed < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-	                switchDirection = false;
-	            }
-	        }
-        }
     });
+    
+    if (this.hitBox.y + this.hitBox.height >= 380) {
+        platformFound = true;
+    }
+    if (!platformFound) {
+        switchDirection = true;
+    }
     if (this.x + this.walkSpeed <= this.game.liveCamera.x ||
     		this.x + this.hitBox.width >= this.game.liveCamera.x + this.game.liveCamera.width) {
     	switchDirection = true;
@@ -1105,6 +1177,12 @@ Voidling.prototype.update = function() {
     	that.walkSpeed *= -1;
     }
     this.x += this.walkSpeed;
+    if (this.walkSpeed < 0) {
+        this.lastDirection = "Left";
+    } else {
+        this.lastDirection = "Right";
+    }
+    
 	Entity.prototype.update.call(this);
 }
 
@@ -1786,7 +1864,7 @@ Character.prototype.update = function () {
  		this.game.currentPhase = 8;
 	}
     if (this.game.currentPhase === 10) {
-        if (this.game.liveCamera.y <= -120 && this.game.liveCamera.y > -500 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
+        if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
             this.currentHealth = 0;
         }
     }
@@ -2088,7 +2166,7 @@ Character.prototype.update = function () {
                     }
                 });
                 if (this.attacking) {
-                    if ((collision && this.game.currentPhase != 0) || !collision || (collision && this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
+                    if ((collision && this.game.currentPhase != 0) || !collision || (collision && this.game.currentPhase != 0 && this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
                         this.x += this.runSpeed;
                     } 
                 }
@@ -2101,7 +2179,7 @@ Character.prototype.update = function () {
                     }
                 });
                 if (this.attacking) {
-                    if (!collision || (collision && this.hitBox.x < this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
+                    if (!collision && this.game.currentPhase != 0 || !collision || (collision && this.game.currentPhase != 0 && this.hitBox.x < this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
                         this.x -= this.runSpeed;
                     }
                 }            
@@ -2376,7 +2454,7 @@ ASSET_MANAGER.downloadAll(function () {
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
     var map1 = new Map1(gameEngine);
-    var voidling = new Voidling(gameEngine, 313, 336);
+    var voidling = new Voidling(gameEngine, 313, 336, "explode");
     
 
     gameEngine.addEntity(bg);
