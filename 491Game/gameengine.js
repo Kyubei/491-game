@@ -47,6 +47,7 @@ GameEngine.prototype.init = function (ctx) {
 	this.currentBoss = null;
     this.currentMap = null;
     this.UI = null;
+    this.textSpeed = 8;
     this.step = 0;
     this.cameraLock = true;
     this.cameraSpeed = 5;
@@ -95,7 +96,9 @@ GameEngine.prototype.startInput = function () {
 			that.player1.attackInput = 1;
 		} else if (String.fromCharCode(e.which) === 'U') {
 			that.player1.attackInput = 2;
-		}
+		} else if (String.fromCharCode(e.which) === ' ') {
+            that.textSpeed = 3;
+        }
         if (String.fromCharCode(e.which) === 'R') {
 			that.r = true;
 		}
@@ -117,13 +120,16 @@ GameEngine.prototype.startInput = function () {
         if (String.fromCharCode(e.which) === 'Y' || String.fromCharCode(e.which) === 'U') {
 			that.player1.attackInput = 0;
 		}
+        if (String.fromCharCode(e.which) === ' ') {
+            that.textSpeed = 8;
+        }
         e.preventDefault();
     }, false);
     console.log('Input started');
 };
 
 GameEngine.prototype.addEntity = function (entity) {
-    console.log('Added Entity');
+    //console.log('Added Entity');
     this.entities.push(entity);
 };
 

@@ -1,6 +1,5 @@
 var soundOn = true;
 var showHitBox = false;
-var speedText = false;
 
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
@@ -125,6 +124,7 @@ Background.prototype.update = function () {
 Background.prototype.draw = function (ctx) {
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 0, 0);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 800, 0);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 1600, 0);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background2.png"), 800 - 100, 0 - 855);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 2);
     Entity.prototype.draw.call(this);
@@ -518,8 +518,8 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
 function createPlatforms(game) {
 	var voidlings = [
 		new Voidling(game, 944, -208, "explode"),
-		new Voidling(game, 992, -704, "explode"),
-		new Voidling(game, 1152, -704, "explode"),
+		new Voidling(game, 992, -704, "touch"),
+		new Voidling(game, 1152, -704, "touch"),
 		new Voidling(game, 1312, -704, "explode")
 	];
 	var platforms = [new Platform(game, 800, 272),
@@ -656,11 +656,7 @@ TextBox.prototype.update = function() {
         	}
 		}
 	}
-    var textSpeed = 8;
-    if (speedText) {
-        textSpeed = 2;
-    }
-	if (this.step % textSpeed === 0) {
+	if (this.step % this.game.textSpeed === 0) {
 		this.progress++;
 		if (this.progress >= this.text.length) {
 			this.showText = this.text;
@@ -672,10 +668,10 @@ TextBox.prototype.update = function() {
 			var c = this.showText.charAt(this.progress - 1);
 			if (c === '?' || (c.toLowerCase() != c.toUpperCase())) { //it's a character
 			    var sound = new Audio("./sounds/chat.wav");
-			    sound.volume = 0.5;
+			    sound.volume = 0.4;
 			    if (this.image.indexOf("Riven") !== -1) {
 			    	sound = new Audio("./sounds/chat2.wav");
-                    sound.volume = 0.2;
+                    sound.volume = 0.1;
 			    }
 			    sound.play();
 			}
@@ -1041,16 +1037,28 @@ function Voidling(game, x, y, voidlingType) {
     this.dead = false;
     this.attackable = true;
     this.walkSpeed = 2;
+    
+    if (voidlingType == "touch") {
+        this.walkSpeed = 4;
+    }
+    
     this.type = voidlingType;
     this.lastDirection = "Right";
     
     this.explosionDamage = 20;
+    this.touchDamage = 10;
 	
 	this.x = x;
 	this.y = y;
 
     this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingRight.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
     this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingLeft.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
+    
+    if (voidlingType == "explode") {
+        this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingRightExplode.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
+        this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingLeftExplode.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
+    }
+    
     this.walkAnimation = this.walkAnimationLeft;
 
     this.maxHealth = 4.0;
@@ -1073,7 +1081,7 @@ Voidling.prototype.update = function() {
     
     if (this.type == "explode") {
         if (checkCollision(this, this.game.player1)) {
-            if (this.game.player1.vulnerable && !this.game.player1.attacking) {
+            if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
                 this.currentHealth = 0;
                 var hitSound = new Audio("./sounds/lightning.wav");
                 hitSound.volume = 0.1;
@@ -1102,9 +1110,45 @@ Voidling.prototype.update = function() {
                 }
             }
         }
+    } else if (this.type == "touch") {
+        if (checkCollision(this, this.game.player1)) {
+            if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
+                var hitSound = new Audio("./sounds/punch.mp3");
+                hitSound.volume = 0.5;
+                hitSound.currentTime = 0;
+                hitSound.play();
+                
+                this.game.player1.vulnerable = false;
+                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                var damage = this.touchDamage;
+                damageText.text = damage;
+                this.walkSpeed *= -1;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                this.game.player1.currentHealth -= this.touchDamage;
+                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                this.game.player1.hitByAttack = true;   
+                if (this.lastDirection == "Left") {
+                    this.game.player1.xVelocity = -2;
+                    this.game.player1.lastDirection = "Right";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                } else if (this.lastDirection == "Right") {
+                    this.game.player1.xVelocity = 2;
+                    this.game.player1.lastDirection = "Left";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                }
+            }
+        }
+        
     }
     
     if (this.currentHealth <= 0 && !this.dead) {
+        var deathSound = new Audio("./sounds/Death.mp3");
+        deathSound.volume = 0.1;
+        deathSound.currentTime = 0;
+        deathSound.play();
         this.dead = true;
         this.attackable = false;
         this.solid = false;
@@ -1223,12 +1267,14 @@ function Malzahar(game) {
     
     this.attackEnabled = false;
     this.dead = false;
-    this.solid = true;
+    this.solid = false;
     this.attackable = true;
     this.state = "idle";
     this.walkSpeed = 2;
 	this.lastDirection = "Left";
     this.autoDamage = 30;
+    this.spawnCount = 0;
+    this.spawnTimer = 0;
     
     this.destinationX = -1;
     this.walkToDestination = false;
@@ -1279,6 +1325,29 @@ function Malzahar(game) {
 }
 
 Malzahar.prototype.update = function() {
+    if (this.spawnTimer >= 0 && this.spawnCount > 0) {
+        if (this.spawnTimer <= 0) {
+            this.spawnTimer = 50;
+            this.spawnCount--;
+            
+            var hitSound = new Audio("./sounds/Spawn.mp3");
+            hitSound.volume = 0.1;
+            hitSound.currentTime = 0;
+            hitSound.play();
+            
+            var random = Math.floor(Math.random() * 2);
+            if (random == 0) {
+                var voidling = new Voidling(this.game, this.hitBox.x, this.hitBox.y + this.hitBox.height - 50, "touch");
+                this.game.addEntity(voidling);
+            } else {
+                var voidling = new Voidling(this.game, this.hitBox.x, this.hitBox.y + this.hitBox.height - 50, "explode");
+                this.game.addEntity(voidling);
+            }
+            
+        }
+        this.spawnTimer--;
+        
+    }
     if (this.game.currentPhase === 1) {
     	this.game.currentBoss = this;
     }
@@ -1308,13 +1377,12 @@ Malzahar.prototype.update = function() {
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
-	            if (this.attackIndex != 2) //no delay after scream
-	                this.idleTimer = this.idleTimerMax;   
+                if (this.attackIndex == 2) {
+                    this.idleTimer = this.idleTimerMax * 1.5;
+                } else {
+                    this.idleTimer = this.idleTimerMax;
+                }                    
 	            this.attackAnimation.elapsedTime = 0;
-	            this.hitBoxDef.growthX = 0;
-	            this.hitBoxDef.growthY = 0;
-	            this.attackable = true;
-	            this.game.player1.hitByAttack = false;
 	        }
 	    }
 	    if (this.state != "attacking") {
@@ -1364,30 +1432,36 @@ Malzahar.prototype.update = function() {
 	                    this.walkToDestination = false;
 	                }
 	            } else if (distance === 0 && !this.walkToDestination && this.energy === 0) { //attack if not walking or charging attack
-
-	                var particle = new Particle(VOID_PORTAL, this.game.player1.x + this.game.player1.hitBox.width / 2, this.y + 150, 
-	                        0, 0, 0, 0, 0, 0, 0, 200, 0, 10, 0, 0, false, this.game);
-	                var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
-	                particle.other = element;
-	                particle.attackId = 1; //void ball
-	                this.game.addEntity(particle);
-	                var hitSound = new Audio("./sounds/chargedburst.wav");
-	                hitSound.volume = 1;
-	                hitSound.currentTime = 0;
-	                hitSound.play();
-	                
-	                this.state = "attacking";
-	                this.attackIndex = 1; //basic attack
-	                if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
-	                    this.lastDirection = "Right";
-	                } else {
-	                    this.lastDirection = "Left";
-	                }
-	                if (this.lastDirection == "Left") {
-	                    this.attackAnimation = this.attackAnimationLeft;
-	                } else {
-	                    this.attackAnimation = this.attackAnimationRight;
-	                }
+                    var random = Math.floor(Math.random() * 4);
+                    if (random == 0) {
+                        this.spawnCount = 3;
+                        this.spawnTimer = 0;
+                        this.state = "attacking";
+                        this.attackIndex = 2;
+                    } else {
+                        var particle = new Particle(VOID_PORTAL, this.game.player1.x + this.game.player1.hitBox.width / 2, this.y + 150, 
+                                0, 0, 0, 0, 0, 0, 0, 200, 0, 10, 0, 0, false, this.game);
+                        var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
+                        particle.other = element;
+                        particle.attackId = 1; //void ball
+                        this.game.addEntity(particle);
+                        var hitSound = new Audio("./sounds/chargedburst.wav");
+                        hitSound.volume = 1;
+                        hitSound.currentTime = 0;
+                        hitSound.play();
+                        this.state = "attacking";
+                        this.attackIndex = 1; //basic attack
+                        if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
+                            this.lastDirection = "Right";
+                        } else {
+                            this.lastDirection = "Left";
+                        }
+                        if (this.lastDirection == "Left") {
+                            this.attackAnimation = this.attackAnimationLeft;
+                        } else {
+                            this.attackAnimation = this.attackAnimationRight;
+                        }
+                    }
 	            }
 	        }
 	    }
@@ -2166,7 +2240,7 @@ Character.prototype.update = function () {
                     }
                 });
                 if (this.attacking) {
-                    if ((collision && this.game.currentPhase != 0) || !collision || (collision && this.game.currentPhase != 0 && this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
+                    if (collision && this.game.currentPhase != 0 || !collision || this.hitBox.x >= this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2)) {
                         this.x += this.runSpeed;
                     } 
                 }
@@ -2179,7 +2253,7 @@ Character.prototype.update = function () {
                     }
                 });
                 if (this.attacking) {
-                    if (!collision && this.game.currentPhase != 0 || !collision || (collision && this.game.currentPhase != 0 && this.hitBox.x < this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2))) {
+                    if (!collision && this.game.currentPhase != 0 || !collision || this.hitBox.x < this.game.currentBoss.hitBox.x + (this.game.currentBoss.hitBox.width / 2)) {
                         this.x -= this.runSpeed;
                     }
                 }            
@@ -2423,6 +2497,8 @@ ASSET_MANAGER.queueDownload("./img/Malzahar/ERight.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/ELeft.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/VoidlingRight.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/VoidlingLeft.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/VoidlingLeftExplode.png");
+ASSET_MANAGER.queueDownload("./img/Malzahar/VoidlingRightExplode.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/MalzaharPortrait.png");
 
 ASSET_MANAGER.queueDownload("./img/Background.png");
@@ -2454,9 +2530,8 @@ ASSET_MANAGER.downloadAll(function () {
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
     var map1 = new Map1(gameEngine);
-    var voidling = new Voidling(gameEngine, 313, 336, "explode");
+    var voidling = new Voidling(gameEngine, 313, 330, "touch");
     
-
     gameEngine.addEntity(bg);
     gameEngine.addEntity(map1);
     gameEngine.addEntity(character);
