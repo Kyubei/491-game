@@ -787,7 +787,7 @@ function createPlatforms(game) {
 		
 		new Platform(game, 1024, -1104),
 		
-		new Platform(game, 1472, -1104, 1, 0, 80), //HORIZONTAL
+		new Platform(game, 1472, -1104, -1, 0, 80), //HORIZONTAL
 		
 		new Platform(game, 960, -1152),
 		
