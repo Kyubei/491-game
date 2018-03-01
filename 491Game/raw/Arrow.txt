@@ -1,0 +1,40 @@
+
+function Arrow(x, y, game) {
+    this.animation = new Animation(ASSET_MANAGER.getAsset("./img/arrow.png"), 0, 0, 184, 29, 0.1, 1, true, false, 0, 0);
+    this.startAnimation = new Animation(ASSET_MANAGER.getAsset("./img/arrow_start.png"), 0, 0, 184, 29, 0.05, 10, false, false, 0, 0);
+	this.starting = true;
+	this.travelX = 0;
+    Entity.call(this, game, x, y);
+}
+
+Arrow.prototype = new Entity();
+Arrow.prototype.constructor = Arrow;
+
+Arrow.prototype.update = function() {
+	if (this.starting) {
+        if (this.startAnimation.isDone()) {
+            this.startAnimation.elapsedTime = 0;
+            this.starting = false;
+        }
+	}
+	
+	this.game.addEntity(new Particle(IMG_PART, this.x + this.travelX, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
+		new Animation(ASSET_MANAGER.getAsset("./img/pink_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
+	if (!this.starting) {
+		this.x += 12;
+		this.travelX += 6;
+	}
+	if (this.x >= 850)
+		this.removeFromWorld = true;
+	
+    Entity.prototype.update.call(this);
+};
+
+Arrow.prototype.draw = function (ctx) {
+    if (this.starting) {
+        //this.startAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.startAnimation.offsetX, this.y + this.startAnimation.offsetY);
+    } else {
+        //this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX, this.y + this.animation.offsetY);
+    }
+    Entity.prototype.draw.call(this);
+};

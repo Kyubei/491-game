@@ -1,6 +1,81 @@
+/**
+    Variables for testing
+*/
+
 var soundOn = true;
 var showHitBox = false;
 
+/**
+    General Variables
+*/
+
+// Booleans
+var musicFadingOut = false;
+var musicFadingIn = false;
+// Numbers
+var bossMusicVolume = 0.1;
+var COMBO_DROPOFF_TIME = 5;
+var IMG_PART = 1;
+var PART_SECONDARY = 2;
+var TEXT_PART = 3;
+var SHAPE_PART = 4;
+var VOID_BALL = 5;
+var PART_GENERATOR = 6;
+var VOID_PORTAL = 7;
+var VOID_ERUPTION = 8;
+var IMG_FLASH_PART = 9;
+// Sounds
+var bossMusic = new Audio("./sounds/map1BGMusic.mp3");
+bossMusic.loop = true;
+bossMusic.volume = bossMusicVolume;
+var climbMusic = new Audio("./sounds/malz.mp3");
+climbMusic.loop = true;
+climbMusic.volume = 0.2;
+var earthRumble = new Audio("./sounds/earth_rumble.wav");
+earthRumble.loop = true;
+earthRumble.volume = 0.4;
+var healSound = new Audio("./sounds/heal.wav");
+healSound.volume = 0.1;
+var reksaiProjectileSound = new Audio("./sounds/rekProjHit.wav");
+reksaiProjectileSound.volume = 0.1;
+var lightningSound = new Audio("./sounds/lightning.wav");
+lightningSound.volume = 0.1;
+var hitSound = new Audio("./sounds/punch.mp3");
+hitSound.volume = 0.5;
+var voidlingDeathSound = new Audio("./sounds/Death.mp3");
+voidlingDeathSound.volume = 0.1;
+var screamSound = new Audio("./sounds/rekScream.wav");
+screamSound.volume = 0.1;
+var shootSound = new Audio("./sounds/rekShoot.wav");
+shootSound.volume = 0.1;
+var spawnSound = new Audio("./sounds/Spawn.mp3");
+spawnSound.volume = 0.1;
+var disappearSound = new Audio("./sounds/disappear.mp3");
+disappearSound.volume = 1.0;
+var footsteps = new Audio("./sounds/footsteps.mp3");
+footsteps.loop = true;
+footsteps.volume = 0;
+if (soundOn) {
+    this.footsteps.play();
+}
+var autoSound = new Audio("./sounds/rivenAuto.mp3");
+autoSound.volume = 0.1;
+var q1Sound = new Audio("./sounds/Q1.mp3");
+q1Sound.volume = 0.1;
+var q2Sound = new Audio("./sounds/Q2.mp3");
+q2Sound.volume = 0.1;
+var q3Sound = new Audio("./sounds/Q3.mp3");
+q3Sound.volume = 0.1;
+var eSound = new Audio("./sounds/E.mp3");
+eSound.volume = 0.1;
+var wSound = new Audio("./sounds/W.mp3");
+wSound.volume = 0.1;
+
+/**
+    Useful methods
+*/
+
+// Creates an animation
 function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse, offsetX, offsetY) {
     this.spriteSheet = spriteSheet;
     this.startX = startX;
@@ -17,27 +92,20 @@ function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDu
 	this.offsetY = offsetY || 0;
 }
 
+// Returns whether or not the audio file is playing
 function isPlaying(audio) {
     return !audio.paused;
 }
 
-/**
- * Checks a collision between two entities, adding a bonus X or Y value to the
- * hitboxes of entity 1 if applicable.
- */
+// Checks collision between two entities
 function checkCollision(entity1, entity2) {
-    if ((entity1.hitBox.x + entity1.hitBox.width) > entity2.hitBox.x) {
-        if (entity1.hitBox.x < (entity2.hitBox.x + entity2.hitBox.width)) {
-            if (entity1.hitBox.y < entity2.hitBox.y + entity2.hitBox.height) {
-                if (entity1.hitBox.y + entity1.hitBox.height > entity2.hitBox.y) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
+    var hitBox1 = entity1.hitBox;
+    var hitBox2 = entity2.hitBox;
+    return (hitBox1.x + hitBox1.width > hitBox2.x && hitBox1.x < hitBox2.x + hitBox2.width
+         && hitBox1.y < hitBox2.y + hitBox2.height && hitBox1.y + hitBox1.height > hitBox2.y);
 }
 
+// Returns the distance along the x-axis between two entities. If they collide, the distance is 0
 function getXDistance(entity1, entity2) {
     var distance = 0;
     if (entity1.hitBox.x + entity1.hitBox.width < entity2.hitBox.x) {
@@ -48,40 +116,128 @@ function getXDistance(entity1, entity2) {
     return distance;
 };
 
-function drawHitBox(entity, ctx) {
+// Creates the hitbox for the entity
+function createHitBox(entity) {
     entity.hitBox = {
     	x: entity.x + entity.hitBoxDef.offsetX + (entity.hitBoxDef.growthX < 0 ? entity.hitBoxDef.growthX : 0), 
 		y: entity.y + entity.hitBoxDef.offsetY + (entity.hitBoxDef.growthY < 0 ? entity.hitBoxDef.growthY : 0),
 		width: entity.hitBoxDef.width + Math.abs(entity.hitBoxDef.growthX), 
 		height: entity.hitBoxDef.height + Math.abs(entity.hitBoxDef.growthY)
 	};
-    
+}
+
+// Draws the hitbox of an entity
+function drawHitBox(entity, ctx) {
+    if (entity.hitBoxDef) {
+        entity.hitBox = {
+            x: entity.x + entity.hitBoxDef.offsetX + (entity.hitBoxDef.growthX < 0 ? entity.hitBoxDef.growthX : 0), 
+            y: entity.y + entity.hitBoxDef.offsetY + (entity.hitBoxDef.growthY < 0 ? entity.hitBoxDef.growthY : 0),
+            width: entity.hitBoxDef.width + Math.abs(entity.hitBoxDef.growthX), 
+            height: entity.hitBoxDef.height + Math.abs(entity.hitBoxDef.growthY)
+        };
+    }
     if (showHitBox) {
-        ctx.globalAlpha=0.2;
+        ctx.globalAlpha = 0.2;
         var tempStyle = ctx.fillStyle;
         ctx.fillStyle = "black";
-        ctx.fillRect(entity.hitBox.x,entity.hitBox.y,entity.hitBox.width,entity.hitBox.height); // Hitbox drawing for testing
+        ctx.fillRect(entity.hitBox.x, entity.hitBox.y, entity.hitBox.width, entity.hitBox.height);
         ctx.fillStyle = tempStyle;
-        ctx.globalAlpha=1;
+        ctx.globalAlpha = 1;
     }
 }
 
+// Fades the boss music out
+fadeBossMusicOut = function() {
+    if (!soundOn) { 
+        return; 
+    }
+    if (bossMusic.volume > 0) {
+        musicFadingOut = true;
+    	bossMusic.volume = Math.max(0, bossMusic.volume - 0.01);
+    }
+    if (bossMusic.volume <= 0) {
+        bossMusic.Volume = 0;
+        bossMusic.pause();
+        bossMusic.currentTime = 0;
+        musicFadingOut = false;
+    }
+}
+
+// Fades the boss music in
+fadeBossMusicIn = function() {
+    if (!soundOn) { 
+        return; 
+    }
+    if (!isPlaying(bossMusic)) {
+        bossMusic.play();
+    }
+    if (bossMusic.volume < bossMusicVolume) {
+        musicFadingIn = true;
+    	bossMusic.volume = Math.min(bossMusicVolume, bossMusic.volume + 0.01);
+    }
+    if (bossMusic.volume >= bossMusicVolume) {
+        bossMusic.Volume = bossMusicVolume;
+        musicFadingOut = false;
+    }
+}
+
+// Returns the RGB of a hex color (e.g. #FFFFFF)
+function rgb(color) {
+    return color.match(/\w\w/g).map(function(b){
+    	return parseInt(b,16)
+    });
+}
+
+// Returns a random color, in hex, of two other hex colors.
+function getRandomColor(color1, color2) {
+	var rgb1 = color1.match(/\w\w/g).map(function(b){
+    	return parseInt(b,16)
+    });
+	var rgb2 = color2.match(/\w\w/g).map(function(b){
+    	return parseInt(b,16)
+    });
+	var rgb = []; //the returning rgb
+	for (var i = 0; i < 3; i++) {
+		rgb[i] = rgb1[i] + Math.random()*(rgb2[i]-rgb1[i]) | 0;
+	}
+	return '#' + rgb
+		.map(function(n){ return n.toString(16) })
+	    .map(function(s){ return "00".slice(s.length)+s}).join(''); 
+}
+
+// Returns whether or not the entity is on the screen
+function isOnScreen(entity) {
+	return (entity.x >= entity.game.liveCamera.x - 50 && entity.x <= entity.game.liveCamera.x + entity.game.liveCamera.width + 50
+			&& entity.y >= entity.game.liveCamera.y -50 && entity.y <= entity.game.liveCamera.y + entity.game.liveCamera.height + 50);
+}
+
+// Plays the given audio
+function playSound(audio) {
+    if (!soundOn) {
+        return;
+    }
+    audio.currentTime = 0;
+    audio.play();
+}
+
+/**
+    Animation
+*/
+
+// Draws the frame for an animation
 Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
 	var linger = linger || false;
     var scale = scaleBy || 1;
     this.elapsedTime += tick;
-    if (this.loop) {
-        if (this.isDone()) {
-            this.elapsedTime = 0;
-        }
+    if (this.loop && this.isDone()) {
+        this.elapsedTime = 0;
     } else if (this.isDone() && !linger) {
         return;
     }
     var index = this.reverse ? this.frames - this.currentFrame() - 1 : this.currentFrame();
     var vindex = 0;
-    if (linger) { //stay on the last frame
-        if (index >= this.frames)
-        	index = this.frames - 1;
+    if (linger && index >= this.frames) { // Stay on the last frame
+        index = this.frames - 1;
     }
     if ((index + 1) * this.frameWidth + this.startX > this.spriteSheet.width) {
         index -= Math.floor((this.spriteSheet.width - this.startX) / this.frameWidth);
@@ -103,24 +259,27 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
                   this.frameHeight * scale);
 };
 
+// Returns the current frame of an animation
 Animation.prototype.currentFrame = function () {
     return Math.floor(this.elapsedTime / this.frameDuration);
 };
 
+// Returns whether or not the animation is done
 Animation.prototype.isDone = function () {
     return (this.elapsedTime >= this.totalTime);
 };
 
+/**
+    Background
+*/
+
 function Background(game) {
     Entity.call(this, game, 0, 0);
 }
-
 Background.prototype = new Entity();
 Background.prototype.constructor = Background;
-
 Background.prototype.update = function () {
 };
-
 Background.prototype.draw = function (ctx) {
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 0, 0);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 800, 0);
@@ -130,160 +289,73 @@ Background.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 };
 
+/**
+    UI
+*/
+
 function UI(game) {
-    this.gameOverTransparency = 0;
+    // Number Variables
+    this.gameOverTransparency = 0;  
+    this.barChangingSpeed = 1;  
     
+    // Bottom
 	this.bottomX = 0;
 	this.bottomY = 380;
 	this.bottomWidth = 800;
 	this.bottomHeight = 120;
-	
+    // Player Portrait
 	this.portraitX = 10;
 	this.portraitY = this.bottomY + 10;
 	this.portraitWidth = 100;
 	this.portraitHeight = 100;
-	
+    // Player Health Bar
 	this.bar1X = this.portraitX + this.portraitWidth - 20;
 	this.bar1Y = this.portraitY + 25;
 	this.bar1Width = 150;
 	this.bar1Height = 30;
-	
-	this.bar2X = this.portraitX + this.portraitWidth - 20;
-	this.bar2Y = this.portraitY + 45;
-	this.bar2Width = 150;
-	this.bar2Height = 30;
-	
 	this.healthX = this.bar1X + 5;
 	this.healthY = this.bar1Y + 11;
 	this.healthWidth = this.bar1Width - 8;
 	this.healthHeight = this.bar1Height - 21;
-    
-    this.barChangingSpeed = 1;
-	
+    // Player Stamina Bar
+	this.bar2X = this.portraitX + this.portraitWidth - 20;
+	this.bar2Y = this.portraitY + 45;
+	this.bar2Width = 150;
+	this.bar2Height = 30;
 	this.staminaX = this.bar2X + 5;
 	this.staminaY = this.bar2Y + 11;
 	this.staminaWidth = this.bar2Width - 8;
 	this.staminaHeight = this.bar2Height - 21;
-    
+    // Boss Portrait
     this.bossPortraitX = 150;
     this.bossPortraitY = 20;
     this.bossPortraitWidth = 80;
     this.bossPortraitHeight = 80;
-    
+    // Boss Health Bar
     this.bossBarX = this.bossPortraitX + this.bossPortraitWidth - 12;
     this.bossBarY = this.bossPortraitY + 15;
     this.bossBarWidth = 400;
     this.bossBarHeight = 50;
-    
     this.bossHealthX = this.bossBarX + 10;
     this.bossHealthY = this.bossBarY + 18;
     this.bossHealthWidth = this.bossBarWidth - 20;
     this.bossHealthHeight = this.bossBarHeight - 35;
     
-    this.map1BGMusic = new Audio("./sounds/map1BGMusic.mp3");
-    this.map1BGMusic.loop = true;
-    this.map1BGMusic.volume = 0.1;
-    this.fading = false;
-    this.fadingIn = false;
-    if (soundOn) {
-        this.map1BGMusic.play();
-    }
-	
 	Entity.call(this, game, 0, 0);
 }
 
 UI.prototype = new Entity();
 UI.prototype.constructor = UI;
 
-fadeMusic = function(ui) {
-    if(ui.map1BGMusic.volume > 0) {
-    	ui.map1BGMusic.volume = Math.max(0, ui.map1BGMusic.volume - 0.01);
-        if (ui.map1BGMusic.volume <= 0) {
-        	ui.fading = false;
-            ui.map1BGMusic.pause();
-            ui.map1BGMusic.currentTime = 0;
-        } else {
-            setTimeout(fadeMusic(ui), 2);
-    	}
-    } else {
-    	ui.fading = false;
-        ui.map1BGMusic.currentTime = 0;
-        ui.map1BGMusic.pause();
-    }
-}
-
-fadeMusicIn = function(ui) {
-    ui.map1BGMusic.play();
-    if(ui.map1BGMusic.volume < 0.1) {
-    	ui.map1BGMusic.volume = Math.min(0.1, ui.map1BGMusic.volume + 0.01);
-        if (ui.map1BGMusic.volume >= 0.1) {
-        	ui.fadingIn = false;
-        } else {
-            setTimeout(fadeMusicIn(ui), 2);
-    	}
-    } else {
-        ui.fadingIn = false;
-    }
-}
-
-function updatePlayerResources(entity, ui) {
-    if (entity.currentHealth < 0) {
-        entity.currentHealth = 0;
-    }
-    if (entity.currentHealthTemp > entity.currentHealth) {
-        entity.currentHealthTemp -= ui.barChangingSpeed;
-    }
-    if (Math.abs(entity.currentHealthTemp - entity.currentHealth) <= ui.barChangingSpeed) {
-        entity.currentHealthTemp = entity.currentHealth;
-    }
-    if (entity.currentHealth > entity.currentHealthTemp) {
-        entity.currentHealthTemp = entity.currentHealth;
-    }
-    
-    if (entity.currentStaminaTemp > entity.currentStamina) {
-        entity.currentStaminaTemp -= ui.barChangingSpeed;
-    }
-    if (Math.abs(entity.currentStaminaTemp - entity.currentStamina) <= ui.barChangingSpeed) {
-        entity.currentStaminaTemp = entity.currentStamina;
-    }
-    if (entity.currentStamina > entity.currentStaminaTemp) {
-        entity.currentStaminaTemp = entity.currentStamina;
-    }
-    if (entity.currentStamina === entity.currentStaminaTemp && entity.currentStamina < entity.maxStamina) {
-        entity.currentStamina += entity.staminaRegen;
-        entity.currentStaminaTemp = entity.currentStamina;
-        if (entity.currentStamina > entity.maxStamina) {
-            entity.currentStamina = entity.maxStamina;
-            entity.currentStaminaTemp = entity.maxStamina;
-        }
-    }  
-}
-
-function updateBossResources(entity, ui) {
-    if (entity.currentHealth < 0) {
-        entity.currentHealth = 0;
-    }
-    if (entity.currentHealthTemp > entity.currentHealth) {
-        entity.currentHealthTemp -= ui.barChangingSpeed;
-    }
-    if (Math.abs(entity.currentHealthTemp - entity.currentHealth) <= ui.barChangingSpeed) {
-        entity.currentHealthTemp = entity.currentHealth;
-    }
-    if (entity.currentHealth > entity.currentHealthTemp) {
-        entity.currentHealthTemp = entity.currentHealth;
-    }    
-}
-
-UI.prototype.update = function () {  
-	if (this.game.currentPhase === 1 && !this.fading) {
-		this.fading = true;
-		fadeMusic(this);
-	} else if (this.game.currentPhase === 2 && this.game.currentBoss.attackEnabled && !this.fadingIn) {
-        this.fadingIn = true;
-        fadeMusicIn(this);
-    } else if (this.game.currentPhase === 3 && !this.fading) {
-        this.fading = true;
-        fadeMusic(this);
+UI.prototype.update = function () {
+    if (this.game.currentPhase === 0) {
+        fadeBossMusicIn();
+    } else if (this.game.currentPhase === 1) {
+        fadeBossMusicOut();
+    } else if (this.game.currentPhase === 2 && this.game.currentBoss.attackEnabled) {
+        fadeBossMusicIn();
+    } else if (this.game.currentPhase === 3) {
+        fadeBossMusicOut();
     }
     updatePlayerResources(this.game.player1, this);
     updateBossResources(this.game.currentBoss, this);
@@ -335,7 +407,7 @@ UI.prototype.draw = function (ctx) { //draw ui
         }
         ctx.font = "100px Calibri";
         ctx.fillStyle = "white";
-        ctx.textAlign="center"; 
+        ctx.textAlign = "center"; 
         ctx.fillText("Defeat",400 + this.game.liveCamera.x,250 + this.game.liveCamera.y);
         ctx.globalAlpha = 1.0;
     } else if (this.game.currentBoss.dead) {
@@ -345,8 +417,7 @@ UI.prototype.draw = function (ctx) { //draw ui
         }
         ctx.font = "100px Calibri";
         ctx.fillStyle = "white";
-        ctx.textAlign="center"; 
-        //ctx.fillText("Go ->",400,250);
+        ctx.textAlign = "center"; 
         if (this.game.currentPhase === 0) {
 	        this.game.cameraLock = false;
 	        this.game.camera.maxX = 800;
@@ -359,41 +430,90 @@ UI.prototype.draw = function (ctx) { //draw ui
     Entity.prototype.draw.call(this);	
 };
 
+// Updates given player's resources
+function updatePlayerResources(entity, ui) {
+    if (entity.currentHealth < 0) {
+        entity.currentHealth = 0;
+    }
+    if (entity.currentHealthTemp > entity.currentHealth) {
+        entity.currentHealthTemp -= ui.barChangingSpeed;
+    }
+    if (Math.abs(entity.currentHealthTemp - entity.currentHealth) <= ui.barChangingSpeed) {
+        entity.currentHealthTemp = entity.currentHealth;
+    }
+    if (entity.currentHealth > entity.currentHealthTemp) {
+        entity.currentHealthTemp = entity.currentHealth;
+    }
+    
+    if (entity.currentStaminaTemp > entity.currentStamina) {
+        entity.currentStaminaTemp -= ui.barChangingSpeed;
+    }
+    if (Math.abs(entity.currentStaminaTemp - entity.currentStamina) <= ui.barChangingSpeed) {
+        entity.currentStaminaTemp = entity.currentStamina;
+    }
+    if (entity.currentStamina > entity.currentStaminaTemp) {
+        entity.currentStaminaTemp = entity.currentStamina;
+    }
+    if (entity.currentStamina === entity.currentStaminaTemp && entity.currentStamina < entity.maxStamina) {
+        entity.currentStamina += entity.staminaRegen;
+        entity.currentStaminaTemp = entity.currentStamina;
+        if (entity.currentStamina > entity.maxStamina) {
+            entity.currentStamina = entity.maxStamina;
+            entity.currentStaminaTemp = entity.maxStamina;
+        }
+    }  
+}
+
+// Updates Boss Resources
+function updateBossResources(entity, ui) {
+    if (entity.currentHealth < 0) {
+        entity.currentHealth = 0;
+    }
+    if (entity.currentHealthTemp > entity.currentHealth) {
+        entity.currentHealthTemp -= ui.barChangingSpeed;
+    }
+    if (Math.abs(entity.currentHealthTemp - entity.currentHealth) <= ui.barChangingSpeed) {
+        entity.currentHealthTemp = entity.currentHealth;
+    }
+    if (entity.currentHealth > entity.currentHealthTemp) {
+        entity.currentHealthTemp = entity.currentHealth;
+    }
+}
+
+/**
+    Platform
+*/
 function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId) {
+    // Number Variables
+    this.x = x;
+    this.y = y;
     this.width = 63;
     this.height = 16;
     this.hSpeed = hSpeed || 0;
     this.vSpeed = vSpeed || 0;
     this.switchDelay = switchDelay || 0;
 	this.specialId = specialId || 0;
+    this.step = 0;
+    // Pictures and Animations
     this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/Platform.png");
     if (this.specialId === 1) {
         this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/PlatformBouncy.png");    	
     }
-    this.step = 0;
-    this.x = x;
-    this.y = y;
     
     Entity.call(this, game, x, y);
     
     this.hitBoxDef = {
-    	width: this.width, height: this.height, offsetX: 0, offsetY: 0, growthX: 0
+    	width: this.width, height: this.height, offsetX: 0, offsetY: 0, growthX: 0, growthY: 0
     };
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
-		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height
-	};
+    createHitBox(this);
 }
 
 Platform.prototype = new Entity();
 Platform.prototype.constructor = Platform;
 
 Platform.prototype.update = function () {
-	//only update when in the screen
-	if (this.x >= this.game.liveCamera.x - 50 && this.x <= this.game.liveCamera.x + this.game.liveCamera.width + 50
-			&& this.y >= this.game.liveCamera.y -50 && this.y <= this.game.liveCamera.y + this.game.liveCamera.height + 50) {
+	// Only update when it is visible on the screen
+	if (isOnScreen(this)) {
 		this.step++;
 		if (this.switchDelay > 0 && this.step % this.switchDelay === 0) {
 			this.hSpeed *= -1;
@@ -401,118 +521,41 @@ Platform.prototype.update = function () {
 		}
 	    this.x += this.hSpeed;
 	    this.y += this.vSpeed;
-	    
-	    this.hitBoxDef = {
-	    	width: this.width, height: this.height, offsetX: 0, offsetY: 0, growthX: 0
-	    };
-	    this.hitBox = {
-	    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
-			y: this.y + this.hitBoxDef.offsetY,
-			width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-			height: this.hitBoxDef.height
-		};
 	}
     Entity.prototype.update.call(this);
+    drawHitBox(this);
 };
 
 Platform.prototype.draw = function (ctx) {
     ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
+	drawHitBox(this, ctx);
     Entity.prototype.draw.call(this);
 }
 
-function Map1(game) {
-    Entity.call(this, game, 0, 0);
+/**
+    Map
+*/
+
+function Map(game) {
+    // Starting Platforms at start
     this.platforms = [];
 	this.platforms.push(new Platform(game, 200, 315, 1, 0, 64));
 	this.platforms.push(new Platform(game, 500, 315));
+    
+    Entity.call(this, game, 0, 0);    
 }
 
-Map1.prototype = new Entity();
-Map1.prototype.constructor = UI;
+Map.prototype = new Entity();
+Map.prototype.constructor = UI;
 
-Map1.prototype.update = function () {
+Map.prototype.update = function () {
 };
 
-Map1.prototype.draw = function (ctx) {
+Map.prototype.draw = function (ctx) {
     this.platforms.forEach(function(currentPlatform) {
         currentPlatform.draw(ctx);
     });
     Entity.prototype.draw.call(this);
-}
-
-var COMBO_DROPOFF_TIME = 5;
-
-var IMG_PART = 1;
-var PART_SECONDARY = 2;
-var TEXT_PART = 3;
-var SHAPE_PART = 4;
-var VOID_BALL = 5;
-var PART_GENERATOR = 6;
-var VOID_PORTAL = 7;
-var VOID_ERUPTION = 8;
-var IMG_FLASH_PART = 9;
-
-/**
- * Returns the RGB of a hex color (e.g. #FFFFFF)
- */
-function rgb(color) {
-    return color.match(/\w\w/g).map(function(b){
-    	return parseInt(b,16)
-    });
-}
-
-/**
- * Returns a random color, in hex, of two other hex colors.
- */
-function getRandomColor(color1, color2) {
-	var rgb1 = color1.match(/\w\w/g).map(function(b){
-    	return parseInt(b,16)
-    });
-	var rgb2 = color2.match(/\w\w/g).map(function(b){
-    	return parseInt(b,16)
-    });
-	var rgb = []; //the returning rgb
-	for (var i = 0; i < 3; i++) {
-		rgb[i] = rgb1[i] + Math.random()*(rgb2[i]-rgb1[i]) | 0;
-	}
-	return '#' + rgb
-		.map(function(n){ return n.toString(16) })
-	    .map(function(s){ return "00".slice(s.length)+s}).join(''); 
-}
-
-/**
- * A shape element which is attached to a particle.
- * If the particle.other is not null, the shape is drawn instead of an image.
- */
-function TextBox(game, image, text) {
-	this.image = image;
-	this.text = text;
-	this.showText = "";
-	this.progress = 0;
-	this.step = 0;
-	this.life = -1;
-    Entity.call(this, game, 0, 0);
-}
-
-function wrapText(context, text, x, y, maxWidth, lineHeight) {
-    var words = text.split(' ');
-    var line = '';
-    y += 5;
-
-    for(var n = 0; n < words.length; n++) {
-      var testLine = line + words[n] + ' ';
-      var metrics = context.measureText(testLine);
-      var testWidth = metrics.width;
-      if (testWidth > maxWidth && n > 0) {
-        context.fillText(line, x, y);
-        line = words[n] + ' ';
-        y += lineHeight;
-      }
-      else {
-        line = testLine;
-      }
-    }
-    context.fillText(line, x, y);
 }
 
 function createPlatforms(game) {
@@ -793,6 +836,40 @@ function createPlatforms(game) {
 	}
 }
 
+/**
+    TextBox
+*/
+
+function TextBox(game, image, text) {
+	this.image = image;
+	this.text = text;
+	this.showText = "";
+	this.progress = 0;
+	this.step = 0;
+	this.life = -1;
+    Entity.call(this, game, 0, 0);
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    var words = text.split(' ');
+    var line = '';
+    y += 5;
+
+    for (var n = 0; n < words.length; n++) {
+        var testLine = line + words[n] + ' ';
+        var metrics = context.measureText(testLine);
+        var testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            context.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    context.fillText(line, x, y);
+}
+
 TextBox.prototype.update = function() {
 	this.step++;
 	if (this.life > 0) {
@@ -803,10 +880,7 @@ TextBox.prototype.update = function() {
                 this.game.currentBoss.attackEnabled = true;
                 this.game.player1.canControl = true;
         	} else if (this.game.currentPhase === 3) {
-        	    var music = new Audio("./sounds/malz.mp3");
-        	    music.loop = true;
-        	    music.volume = 0.2;
-        	    music.play();
+        	    climbMusic.play();
         		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "You think you've WON?");
         		this.game.addEntity(chat);
         		this.game.currentPhase = 4;
@@ -817,10 +891,7 @@ TextBox.prototype.update = function() {
         	} else if (this.game.currentPhase === 5) {
         		this.game.currentPhase = 6;
         		this.game.step = 0;
-        	    var music = new Audio("./sounds/earth_rumble.wav");
-        	    music.loop = true;
-        	    music.volume = 0.4;
-        	    music.play();
+                earthRumble.play();
         	} else if (this.game.currentPhase === 8) {
          		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "Not good! Better get out of here!");
          		this.game.addEntity(chat);
@@ -845,7 +916,7 @@ TextBox.prototype.update = function() {
 		} else {
 			this.showText = this.text.substring(0, this.progress);
 			var c = this.showText.charAt(this.progress - 1);
-			if (c === '?' || (c.toLowerCase() != c.toUpperCase())) { //it's a character
+			if (c === '?' || (c.toLowerCase() != c.toUpperCase())) { // It's a character
 			    var sound = new Audio("./sounds/chat.wav");
 			    sound.volume = 0.4;
 			    if (this.image.indexOf("Riven") !== -1) {
@@ -877,14 +948,15 @@ TextBox.prototype.draw = function(ctx) {
     ctx.fillStyle = "white";
     ctx.textAlign = "left";
     wrapText(ctx, this.showText, 285 + 64 + this.game.liveCamera.x + 12, 420 + this.game.liveCamera.y + 12, 196, 20);
-    //ctx.fillText(this.showText, 285 + 64 + this.game.liveCamera.x + 12, 420 + this.game.liveCamera.y + 12);
     Entity.prototype.draw.call(this);
 }
 
 /**
- * A shape element which is attached to a particle.
- * If the particle.other is not null, the shape is drawn instead of an image.
- */
+    Particles
+*/
+
+// A shape element which is attached to a particle.
+// If the particle.other is not null, the shape is drawn instead of an image.
 function SquareElement(width, height, color1, color2) {
 	this.width = width;
 	this.height = height;
@@ -907,10 +979,8 @@ SquareElement.prototype.draw = function(ctx, x, y, sizeScale) {
     Entity.prototype.draw.call(this);
 }
 
-/**
- * A shape element which is attached to a particle.
- * If the particle.other is not null, the shape is drawn instead of an image.
- */
+// A shape element which is attached to a particle.
+// If the particle.other is not null, the shape is drawn instead of an image.
 function CircleElement(radius, color1, color2) {
 	this.radius = radius;
 	var color1 = color1;
@@ -933,10 +1003,8 @@ CircleElement.prototype.draw = function(ctx, x, y, sizeScale) {
     Entity.prototype.draw.call(this);
 }
 
-/**
- * A text element which is attached to a particle.
- * If the particle.other is not null, the text is drawn instead of an image.
- */
+// A text element which is attached to a particle.
+// If the particle.other is not null, the text is drawn instead of an image.
 function TextElement(text, font, size, color, shadowColor) {
 	this.text = text;
 	this.font = font;
@@ -981,10 +1049,11 @@ function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
 	this.other = null;
 	this.snapEntity = null;
 	this.attackId = -1;
-	if (fadeIn > 0)
+	if (fadeIn > 0) {
 		this.alpha = 0;
-	else
+	} else {
 		this.alpha = maxAlpha;
+    }
     this.hitBox = {
     	x: this.x - this.width / 2 + this.width, 
 		y: this.y - this.width / 2 + this.width,
@@ -1071,8 +1140,9 @@ Particle.prototype.update = function() {
 		this.vSpeed = this.GRAVITY_CAP;
 	this.x += this.hSpeed;
 	this.y += this.vSpeed;
-	if (this.y >= 600)
+	if (this.y >= 600) {
 		this.removeFromWorld = true;
+    }
 	this.life++;
 	
 	if (this.snapEntity != null) {
@@ -1086,10 +1156,8 @@ Particle.prototype.update = function() {
 		width: this.width, 
 		height: this.width
 	};
-    //console.log("hitbox of particle "+this.attackId+": "+this.hitBox.x+","+this.hitBox.y+", width: "+this.hitBox.width);
     if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
-    	//console.log("particle id "+this.attackId+" collision");
-    	if (this.attackId === 1) { //reksai void ball
+    	if (this.attackId === 1) { // Reksai Void Ball
             if (this.game.player1.vulnerable) {
                 this.game.player1.vulnerable = false;
                 var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
@@ -1102,10 +1170,7 @@ Particle.prototype.update = function() {
                 this.game.player1.currentHealth -= 40;
                 this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
                 this.game.player1.hitByAttack = true;
-                var hitSound = new Audio("./sounds/rekProjHit.wav");
-                hitSound.volume = 0.1;
-                hitSound.currentTime = 0;
-                hitSound.play();
+                playSound(reksaiProjectileSound);
                 if (this.hSpeed < 0) {
                     this.game.player1.xVelocity = -3;
                     this.game.player1.lastDirection = "Right";
@@ -1130,10 +1195,7 @@ Particle.prototype.update = function() {
                 this.game.player1.currentHealth -= 40;
                 this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
                 this.game.player1.hitByAttack = true;
-                var hitSound = new Audio("./sounds/lightning.wav");
-                hitSound.volume = 0.1;
-                hitSound.currentTime = 0;
-                hitSound.play();
+                playSound(lightningSound);
                 if (this.hSpeed < 0) {
                     this.game.player1.xVelocity = -3;
                     this.game.player1.lastDirection = "Right";
@@ -1146,7 +1208,6 @@ Particle.prototype.update = function() {
             }
     	}
     }
-    
     Entity.prototype.update.call(this);
 };
 
@@ -1167,76 +1228,29 @@ Particle.prototype.draw = function (ctx) {
 	ctx.globalAlpha = 1;
 };
 
-
-function Arrow(x, y, game) {
-    this.animation = new Animation(ASSET_MANAGER.getAsset("./img/arrow.png"), 0, 0, 184, 29, 0.1, 1, true, false, 0, 0);
-    this.startAnimation = new Animation(ASSET_MANAGER.getAsset("./img/arrow_start.png"), 0, 0, 184, 29, 0.05, 10, false, false, 0, 0);
-	this.starting = true;
-	this.travelX = 0;
-    Entity.call(this, game, x, y);
-}
-
-Arrow.prototype = new Entity();
-Arrow.prototype.constructor = Arrow;
-
-Arrow.prototype.update = function() {
-	if (this.starting) {
-        if (this.startAnimation.isDone()) {
-            this.startAnimation.elapsedTime = 0;
-            this.starting = false;
-        }
-	}
-	
-	this.game.addEntity(new Particle(IMG_PART, this.x + this.travelX, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
-		new Animation(ASSET_MANAGER.getAsset("./img/pink_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
-	if (!this.starting) {
-		this.x += 12;
-		this.travelX += 6;
-	}
-	if (this.x >= 850)
-		this.removeFromWorld = true;
-	
-    Entity.prototype.update.call(this);
-};
-
-Arrow.prototype.draw = function (ctx) {
-    if (this.starting) {
-        //this.startAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.startAnimation.offsetX, this.y + this.startAnimation.offsetY);
-    } else {
-        //this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX, this.y + this.animation.offsetY);
-    }
-    Entity.prototype.draw.call(this);
-};
+/**
+    Powerup
+*/
 
 function Powerup(game, x, y, type) {
 	this.step = 0;
-    
 	this.x = x;
 	this.y = y;
+    Entity.call(this, game, x, y);
 	
     this.hitBoxDef = {
     	width: 32, height: 32, offsetX: 0, offsetY: 0, growthX: 0, growthY: 0
     };
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
-		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
-    Entity.call(this, game, x, y);
+    drawHitBox(this);
 }
 
 Powerup.prototype.update = function () {
-	//only update when in the screen
-	if (this.x >= this.game.liveCamera.x - 50 && this.x <= this.game.liveCamera.x + this.game.liveCamera.width + 50
-			&& this.y >= this.game.liveCamera.y -50 && this.y <= this.game.liveCamera.y + this.game.liveCamera.height + 50) {
+	// Only update when in the screen
+	if (isOnScreen(this)) {
 		this.game.addEntity(new Particle(IMG_PART, this.x, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
 			new Animation(ASSET_MANAGER.getAsset("./img/pink_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
         if (checkCollision(this, this.game.player1)) {
-            var hitSound = new Audio("./sounds/heal.wav");
-            hitSound.volume = 0.1;
-            hitSound.currentTime = 0;
-            hitSound.play();
+            playSound(healSound);
             
             var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
                     0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -1255,58 +1269,52 @@ Powerup.prototype.update = function () {
     Entity.prototype.update.call(this);
 };
 
-Powerup.prototype.draw = function (ctx) {
-    //ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
+Powerup.prototype.draw = function (ctx) { 
     Entity.prototype.draw.call(this);
 }
 
+/**
+    Voidling
+*/
+
 function Voidling(game, x, y, voidlingType) {
-    
+    // Number Variables
+    this.x = x;
+    this.y = y;
 	this.step = 0;
-    
+    this.walkSpeed = 2;
+    this.attackableTimer = 0;
+    this.explosionDamage = 20;
+    this.touchDamage = 10;
+    this.maxHealth = 3.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;
+    // String Variables
+    this.type = voidlingType;
+    this.lastDirection = "Right";
+    // Boolean Variables    
     this.attackEnabled = true;
     this.dead = false;
     this.attackable = true;
-    this.walkSpeed = 2;
-    this.attackableTimer = 0;
-    
-    if (voidlingType == "touch") {
-        this.walkSpeed = 4;
-    }
-    
-    this.type = voidlingType;
-    this.lastDirection = "Right";
-    
-    this.explosionDamage = 20;
-    this.touchDamage = 10;
-	
-	this.x = x;
-	this.y = y;
-
+    // Animations
     this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingRight.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
     this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingLeft.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
     
-    if (voidlingType == "explode") {
+    // Type Control
+    if (voidlingType == "touch") {
+        this.walkSpeed = 4;
+    } else if (voidlingType == "explode") {
         this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingRightExplode.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
         this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/VoidlingLeftExplode.png"), 0, 0, 97, 60, 0.1, 4, true, false, 0, 0);
     }
-    
     this.walkAnimation = this.walkAnimationLeft;
 
-    this.maxHealth = 4.0;
-    this.currentHealth = this.maxHealth;
-    this.currentHealthTemp = this.currentHealth;
+    Entity.call(this, game, x, y);
 
     this.hitBoxDef = {
     	width: 97, height: 60, offsetX: 0, offsetY: 0, growthX: 0, growthY: 0
     };
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
-		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
-    Entity.call(this, game, x, y);
+    drawHitBox(this);
 }
 
 Voidling.prototype.update = function() {
@@ -1319,16 +1327,12 @@ Voidling.prototype.update = function() {
     
     if (this.attackable) {
     	if (this.game.player1.y >= this.y + 30) {
-    		//don't hit the head
+    		// Don't hit the head
     	} else if (this.type == "explode") {
             if (checkCollision(this, this.game.player1)) {
-                if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
+                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
                     this.currentHealth = 0;
-                    var hitSound = new Audio("./sounds/lightning.wav");
-                    hitSound.volume = 0.1;
-                    hitSound.currentTime = 0;
-                    hitSound.play();
-                    
+                    playSound(lightningSound);
                     this.game.player1.vulnerable = false;
                     var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
                             0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -1353,12 +1357,8 @@ Voidling.prototype.update = function() {
             }
         } else if (this.type == "touch") {
             if (checkCollision(this, this.game.player1)) {
-                if (this.game.player1.vulnerable && (!this.game.player1.attacking || !(this.game.player1.attacking && (this.game.player1.attackIndex < 4 || this.game.player1.attackIndex > 6)))) {
-                    var hitSound = new Audio("./sounds/punch.mp3");
-                    hitSound.volume = 0.5;
-                    hitSound.currentTime = 0;
-                    hitSound.play();
-                    
+                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
+                    playSound(hitSound);                    
                     this.game.player1.vulnerable = false;
                     var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
                             0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -1386,11 +1386,9 @@ Voidling.prototype.update = function() {
         }
     }
     
+    // Death
     if (this.currentHealth <= 0 && !this.dead) {
-        var deathSound = new Audio("./sounds/Death.mp3");
-        deathSound.volume = 0.1;
-        deathSound.currentTime = 0;
-        deathSound.play();
+        playSound(voidlingDeathSound);
         this.dead = true;
         this.attackable = false;
         this.solid = false;
@@ -1406,6 +1404,7 @@ Voidling.prototype.update = function() {
     var that = this;
     var switchDirection = false;
     
+    // Platform detection
     var platformFound = false;
     this.game.currentMap.platforms.forEach(function(currentPlatform) {
         if (currentPlatform.hSpeed == 0 && currentPlatform.vSpeed == 0) {
@@ -1459,7 +1458,7 @@ Voidling.prototype.update = function() {
     	switchDirection = true;
     }
     if (switchDirection) {
-    	console.log("voidling at "+this.x+", "+this.y+" SWAP");
+    	//console.log("voidling at "+this.x+", "+this.y+" SWAP");
     	that.walkSpeed *= -1;
     }
     this.x += this.walkSpeed;
@@ -1472,62 +1471,54 @@ Voidling.prototype.update = function() {
 	Entity.prototype.update.call(this);
 }
 
-
 Voidling.prototype.draw = function (ctx) {
 	ctx.globalAlpha = 1;
     if (!this.attackable) {
         ctx.globalAlpha = 0.5;
     }
 	if (!this.dead) {
-		if (this.walkSpeed > 0)
+		if (this.walkSpeed > 0) {
 			this.walkAnimation = this.walkAnimationRight;
-		else
+		} else {
 			this.walkAnimation = this.walkAnimationLeft;
+        }
         this.walkAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimation.offsetX, this.y + this.walkAnimation.offsetY);
 	}
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
-		y: this.y + this.hitBoxDef.offsetY + (this.hitBoxDef.growthY < 0 ? this.hitBoxDef.growthY : 0),
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
 	drawHitBox(this, ctx);
 	Entity.prototype.draw.call(this);
 	ctx.globalAlpha = 1;
 }
 
+/**
+    Malzahar
+*/
+
 function Malzahar(game) {
-	
+	// Number Variables
 	this.alpha = 1;
-
-    this.screamSound = new Audio("./sounds/rekScream.wav");
-    this.screamSound.volume = 0.1;
-
-    this.shootSound = new Audio("./sounds/rekShoot.wav");
-    this.shootSound.volume = 0.1;
-
-    this.punchSound = new Audio("./sounds/punch.mp3");
-    this.punchSound.volume = 0.5;
-    
 	this.step = 0;
-    
+    this.walkSpeed = 2;
+    this.autoDamage = 30;
+    this.spawnCount = 0;
+    this.spawnTimer = 0;
+    this.destinationX = -1;
+    this.attackIndex = 0;
+    this.attackCount = 0;
+    this.energy = 0; //denotes if an attack is charged
+    this.idleTimerMax = 110;
+    this.idleTimer = this.idleTimerMax;
+    this.maxHealth = 40.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;   
+    // String Variables
+    this.state = "idle";
+	this.lastDirection = "Left";    
+    // Boolean Variables
     this.attackEnabled = false;
     this.dead = false;
     this.solid = false;
     this.attackable = true;
-    this.state = "idle";
-    this.walkSpeed = 2;
-	this.lastDirection = "Left";
-    this.autoDamage = 30;
-    this.spawnCount = 0;
-    this.spawnTimer = 0;
-    
-    this.destinationX = -1;
     this.walkToDestination = false;
-    
-    this.attackIndex = 0;
-    this.attackCount = 0;
-    this.energy = 0; //denotes if an attack is charged
     
     /**
      * Initial cooldowns of skills.
@@ -1537,37 +1528,24 @@ function Malzahar(game) {
      */
     this.cooldown = [250, 0, 0, 0];
     
+    // Animations
 	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, -20);
 	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, -20);
     this.idleAnimation = this.idleLeft;
-    
-    this.idleTimerMax = 110;
-    this.idleTimer = this.idleTimerMax;
-
     this.walkAnimationRight = this.idleRight;
     this.walkAnimationLeft = this.idleLeft;
     this.walkAnimation = this.walkAnimationLeft;
-
     this.attackAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ERight.png"), 0, 0, 114, 180, 0.1, 9, false, false, -10, -40);
     this.attackAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ELeft.png"), 0, 0, 114, 180, 0.1, 9, false, false, 0, -40);
     this.attackAnimation = this.attackAnimationLeft;  
-
-    this.maxHealth = 40.0;
-    this.currentHealth = this.maxHealth;
-    this.currentHealthTemp = this.currentHealth;    
-
+    this.currentAnimation = this.idleLeft;
+ 
     Entity.call(this, game, 1400, 235);
     
-    this.currentAnimation = this.idleLeft;
     this.hitBoxDef = {
     	width: 80, height: 150, offsetX: 5, offsetY: -5, growthX: 0, growthY: 0
     };
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
-		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
+    drawHitBox(this);
 }
 
 Malzahar.prototype.update = function() {
@@ -1575,12 +1553,7 @@ Malzahar.prototype.update = function() {
         if (this.spawnTimer <= 0) {
             this.spawnTimer = 50;
             this.spawnCount--;
-            
-            var hitSound = new Audio("./sounds/Spawn.mp3");
-            hitSound.volume = 0.1;
-            hitSound.currentTime = 0;
-            hitSound.play();
-            
+            playSound(spawnSound);
             var random = Math.floor(Math.random() * 2);
             if (random == 0) {
                 var voidling = new Voidling(this.game, this.hitBox.x, this.hitBox.y + this.hitBox.height - 50, "touch");
@@ -1601,21 +1574,17 @@ Malzahar.prototype.update = function() {
                 voidling.attackableTimer = 50;
                 this.game.addEntity(voidling);
             }
-            
         }
         this.spawnTimer--;
-        
     }
     if (this.game.currentPhase === 1) {
     	this.game.currentBoss = this;
     }
-	if (this.game.currentPhase === 2 && this.currentHealth <= 0) { //phase transition
+	if (this.game.currentPhase === 2 && this.currentHealth <= 0) { // Phase transition
 		this.game.currentPhase = 3;
 		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "HEhHehEEhHe...");
 		this.game.addEntity(chat);
-	    var music = new Audio("./sounds/disappear.mp3");
-	    music.volume = 1.0;
-	    music.play();
+        playSound(disappearSound);
 	}
     if (this.game.currentPhase === 3) {
     	if (this.alpha > 0) {
@@ -1625,13 +1594,12 @@ Malzahar.prototype.update = function() {
     	    var element = new CircleElement(6 + Math.random() * 3, "#240340", "#131d4f");
     	   	newParticle.other = element;
     	    this.game.addEntity(newParticle);
-    	    if (this.alpha <= 0) {
-    	    	this.alpha = 0;
-    	    	this.x += 800; //temporarily hide
-    	    }
     	}
+    } else if (this.game.currentPhase === 4) {
+        this.alpha = 0;
+        this.x = 2000;
     }
-    if (this.game.currentPhase === 2 && this.attackEnabled) { //malz attack code
+    if (this.game.currentPhase === 2 && this.attackEnabled) { // Malz attack code
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
@@ -1690,7 +1658,7 @@ Malzahar.prototype.update = function() {
 	                    this.walkToDestination = false;
 	                }
 	            } else if (distance === 0 && !this.walkToDestination && this.energy === 0) { //attack if not walking or charging attack
-                    var random = Math.floor(Math.random() * 4);
+                    var random = Math.floor(Math.random() * 3);
                     if (random == 0) {
                         this.spawnCount = 3;
                         this.spawnTimer = 0;
@@ -1741,46 +1709,37 @@ Malzahar.prototype.draw = function (ctx) {
             this.currentAnimation = this.attackAnimation;
         }
     }
-    ctx.globalAlpha = 1;
-    
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
-		y: this.y + this.hitBoxDef.offsetY + (this.hitBoxDef.growthY < 0 ? this.hitBoxDef.growthY : 0),
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
-    
+    ctx.globalAlpha = 1;    
     drawHitBox(this, ctx);
     Entity.prototype.draw.call(this);
 };
 
+/**
+    Reksai
+*/
+
 function Reksai(game) {
-
-    this.screamSound = new Audio("./sounds/rekScream.wav");
-    this.screamSound.volume = 0.1;
-
-    this.shootSound = new Audio("./sounds/rekShoot.wav");
-    this.shootSound.volume = 0.1;
-
-    this.punchSound = new Audio("./sounds/punch.mp3");
-    this.punchSound.volume = 0.5;
-    
+    // Number Variables
 	this.step = 0;
-    
+    this.walkSpeed = 2;
+    this.autoDamage = 30;
+    this.destinationX = -1;
+    this.attackIndex = 0;
+    this.attackCount = 0;
+    this.energy = 0; // Denotes if an attack is charged
+    this.idleTimerMax = 110;
+    this.idleTimer = this.idleTimerMax;
+    this.maxHealth = 100.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;  
+    // String Variables
+    this.state = "idle";
+	this.lastDirection = "Left";
+    // Boolean Variables
     this.dead = false;
     this.solid = true;
     this.attackable = true;
-    this.state = "idle";
-    this.walkSpeed = 2;
-	this.lastDirection = "Left";
-    this.autoDamage = 30;
-    
-    this.destinationX = -1;
     this.walkToDestination = false;
-    
-    this.attackIndex = 0;
-    this.attackCount = 0;
-    this.energy = 0; //denotes if an attack is charged
     
     /**
      * Initial cooldowns of skills.
@@ -1790,48 +1749,33 @@ function Reksai(game) {
      */
     this.cooldown = [250, 0, 0, 0];
     
+    // Animations
 	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleRight.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
 	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleLeft.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
     this.idleAnimation = this.idleLeft;
-    
-    this.idleTimerMax = 110;
-    this.idleTimer = this.idleTimerMax;
-
     this.walkAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiWalkRight.png"), 0, 0, 192, 107, 0.1, 17, true, false, -10, 0);
     this.walkAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiWalkLeft.png"), 0, 0, 192, 107, 0.1, 17, true, false, -20, 0);
     this.walkAnimation = this.walkAnimationLeft;
-
     this.attackAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/AttackRight.png"), 0, 0, 198, 135, 0.1, 13, false, false, 0, -40);
     this.attackAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/AttackLeft.png"), 0, 0, 198, 135, 0.1, 13, false, false, -50, -40);
     this.attackAnimation = this.attackAnimationLeft;  
-
     this.screamAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamRight.png"), 0, 0, 177, 180, 0.1, 17, false, true, -40, -80);
     this.screamAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ScreamLeft.png"), 0, 0, 177, 180, 0.1, 17, false, true, 0, -80);
-
-    this.maxHealth = 100.0;
-    this.currentHealth = this.maxHealth;
-    this.currentHealthTemp = this.currentHealth;    
-        
+    this.currentAnimation = this.idleLeft;      
+    
     Entity.call(this, game, 600, 295);
     
-    this.currentAnimation = this.idleLeft;
     this.hitBoxDef = {
     	width: 140, height: 100, offsetX: 5, offsetY: 0, growthX: 0, growthY: 0
     };
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0),  
-		y: this.y + this.hitBoxDef.offsetY,
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
+    drawHitBox(this);
 }
 
 Reksai.prototype.update = function() {
 	this.step++;
     if (this.currentHealth <= 0 && !this.dead) {
     	if (this.game.currentPhase === 0) {
-            this.game.currentBoss.screamSound.currentTime = 0;
-            this.game.currentBoss.screamSound.play();
+            playSound(screamSound);
     	}
         this.dead = true;
         this.attackable = false;
@@ -1849,7 +1793,7 @@ Reksai.prototype.update = function() {
         if (this.cooldown[i] > 0)
             this.cooldown[i]--;
     }
-    if (this.energy === 3 && this.attackCount > 0 && this.step % 5 === 0) {
+    if (this.energy === 3 && this.attackCount > 0 && this.step % 5% 5 === 0) {
         var originX = this.lastDirection === "Right" ? this.x + this.hitBox.width : this.x;
         var originY = this.y + 50;
         var speed = this.lastDirection === "Left" ? -10 : 10;
@@ -1857,13 +1801,12 @@ Reksai.prototype.update = function() {
                 speed, speed, -1.5 * this.attackCount, -1.5 * this.attackCount, 0.3, 0, 0, 100, 0, 10, 1, 0, false, this.game);
         var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
         particle.other = element;
-        particle.attackId = 1; //void ball
+        particle.attackId = 1; // Void ball
         this.game.addEntity(particle);
         this.attackCount--;
         if (this.attackCount === 0)
             this.energy = 0;
-        this.shootSound.currentTime = 0;
-        this.shootSound.play();
+        playSound(shootSound);
     }
     if (this.state == "attacking") {
         this.attackable = false;
@@ -1897,10 +1840,7 @@ Reksai.prototype.update = function() {
                             this.game.player1.currentHealth -= this.autoDamage;
                             this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
                             this.game.player1.hitByAttack = true;
-                            if (soundOn) {
-                                this.punchSound.currentTime = 0;
-                                this.punchSound.play();
-                            }
+                            playSound(hitSound);
                             if (this.lastDirection == "Left") {
                                 this.game.player1.xVelocity = -2;
                                 this.game.player1.lastDirection = "Right";
@@ -1956,8 +1896,7 @@ Reksai.prototype.update = function() {
                 this.energy = 2; //screaming
                 this.state = "attacking";
                 this.attackIndex = 2; //scream - this doesn't actually do any damage.
-                this.screamSound.currentTime = 0;
-                this.screamSound.play();
+                playSound(screamSound);
                 if (this.x < 325) {
                     this.lastDirection = "Right";
                 } else {
@@ -2029,46 +1968,65 @@ Reksai.prototype.draw = function (ctx) {
         }
     }
     
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
-		y: this.y + this.hitBoxDef.offsetY + (this.hitBoxDef.growthY < 0 ? this.hitBoxDef.growthY : 0),
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
-    
     drawHitBox(this, ctx);
     
     Entity.prototype.draw.call(this);
 };
 
+/**
+    Character
+*/
+
 function Character(game) {
+    // Number Variables
+	this.runSpeed = 3;
+	this.jumpSpeed = 0; // X Velocity when jumping
+    this.yVelocity = 0;
+    this.xVelocity = 0; // X Velocity when hit
+    this.jumpYVelocity = 9; // Max Y upwards velocity when jumping
+    this.gravity = 0.55;
+    this.strongAttackCost = 20; // Stamina cost of strong attacks
+    this.wCost = 30;
+    this.eCost = 40;
+    this.staminaRegen = 0.2;
+    this.maxHealth = 100.0;
+    this.currentHealth = this.maxHealth;
+    this.currentHealthTemp = this.currentHealth;
+    this.maxStamina = 100.0;
+    this.currentStamina = this.maxStamina;
+    this.currentStaminaTemp = this.currentStamina;
+    this.attackInput = 0; // Keyboard Input for Attack, 1 = Light, 2 = Strong
+	this.attackIndex = 0;
+    this.lastComboIndex = 0; // The last combo index (AA, Q, etc)
+    this.lastComboStage = 0; // The last stage of your combo (1, 2, 3, etc)
+    this.comboTime = 0; // The timer before the combo drops off
+    this.invulnTimerMax = 20;
+    this.invulnTimer = 0;
+    this.ground = 370; 
+    this.autoDamage = 2;
+    this.autoScaling = 1;
+    this.qDamage = 4;
+    this.qScaling = 2;
+    this.wDamage = 700; //TEMP
+    // String Variables
+	this.lastDirection = "Right";
+    // Boolean Variables
+	this.running = false;
+    this.dead = false;
+    this.jumping = false;
+    this.falling = true;
+	this.attacking = false;
+    this.vulnerable = true;
+    this.canControl = true;
+    this.hurt = false;
+    this.hitByAttack = false;
+    this.leftDown = false;
+    this.rightDown = false;
+    this.jumpDown = false;
+    this.downDown = false;
     
-    // Sounds
-    this.footsteps = new Audio("./sounds/footsteps.mp3");
-    this.footsteps.loop = true;
-    this.footsteps.volume = 0;
-    if (soundOn) {
-        this.footsteps.play();
-    }
-    
-    this.autoSound = new Audio("./sounds/rivenAuto.mp3");
-    this.autoSound.volume = 0.1;
-    
-    this.q1Sound = new Audio("./sounds/Q1.mp3");
-    this.q1Sound.volume = 0.1;
-    
-    this.q2Sound = new Audio("./sounds/Q2.mp3");
-    this.q2Sound.volume = 0.1;
-    
-    this.q3Sound = new Audio("./sounds/Q3.mp3");
-    this.q3Sound.volume = 0.1;
-    
-    this.eSound = new Audio("./sounds/E.mp3");
-    this.eSound.volume = 0.1;
-    
-    this.wSound = new Audio("./sounds/W.mp3");
-    this.wSound.volume = 0.1;
-    
+    this.targetHit = []; // The targets you've currently hit with your attack
+      
     // Animations    	
 	this.idleAnimation = null;
     this.idleAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Riven/RivenIdleRight.png"), 0, 0, 55, 85, 0.1, 12, true, false, 0, 0);
@@ -2112,69 +2070,12 @@ function Character(game) {
     
     this.currentAnimation = this.idleAnimationRight; // Setting starting animation
     
-    // Variables
-    
-	this.runSpeed = 3;
-	this.jumpSpeed = 0; // X Velocity when jumping
-    this.yVelocity = 0;
-    this.xVelocity = 0; // X Velocity when hit
-    this.jumpYVelocity = 9; // Max Y upwards velocity when jumping
-    this.gravity = 0.55;
-    this.strongAttackCost = 20; // Stamina cost of strong attacks
-    this.wCost = 30;
-    this.eCost = 40;
-	this.lastDirection = "Right";
-    this.staminaRegen = 0.2; //0.2;
-    
-    this.maxHealth = 100.0;
-    this.currentHealth = this.maxHealth;
-    this.currentHealthTemp = this.currentHealth;
-    
-    this.maxStamina = 100.0;
-    this.currentStamina = this.maxStamina;
-    this.currentStaminaTemp = this.currentStamina;
-        
-    this.attackInput = 0; // Keyboard Input for Attack, 1 = Light, 2 = Strong
-	this.attackIndex = 0;
-    this.lastComboIndex = 0; // The last combo index (AA, Q, etc)
-    this.lastComboStage = 0; // The last stage of your combo (1, 2, 3, etc)
-    this.comboTime = 0; // The timer before the combo drops off
-    
-	this.running = false;
-    this.dead = false;
-    this.jumping = false;
-    this.falling = true;
-	this.attacking = false;
-    this.vulnerable = true;
-    this.canControl = true;
-    this.hurt = false;
-    this.hitByAttack = false;
-    this.targetHit = []; //the targets you've currently hit with your attack
-    this.invulnTimerMax = 20;
-    this.invulnTimer = 0;
-    this.ground = 370; 
-    this.autoDamage = 2;
-    this.autoScaling = 1;
-    this.qDamage = 4;
-    this.qScaling = 2;
-    this.wDamage = 700; //TEMP
-    
-    this.leftDown = false;
-    this.rightDown = false;
-    this.jumpDown = false;
-    this.downDown = false;
-    
     Entity.call(this, game, 100, 300);
     
     this.hitBoxDef = {
     	width: 45, height: 70, offsetX: 8, offsetY: 10, growthX: 0, growthY: 0, originalOffsetX: 8
     };
-    this.hitBox = {
-    	x: this.x + this.hitBoxDef.offsetX + (this.hitBoxDef.growthX < 0 ? this.hitBoxDef.growthX : 0), 
-		y: this.y + this.hitBoxDef.offsetY + (this.hitBoxDef.growthY < 0 ? this.hitBoxDef.growthY : 0),
-		width: this.hitBoxDef.width + Math.abs(this.hitBoxDef.growthX), 
-		height: this.hitBoxDef.height + Math.abs(this.hitBoxDef.growthY)
-	};
+    drawHitBox(this);
 }
 
 Character.prototype = new Entity();
@@ -2201,11 +2102,7 @@ Character.prototype.update = function () {
         }
     }
     if (this.currentHealth <= 0 && !this.dead) {
-        var hitSound = new Audio("./sounds/lightning.wav");
-        hitSound.volume = 0.1;
-        hitSound.currentTime = 0;
-        hitSound.play();
-        
+        playSound(lightningSound);
         this.dead = true;
         this.vulnerable = false;
         var particle = new Particle(PART_GENERATOR,
@@ -2240,14 +2137,6 @@ Character.prototype.update = function () {
         if (!this.canControl && !this.vulnerable) {
             this.x += this.xVelocity;
         }
-        
-        if (this.game.r) { // Arrow thing temporary
-            if (!this.attacking) {
-                //this.attacking = true;
-                this.running = false;
-                this.game.addEntity(new Arrow(this.x, this.y + 40, this.game));
-            }
-        }
         if (this.jumpDown && !this.attacking && !this.jumping && !this.falling && this.canControl) {
             this.jumping = true;
             this.yVelocity = this.jumpYVelocity;
@@ -2274,7 +2163,6 @@ Character.prototype.update = function () {
 
         this.comboTime -= this.game.clockTick; // Combo Timer
         if (this.comboTime <= 0 && this.lastComboStage > 0) {
-            //console.log("Combo stage "+this.lastComboStage+" has dropped off!");
             this.lastComboStage = 0;
         }
         
@@ -2286,10 +2174,7 @@ Character.prototype.update = function () {
                         if (this.lastComboType != this.attackInput) { // Last Combo was different (e.g. AA vs Q) - drop combo
                             this.lastComboStage = 0;		    				
                         }
-                        if (soundOn) {
-                            this.autoSound.currentTime = 0;
-                            this.autoSound.play();
-                        }
+                        playSound(autoSound);
                         this.targetHit = [];
                         this.attacking = true;
                         // AA will take attack indexes 4-6
@@ -2318,17 +2203,12 @@ Character.prototype.update = function () {
                                     this.attackIndex = this.lastComboStage + 1;
                                 else
                                     this.attackIndex = 1;
-                                if (soundOn) {
-                                    if (this.attackIndex == 1) {
-                                        this.q1Sound.currentTime = 0;
-                                        this.q1Sound.play();
-                                    } else if (this.attackIndex == 2) {
-                                        this.q2Sound.currentTime = 0;
-                                        this.q2Sound.play();
-                                    } else if (this.attackIndex == 3) {
-                                        this.q3Sound.currentTime = 0;
-                                        this.q3Sound.play();
-                                    }
+                                if (this.attackIndex == 1) {
+                                    playSound(q1Sound);
+                                } else if (this.attackIndex == 2) {
+                                    playSound(q2Sound);
+                                } else if (this.attackIndex == 3) {
+                                    playSound(q3Sound);
                                 }
                                 this.lastComboType = this.attackInput;
                                 this.lastComboStage = this.attackIndex;
@@ -2342,11 +2222,7 @@ Character.prototype.update = function () {
                                 this.vulnerable = false;
                                 this.attackIndex = 7;
                                 var particle;
-                        		
-                                if (soundOn) {
-                                    this.eSound.currentTime = 0;
-                                    this.eSound.play();
-                                }
+                        		playSound(eSound);
                                 if (this.lastDirection === "Left") {
                                     this.hurtAnimation = this.hurtAnimationLeft;
                                     particle = new Particle(IMG_PART, 0, 0, 0, 0,
@@ -2368,10 +2244,7 @@ Character.prototype.update = function () {
                                 this.targetHit = [];
                                 this.attacking = true;
                                 this.attackIndex = 8;
-                                if (soundOn) {
-                                    this.wSound.currentTime = 0;
-                                    this.wSound.play();
-                                }
+                                playSound(wSound);
                                 for (i = 0; i < 10; i++) {
                                     var particle = new Particle(SHAPE_PART,
                                             this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
@@ -2468,7 +2341,7 @@ Character.prototype.update = function () {
         }
         
         if (this.running) {
-            this.footsteps.volume = 0.8;
+            footsteps.volume = 0.8;
             if (this.lastDirection === "Right") {
                 this.x += this.runSpeed;
             } else if (this.lastDirection === "Left") {
@@ -2479,12 +2352,12 @@ Character.prototype.update = function () {
         }
         
         if (!this.running) {
-            if (this.footsteps.volume > 0.05) {
-                this.footsteps.volume -= 0.05;
+            if (footsteps.volume > 0.05) {
+                footsteps.volume -= 0.05;
             }
-            if (this.footsteps.volume <= 0.05) {
-                this.footsteps.volume = 0;
-                this.footsteps.currentTime = 0;
+            if (footsteps.volume <= 0.05) {
+                footsteps.volume = 0;
+                footsteps.currentTime = 0;
             }
         }
         var collision = false;
@@ -2518,42 +2391,7 @@ Character.prototype.update = function () {
                 }            
             }
         }
-        if (this.attacking) {
-        	/*if (this.game.currentBoss != null) {
-	            if (checkCollision(this, this.game.currentBoss) && !this.attackHit && this.game.currentBoss.attackable) {
-	                this.attackHit = true;
-	                var damageParticle = new Particle(TEXT_PART, this.game.currentBoss.hitBox.x + this.game.currentBoss.hitBox.width / 2    , this.game.currentBoss.hitBox.y, 
-	                        0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-	                var damageText = new TextElement("", "Lucida Console", 25, "white", "black");
-	                var damage = 0;
-	                if (this.attackIndex >= 1 && this.attackIndex <= 3) {
-	                   damage = this.attackIndex * this.qScaling + this.qDamage;
-	                } else if (this.attackIndex >= 4 && this.attackIndex <= 6) {
-	                    damage = (this.attackIndex - 3) * this.autoScaling + this.autoDamage;
-	                } else if (this.attackIndex == 8) {
-	                    damage = this.wDamage;
-	                }
-	                this.game.currentBoss.currentHealth -= damage;
-	                damageText.text = damage;
-	                damageParticle.other = damageText;
-	                this.game.addEntity(damageParticle);
-	                if (this.game.currentBoss.currentHealth <= 0) {
-	                	if (this.game.currentPhase === 0) {
-		                    this.game.currentBoss.screamSound.currentTime = 0;
-		                    this.game.currentBoss.screamSound.play();
-	                	}
-	                	if (this.game.currentPhase === 2) { //phase transition
-	                		this.game.currentPhase = 3;
-                    		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "HEhHehEEhHe...");
-                    		this.game.addEntity(chat);
-                    	    var music = new Audio("./sounds/disappear.mp3");
-                    	    music.volume = 1.0;
-                    	    music.play();
-	                	}
-	                }
-	            }
-        	}*/
-            
+        if (this.attacking) {            
             this.game.entities.forEach(function(entity) {
                 if (entity.attackable && that.targetHit.indexOf(entity) === -1) {
                     if (checkCollision(that, entity)) {
@@ -2749,7 +2587,6 @@ ASSET_MANAGER.queueDownload("./img/Reksai/AttackRight.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamRight.png");
 
-
 ASSET_MANAGER.queueDownload("./img/Malzahar/IdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/IdleLeft.png");
 ASSET_MANAGER.queueDownload("./img/Malzahar/ERight.png");
@@ -2788,11 +2625,11 @@ ASSET_MANAGER.downloadAll(function () {
 	var malzahar = new Malzahar(gameEngine);
     var character = new Character(gameEngine);
     var ui = new UI(gameEngine);
-    var map1 = new Map1(gameEngine);
+    var map = new Map(gameEngine);
     var voidling = new Voidling(gameEngine, 313, 330, "touch");
     
     gameEngine.addEntity(bg);
-    gameEngine.addEntity(map1);
+    gameEngine.addEntity(map);
     gameEngine.addEntity(character);
     gameEngine.addEntity(reksai);
     gameEngine.addEntity(malzahar);
@@ -2802,7 +2639,7 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.init(ctx);
     gameEngine.setPlayer1(character);
     gameEngine.setBoss(reksai);
-    gameEngine.setMap(map1);
+    gameEngine.setMap(map);
     gameEngine.setUI(ui);
     gameEngine.start();
 });
