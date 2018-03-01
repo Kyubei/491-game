@@ -484,7 +484,7 @@ function updateBossResources(entity, ui) {
 }
 
 /**
-    Platform
+    Platform (PLATFORM ID)
 */
 function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId) {
     // Number Variables
@@ -1103,20 +1103,20 @@ Particle.prototype.update = function() {
         var distance = getXDistance(this.game.player1, this) - this.game.player1.hitBox.width / 2;
         if (distance > 0) {
         	right = true;
-        	this.x += Math.min(distance, 2);
+        	this.x += Math.min(distance, 2.05);
         } else
-        	this.x += Math.max(distance, -2);
+        	this.x += Math.max(distance, -2.05);
         if (this.life % 4 === 0) {
 		    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
 					-3, 3, -4, 0, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
-		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.06 + Math.random() * 0.02, 20, true, false, 0, 0));
+		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.06 + Math.random() * 0.02, 20, true, false, 30, 10));
 		    newParticle.absoluteSizeScale = .1 + Math.random() * .1;
 		    this.game.addEntity(newParticle);
         }
 		if (this.life % 2 === 0 && this.life >= (this.maxLife * 3 / 4)) { //erupt!
 		    newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
 					-3, 3, -7, 4, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
-		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 0, 0));
+		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 30, 10));
 		    newParticle.absoluteSizeScale = .2 + Math.random() * .2;
 		    this.game.addEntity(newParticle);
 		}
@@ -1315,7 +1315,7 @@ Powerup.prototype.draw = function (ctx) {
 }
 
 /**
-    Voidling
+    Voidling (VOIDLING ID)
 */
 
 function Voidling(game, x, y, voidlingType) {
@@ -1531,7 +1531,7 @@ Voidling.prototype.draw = function (ctx) {
 }
 
 /**
-    Malzahar
+    Malzahar (MALZAHAR ID)
 */
 
 function Malzahar(game) {
@@ -1756,7 +1756,7 @@ Malzahar.prototype.draw = function (ctx) {
 };
 
 /**
-    Reksai
+    Reksai (REKSAI ID)
 */
 
 function Reksai(game) {
@@ -1868,7 +1868,7 @@ Reksai.prototype.update = function() {
 	            for (i = 0; i < 10; i++) {
 	    		    var newParticle = new Particle(PART_SECONDARY, this.x + this.hitBox.width / 2, this.y + this.hitBox.height / 2, 
 	    					-3, 3, -7, 4, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
-	    		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 0, 0));
+	    		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 15, 10));
 	    		    newParticle.absoluteSizeScale = .2 + Math.random() * .2;
 	    		    this.game.addEntity(newParticle);
 	            }
@@ -1876,42 +1876,66 @@ Reksai.prototype.update = function() {
 	        	this.y += 1000; //that's one way to do it!
 	        }
         } else { 
-            if (this.attackAnimation.currentFrame() >= 4 && this.attackAnimation.currentFrame() <= this.attackAnimation.frames - 8) {
+            if (this.attackIndex === 1 && this.attackAnimation.currentFrame() >= 4 && this.attackAnimation.currentFrame() <= this.attackAnimation.frames - 8) {
                 if (this.attackAnimation.currentFrame() < 6) {
                     this.hitBoxDef.growthY = -20;
                 } else {
                     this.hitBoxDef.growthY = 0;
                 }
                 if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
-                    if (this.attackIndex === 1 || this.attackIndex === 4) { //basic attack
-                        if (this.game.player1.vulnerable) {
-                            this.game.player1.vulnerable = false;
-                            var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-                                    0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-                            var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                            var damage = this.autoDamage;
-                            if (this.attackIndex === 4) //scream from burrow - hits twice? questionmark
-                            	damage = 20;
-                            damageText.text = damage;
-                            damageParticle.other = damageText;
-                            this.game.addEntity(damageParticle);
-                            this.game.player1.currentHealth -= damage;
-                            this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
-                            this.game.player1.hitByAttack = true;
-                            playSound(hitSound);
-                            if (this.lastDirection == "Left") {
-                                this.game.player1.xVelocity = -2;
-                                this.game.player1.lastDirection = "Right";
-                                this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
-                            } else if (this.lastDirection == "Right") {
-                                this.game.player1.xVelocity = 2;
-                                this.game.player1.lastDirection = "Left";
-                                this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
-                            }
+                    if (this.game.player1.vulnerable) {
+                        this.game.player1.vulnerable = false;
+                        var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                                0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                        var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                        var damage = this.autoDamage;
+                        this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                        damageText.text = damage;
+                        damageParticle.other = damageText;
+                        this.game.addEntity(damageParticle);
+                        this.game.player1.currentHealth -= damage;
+                        this.game.player1.hitByAttack = true;
+                        playSound(hitSound);
+                        if (this.lastDirection == "Left") {
+                            this.game.player1.xVelocity = -2;
+                            this.game.player1.lastDirection = "Right";
+                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                        } else if (this.lastDirection == "Right") {
+                            this.game.player1.xVelocity = 2;
+                            this.game.player1.lastDirection = "Left";
+                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
                         }
                     }
                 }
-            }
+            } else if (this.attackIndex === 4 && this.attackAnimation.currentFrame() <= 5) {
+                if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
+                    if (this.game.player1.vulnerable) {
+                        this.game.player1.vulnerable = false;
+                        var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+                                0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                        var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                        var damage = 20;
+                        this.game.player1.invulnTimer = this.game.player1.invulnTimerMax * 2.5;
+                        this.game.player1.yVelocity = 13;
+                        this.game.player1.jumping = true;
+                        damageText.text = damage;
+                        damageParticle.other = damageText;
+                        this.game.addEntity(damageParticle);
+                        this.game.player1.currentHealth -= damage;
+                        this.game.player1.hitByAttack = true;
+                        playSound(hitSound);
+                        if (this.lastDirection == "Left") {
+                            this.game.player1.xVelocity = -5;
+                            this.game.player1.lastDirection = "Right";
+                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                        } else if (this.lastDirection == "Right") {
+                            this.game.player1.xVelocity = 5;
+                            this.game.player1.lastDirection = "Left";
+                            this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                        }
+                    }
+                }
+            } 
             if (this.attackIndex === 1) {
 	            if (this.lastDirection == "Left") {
 	                this.hitBoxDef.growthX -= 1.3;
