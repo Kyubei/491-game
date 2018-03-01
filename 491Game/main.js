@@ -3,7 +3,7 @@
 */
 
 var soundOn = true;
-var showHitBox = false;
+var showHitBox = true;
 
 /**
     General Variables
@@ -24,6 +24,7 @@ var PART_GENERATOR = 6;
 var VOID_PORTAL = 7;
 var VOID_ERUPTION = 8;
 var IMG_FLASH_PART = 9;
+var BURROW_PART = 10;
 // Sounds
 var bossMusic = new Audio("./sounds/map1BGMusic.mp3");
 bossMusic.loop = true;
@@ -137,12 +138,14 @@ function drawHitBox(entity, ctx) {
         };
     }
     if (showHitBox) {
-        ctx.globalAlpha = 0.2;
-        var tempStyle = ctx.fillStyle;
-        ctx.fillStyle = "black";
-        ctx.fillRect(entity.hitBox.x, entity.hitBox.y, entity.hitBox.width, entity.hitBox.height);
-        ctx.fillStyle = tempStyle;
-        ctx.globalAlpha = 1;
+    	if (ctx != null) {
+	        ctx.globalAlpha = 0.2;
+	        var tempStyle = ctx.fillStyle;
+	        ctx.fillStyle = "black";
+	        ctx.fillRect(entity.hitBox.x, entity.hitBox.y, entity.hitBox.width, entity.hitBox.height);
+	        ctx.fillStyle = tempStyle;
+	        ctx.globalAlpha = 1;
+    	}
     }
 }
 
@@ -1044,6 +1047,7 @@ function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
 	this.fadeOut = fadeOut;
 	this.shrink = shrink;
 	this.sizeScale = 1;
+	this.absoluteSizeScale = 1;
 	this.width = width;
 	this.maxAlpha = maxAlpha + Math.random() * (alphaVariance * 2) - alphaVariance;
 	this.other = null;
@@ -1092,6 +1096,42 @@ Particle.prototype.update = function() {
 		   	newParticle.other = element;
 		   	newParticle.attackId = 2;
 		    this.game.addEntity(newParticle);
+		}
+	}
+	if (this.particleId === BURROW_PART) {
+		var right = false;
+        var distance = getXDistance(this.game.player1, this) - this.game.player1.hitBox.width / 2;
+        if (distance > 0) {
+        	right = true;
+        	this.x += Math.min(distance, 2);
+        } else
+        	this.x += Math.max(distance, -2);
+        if (this.life % 4 === 0) {
+		    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
+					-3, 3, -4, 0, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
+		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.06 + Math.random() * 0.02, 20, true, false, 0, 0));
+		    newParticle.absoluteSizeScale = .1 + Math.random() * .1;
+		    this.game.addEntity(newParticle);
+        }
+		if (this.life % 2 === 0 && this.life >= (this.maxLife * 3 / 4)) { //erupt!
+		    newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
+					-3, 3, -7, 4, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
+		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 0, 0));
+		    newParticle.absoluteSizeScale = .2 + Math.random() * .2;
+		    this.game.addEntity(newParticle);
+		}
+		if (this.life === this.maxLife) {
+			this.game.currentBoss.energy = 0;
+            this.game.currentBoss.state = "attacking";
+            playSound(screamSound);
+            this.game.currentBoss.attackIndex = 4; //scream that does damage
+            if (!right) {
+                this.game.currentBoss.attackAnimation = this.game.currentBoss.screamAnimationLeft;
+            } else {
+                this.game.currentBoss.attackAnimation = this.game.currentBoss.screamAnimationRight;
+            }
+			this.game.currentBoss.y -= 1000;
+			this.game.currentBoss.x = this.x - this.game.currentBoss.hitBox.width / 2;
 		}
 	}
 	/**
@@ -1219,10 +1259,11 @@ Particle.prototype.draw = function (ctx) {
 	}
 	ctx.globalAlpha = this.alpha * this.maxAlpha;
 	if (this.other == null) {
-	    this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX,
-			this.y + this.animation.offsetY, this.sizeScale, this.sizeScale);
+		if (this.animation !== null)
+			this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX,
+					this.y + this.animation.offsetY, this.sizeScale * this.absoluteSizeScale, this.sizeScale * this.absoluteSizeScale);
 	} else {
-		this.other.draw(ctx, this.x, this.y, this.sizeScale);
+		this.other.draw(ctx, this.x, this.y, this.sizeScale * this.absoluteSizeScale);
 	}
     Entity.prototype.draw.call(this);
 	ctx.globalAlpha = 1;
@@ -1745,9 +1786,9 @@ function Reksai(game) {
      * Initial cooldowns of skills.
      * Skill ids:
      * 1) Walk to nearest edge, scream, and throw a barrage of void balls.
-     * 2) Undefined...
+     * 2) Burrow attack
      */
-    this.cooldown = [250, 0, 0, 0];
+    this.cooldown = [250, 750, 0, 0];
     
     // Animations
 	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiIdleRight.png"), 0, 0, 151, 100, 0.1, 10, true, false, 0, 0);
@@ -1793,7 +1834,7 @@ Reksai.prototype.update = function() {
         if (this.cooldown[i] > 0)
             this.cooldown[i]--;
     }
-    if (this.energy === 3 && this.attackCount > 0 && this.step % 5% 5 === 0) {
+    if (this.energy === 3 && this.attackCount > 0 && this.step % 5 === 0) {
         var originX = this.lastDirection === "Right" ? this.x + this.hitBox.width : this.x;
         var originY = this.y + 50;
         var speed = this.lastDirection === "Left" ? -10 : 10;
@@ -1815,10 +1856,25 @@ Reksai.prototype.update = function() {
             if (this.attackIndex != 2) //no delay after scream
                 this.idleTimer = this.idleTimerMax;   
             this.attackAnimation.elapsedTime = 0;
+            this.attackIndex = 0;
             this.hitBoxDef.growthX = 0;
             this.hitBoxDef.growthY = 0;
             this.attackable = true;
             this.game.player1.hitByAttack = false;
+	        if (this.energy === 4) { //burrow 
+	        	this.energy = 5; //burrowed
+	            var particle = new Particle(BURROW_PART, this.x + this.hitBox.width / 2, this.y + 50, 
+	                    0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
+	            for (i = 0; i < 10; i++) {
+	    		    var newParticle = new Particle(PART_SECONDARY, this.x + this.hitBox.width / 2, this.y + this.hitBox.height / 2, 
+	    					-3, 3, -7, 4, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
+	    		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 0, 0));
+	    		    newParticle.absoluteSizeScale = .2 + Math.random() * .2;
+	    		    this.game.addEntity(newParticle);
+	            }
+	            this.game.addEntity(particle);
+	        	this.y += 1000; //that's one way to do it!
+	        }
         } else { 
             if (this.attackAnimation.currentFrame() >= 4 && this.attackAnimation.currentFrame() <= this.attackAnimation.frames - 8) {
                 if (this.attackAnimation.currentFrame() < 6) {
@@ -1827,17 +1883,19 @@ Reksai.prototype.update = function() {
                     this.hitBoxDef.growthY = 0;
                 }
                 if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
-                    if (this.attackIndex === 1) { //basic attack
+                    if (this.attackIndex === 1 || this.attackIndex === 4) { //basic attack
                         if (this.game.player1.vulnerable) {
                             this.game.player1.vulnerable = false;
                             var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
                                     0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
                             var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
                             var damage = this.autoDamage;
+                            if (this.attackIndex === 4) //scream from burrow - hits twice? questionmark
+                            	damage = 20;
                             damageText.text = damage;
                             damageParticle.other = damageText;
                             this.game.addEntity(damageParticle);
-                            this.game.player1.currentHealth -= this.autoDamage;
+                            this.game.player1.currentHealth -= damage;
                             this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
                             this.game.player1.hitByAttack = true;
                             playSound(hitSound);
@@ -1854,10 +1912,12 @@ Reksai.prototype.update = function() {
                     }
                 }
             }
-            if (this.lastDirection == "Left") {
-                this.hitBoxDef.growthX -= 1.3;
-            } else if (this.lastDirection == "Right") {
-                this.hitBoxDef.growthX += 1.3;
+            if (this.attackIndex === 1) {
+	            if (this.lastDirection == "Left") {
+	                this.hitBoxDef.growthX -= 1.3;
+	            } else if (this.lastDirection == "Right") {
+	                this.hitBoxDef.growthX += 1.3;
+	            }
             }
         }
     }
@@ -1867,7 +1927,9 @@ Reksai.prototype.update = function() {
         this.walkSpeed = 2;
     }
     if (this.state != "attacking") {
-        if (this.idleTimer > 0) {
+    	if (this.energy === 5) { //currently burrowed into the ground
+    		
+    	} else if (this.idleTimer > 0) {
             this.idleTimer--;
             if (this.lastDirection == "Left") {
                 this.idleAnimation = this.idleLeft;
@@ -1880,9 +1942,9 @@ Reksai.prototype.update = function() {
                 this.energy = 1;
                 this.walkToDestination = true;
                 if (this.x < 325) {
-                    this.destinationX = 50;
-                } else {
                     this.destinationX = 600;
+                } else {
+                    this.destinationX = 50;
                 }
                 this.cooldown[0] = 1000;
             }
@@ -1892,7 +1954,19 @@ Reksai.prototype.update = function() {
                 this.destinationX = -1;
                 this.walkToDestination = false;
             }
-            if (this.energy === 1 && !this.walkToDestination && !this.dead) { //destination reached!
+            if (this.cooldown[1] == 0 && !this.walkToDestination) {
+                this.energy = 4; //start burrow - scream first
+                this.cooldown[1] = 1500;
+                this.state = "attacking";
+                distance = 0;
+                playSound(screamSound);
+                this.attackIndex = 2; //scream - this doesn't actually do any damage.
+                if (this.lastDirection == "Left") {
+                    this.attackAnimation = this.screamAnimationLeft;
+                } else {
+                    this.attackAnimation = this.screamAnimationRight;
+                }
+            } else if (this.energy === 1 && !this.walkToDestination && !this.dead) { //destination reached!
                 this.energy = 2; //screaming
                 this.state = "attacking";
                 this.attackIndex = 2; //scream - this doesn't actually do any damage.
@@ -2550,6 +2624,7 @@ ASSET_MANAGER.queueDownload("./img/small_flare.png");
 
 ASSET_MANAGER.queueDownload("./img/Particle/bubbleleft.png");
 ASSET_MANAGER.queueDownload("./img/Particle/bubbleright.png");
+ASSET_MANAGER.queueDownload("./img/Particle/smoke.png");
 
 ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleRight.png");
