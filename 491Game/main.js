@@ -184,6 +184,23 @@ fadeBossMusicIn = function() {
     }
 }
 
+// Fades the climb music out
+fadeClimbMusicOut = function() {
+    if (!soundOn) { 
+        return; 
+    }
+    if (climbMusic.volume > 0) {
+        musicFadingOut = true;
+    	climbMusic.volume = Math.max(0, climbMusic.volume - 0.01);
+    }
+    if (climbMusic.volume <= 0) {
+        climbMusic.Volume = 0;
+        climbMusic.pause();
+        climbMusic.currentTime = 0;
+        musicFadingOut = false;
+    }
+}
+
 // Returns the RGB of a hex color (e.g. #FFFFFF)
 function rgb(color) {
     return color.match(/\w\w/g).map(function(b){
@@ -386,7 +403,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
-    if (this.game.currentPhase === 2) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 16) {
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
@@ -399,7 +416,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     if (this.game.currentPhase === 0) {
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
-    if (this.game.currentPhase === 2) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 16) {
         ctx.fillText("Malzahar", this.game.currentBoss.x + 10, this.game.currentBoss.y - 15);
     }
     ctx.fillStyle = tempColor;
@@ -883,7 +900,9 @@ TextBox.prototype.update = function() {
                 this.game.currentBoss.attackEnabled = true;
                 this.game.player1.canControl = true;
         	} else if (this.game.currentPhase === 3) {
-        	    climbMusic.play();
+                if (soundOn) {
+                    climbMusic.play();
+                }
         		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "You think you've WON?");
         		this.game.addEntity(chat);
         		this.game.currentPhase = 4;
@@ -894,7 +913,9 @@ TextBox.prototype.update = function() {
         	} else if (this.game.currentPhase === 5) {
         		this.game.currentPhase = 6;
         		this.game.step = 0;
-                earthRumble.play();
+                if (soundOn) {
+                    earthRumble.play();
+                }
         	} else if (this.game.currentPhase === 8) {
          		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "Not good! Better get out of here!");
          		this.game.addEntity(chat);
@@ -906,7 +927,22 @@ TextBox.prototype.update = function() {
         		this.game.step = 0;
         		this.game.cameraLock = false;
         		createPlatforms(this.game);
-        	}
+        	} else if (this.game.currentPhase === 13) {
+                this.game.currentPhase = 14;
+                var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "However... I've had enough fun.");
+                this.game.addEntity(chat);
+            } else if (this.game.currentPhase === 14) {
+                this.game.currentPhase = 15;
+                var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "Die.");
+                this.game.addEntity(chat);                
+            } else if (this.game.currentPhase === 15) {
+                this.game.currentPhase = 16;
+                this.game.player1.canControl = true;
+                this.attackEnabled = true;
+                this.maxHealth = 100;
+                this.currentHealth = 100;
+                this.currentHealthTemp = 100;
+            }
 		}
 	}
 	if (this.step % this.game.textSpeed === 0) {
@@ -1353,7 +1389,7 @@ function Voidling(game, x, y, voidlingType) {
     Entity.call(this, game, x, y);
 
     this.hitBoxDef = {
-    	width: 97, height: 60, offsetX: 0, offsetY: 0, growthX: 0, growthY: 0
+    	width: 75, height: 60, offsetX: 15, offsetY: 0, growthX: 0, growthY: 0
     };
     drawHitBox(this);
 }
@@ -1449,20 +1485,20 @@ Voidling.prototype.update = function() {
     var platformFound = false;
     this.game.currentMap.platforms.forEach(function(currentPlatform) {
         if (currentPlatform.hSpeed == 0 && currentPlatform.vSpeed == 0) {
-            if (that.hitBox.x > currentPlatform.hitBox.x) {
+            if (that.hitBox.x > currentPlatform.hitBox.x && that.walkSpeed < 0) {
                 if (that.hitBox.x <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                    if (that.hitBox.y <= currentPlatform.hitBox.y) {
+                    if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
                         if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
                             platformFound = true;
                         }
                     }
                 }
-            } else {
+            } else if (that.walkSpeed < 0) {
                 var platformFound2 = false;
                 that.game.currentMap.platforms.forEach(function(currentPlatform2) {
                     if (currentPlatform.hitBox.x - 2 >= currentPlatform2.hitBox.x) {
                         if (currentPlatform.hitBox.x - 2 <= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width) {
-                            if (currentPlatform.hitBox.y + 2 >= currentPlatform2.hitBox.y) {
+                            if (currentPlatform.hitBox.y + 2 + that.hitBox.height / 2 >= currentPlatform2.hitBox.y) {
                                 if (currentPlatform.hitBox.y + 2 <= currentPlatform2.hitBox.y + currentPlatform2.hitBox.height) {
                                     if (currentPlatform2.hSpeed == 0 && currentPlatform2.vSpeed == 0) {
                                         platformFound2 = true;
@@ -1476,7 +1512,34 @@ Voidling.prototype.update = function() {
                 if (platformFound2) {
                     if (that.hitBox.x <= currentPlatform.hitBox.x && that.hitBox.x + that.hitBox.width >= currentPlatform.hitBox.x) {
                         if (that.hitBox.x + that.hitBox.width <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                            if (that.hitBox.y <= currentPlatform.hitBox.y) {
+                            if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
+                                if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
+                                    platformFound = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (that.walkSpeed > 0) {
+                var platformFound2 = false;
+                that.game.currentMap.platforms.forEach(function(currentPlatform2) {
+                    if (currentPlatform.hitBox.x + currentPlatform.hitBox.width + 2 >= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width) {
+                        if (currentPlatform.hitBox.x + currentPlatform.hitBox.width + 2 <= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width * 2) {
+                            if (currentPlatform.hitBox.y + 2 + that.hitBox.height / 2 >= currentPlatform2.hitBox.y) {
+                                if (currentPlatform.hitBox.y + 2 <= currentPlatform2.hitBox.y + currentPlatform2.hitBox.height) {
+                                    if (currentPlatform2.hSpeed == 0 && currentPlatform2.vSpeed == 0) {
+                                        platformFound2 = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                if (platformFound2) {
+                    if (that.hitBox.x <= currentPlatform.hitBox.x && that.hitBox.x + that.hitBox.width >= currentPlatform.hitBox.x) {
+                        if (that.hitBox.x <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+                            if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
                                 if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
                                     platformFound = true;
                                 }
@@ -1625,6 +1688,7 @@ Malzahar.prototype.update = function() {
 		this.game.currentPhase = 3;
 		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "HEhHehEEhHe...");
 		this.game.addEntity(chat);
+        this.attackEnabled = false;
         playSound(disappearSound);
 	}
     if (this.game.currentPhase === 3) {
@@ -1639,8 +1703,33 @@ Malzahar.prototype.update = function() {
     } else if (this.game.currentPhase === 4) {
         this.alpha = 0;
         this.x = 2000;
+    } else if (this.game.currentPhase === 11) {
+        this.x = 1400;
+        this.y = -1470;
+        this.alpha = 0;
+        if (isPlaying(earthRumble)) {
+            earthRumble.pause();
+        } 
+        if (climbMusic.volume > 0.0) {
+            fadeClimbMusicOut();
+            if (climbMusic.volume <= 0) {
+                this.game.currentPhase = 12;
+            }
+        }
+    } else if (this.game.currentPhase === 12) {
+        this.game.player1.canControl = false;
+        if (this.alpha < 1) {
+            this.alpha += 0.005;
+        } else {
+            this.alpha = 1;
+            var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "Hehehe. Not bad. Not bad at all.");
+            this.game.addEntity(chat);
+            this.game.currentPhase = 13;
+        }
+    } else if (this.game.currentPhase === 16) {
+        fadeBossMusicIn();
     }
-    if (this.game.currentPhase === 2 && this.attackEnabled) { // Malz attack code
+    if ((this.game.currentPhase === 2 || this.game.currentPhase === 16) && this.attackEnabled) { // Malz attack code
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
@@ -1653,84 +1742,6 @@ Malzahar.prototype.update = function() {
 	        }
 	    }
 	    if (this.state != "attacking") {
-	        if (this.idleTimer > 0) {
-	            this.idleTimer--;
-	            if (this.lastDirection == "Left") {
-	                this.idleAnimation = this.idleLeft;
-	            } else {
-	                this.idleAnimation = this.idleRight;
-	            }
-	        } else {
-	            var distance = getXDistance(this.game.player1, this);
-	            if (this.cooldown[0] == 0 && !this.walkToDestination) {
-	                this.energy = 1;
-	                this.walkToDestination = true;
-	                if (this.x < 325) {
-	                    this.destinationX = 50;
-	                } else {
-	                    this.destinationX = 600;
-	                }
-	                this.cooldown[0] = 1000;
-	            }
-	            if (this.walkToDestination)
-	                distance = this.destinationX - this.x;
-	            if (this.game.currentPhase === 2)
-	            	distance = 0;
-	            if (distance === 0) { //destination must be the same as current location
-	                this.destinationX = -1;
-	                this.walkToDestination = false;
-	            }
-	            if (distance < 0) {
-	                this.state = "walking";
-	                this.lastDirection = "Left";
-	                this.walkAnimation = this.walkAnimationLeft;
-	                this.x -= this.walkSpeed;
-	                if (this.walkToDestination && this.x <= this.destinationX) { //destination reached
-	                    this.destinationX = -1;
-	                    this.walkToDestination = false;
-	                }
-	            } else if (distance > 0) {
-	                this.state = "walking";
-	                this.lastDirection = "Right";
-	                this.walkAnimation = this.walkAnimationRight;
-	                this.x += this.walkSpeed;
-	                if (this.walkToDestination && this.x >= this.destinationX) { //destination reached
-	                    this.destinationX = -1;
-	                    this.walkToDestination = false;
-	                }
-	            } else if (distance === 0 && !this.walkToDestination && this.energy === 0) { //attack if not walking or charging attack
-                    var random = Math.floor(Math.random() * 3);
-                    if (random == 0) {
-                        this.spawnCount = 3;
-                        this.spawnTimer = 0;
-                        this.state = "attacking";
-                        this.attackIndex = 2;
-                    } else {
-                        var particle = new Particle(VOID_PORTAL, this.game.player1.x + this.game.player1.hitBox.width / 2, this.y + 150, 
-                                0, 0, 0, 0, 0, 0, 0, 200, 0, 10, 0, 0, false, this.game);
-                        var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
-                        particle.other = element;
-                        particle.attackId = 1; //void ball
-                        this.game.addEntity(particle);
-                        var hitSound = new Audio("./sounds/chargedburst.wav");
-                        hitSound.volume = 1;
-                        hitSound.currentTime = 0;
-                        hitSound.play();
-                        this.state = "attacking";
-                        this.attackIndex = 1; //basic attack
-                        if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
-                            this.lastDirection = "Right";
-                        } else {
-                            this.lastDirection = "Left";
-                        }
-                        if (this.lastDirection == "Left") {
-                            this.attackAnimation = this.attackAnimationLeft;
-                        } else {
-                            this.attackAnimation = this.attackAnimationRight;
-                        }
-                    }
-	            }
-	        }
 	    }
     }
     Entity.prototype.update.call(this);
@@ -2438,26 +2449,6 @@ Character.prototype.update = function () {
             this.runAnimation = this.runAnimationLeft;
         }
         
-        if (this.running) {
-            footsteps.volume = 0.8;
-            if (this.lastDirection === "Right") {
-                this.x += this.runSpeed;
-            } else if (this.lastDirection === "Left") {
-                this.x -= this.runSpeed;
-            }
-        } else if ((this.jumping || this.falling) && !this.attacking) {
-            this.x += this.jumpSpeed;
-        }
-        
-        if (!this.running) {
-            if (footsteps.volume > 0.05) {
-                footsteps.volume -= 0.05;
-            }
-            if (footsteps.volume <= 0.05) {
-                footsteps.volume = 0;
-                footsteps.currentTime = 0;
-            }
-        }
         var collision = false;
         if (this.attackIndex == 7 || //e
                 ((this.attackIndex >= 1 && this.attackIndex <= 3) && this.attackAnimation.elapsedTime <= 0.5)) { // Q first part - has movement on first half
@@ -2545,6 +2536,7 @@ Character.prototype.update = function () {
                         if (currentPlatform.specialId === 1) { //bouncy platform
                         	that.yVelocity = 15;
                         	that.jumpSpeed = 0;
+                            that.jumping = true;
                         } else {
 	                    	that.x += currentPlatform.hSpeed;
 	                    	that.y += currentPlatform.vSpeed;
@@ -2560,6 +2552,27 @@ Character.prototype.update = function () {
             }
         }
     });
+    
+    if (this.running) {
+        footsteps.volume = 0.8;
+        if (this.lastDirection === "Right") {
+            this.x += this.runSpeed;
+        } else if (this.lastDirection === "Left") {
+            this.x -= this.runSpeed;
+        }
+    } else if ((this.jumping || this.falling) && !this.attacking) {
+        this.x += this.jumpSpeed;
+    }
+    
+    if (!this.running) {
+        if (footsteps.volume > 0.05) {
+            footsteps.volume -= 0.05;
+        }
+        if (footsteps.volume <= 0.05) {
+            footsteps.volume = 0;
+            footsteps.currentTime = 0;
+        }
+    }
     
     if (!platformFound && !this.jumping) {
         if (!this.falling) {

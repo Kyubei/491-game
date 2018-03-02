@@ -201,6 +201,14 @@ GameEngine.prototype.update = function () {
 	    		this.liveCamera.y = Math.max(this.camera.y, this.liveCamera.y - this.cameraSpeed);	    		
 	    	}
 	    }
+        if (this.camera.y <= -1700) {
+            this.currentPhase = 11;
+            this.camera.x = 800;
+            this.camera.y = -1700;
+            this.liveCamera.x = 800;
+            this.liveCamera.y = -1700;
+            this.cameraLock = true;
+        }
 	}
 	//CAMERA SHAKE
 	if (this.currentPhase >= 6 && this.currentPhase <= 10) {
