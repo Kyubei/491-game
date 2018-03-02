@@ -186,6 +186,13 @@ GameEngine.prototype.update = function () {
 			if (this.step >= 100) {
 				this.camera.y = 0 - (this.step - 100) / 2;
 			}
+			if (this.camera.y === -855 * 2) {
+				this.currentPhase = 11;
+				this.camera.minY = this.camera.y;
+				this.camera.minX = 800;
+				this.cameraLock = true;
+				console.log("change in y: "+(0 - (this.step - 100) / 2));
+			}
 		}
 	    if (this.liveCamera.x != this.camera.x) {
 	    	if (this.liveCamera.x < this.camera.x) {
