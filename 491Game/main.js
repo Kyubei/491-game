@@ -26,6 +26,7 @@ var VOID_ERUPTION = 8;
 var IMG_FLASH_PART = 9;
 var BURROW_PART = 10;
 var VOID_STORM = 11;
+var VOID_GOOP = 12;
 // Sounds
 var bossMusic = new Audio("./sounds/map1BGMusic.mp3");
 bossMusic.loop = true;
@@ -1160,6 +1161,18 @@ Particle.prototype.update = function() {
 	   	newParticle.other = element;
 	   	newParticle.attackId = 3;
 	    this.game.addEntity(newParticle);
+	}
+	if (this.particleId === VOID_GOOP && this.life % 2 === 0) {
+		if (this.y <= this.game.liveCamera.y + this.game.liveCamera.height) {
+		    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
+					0, 0, 0, 0, 0, 0, 0, 40, 10, 10, .3, .2, true, this.game);
+		    var element = new CircleElement(7 + Math.random() * 4, "#240340", "#131d4f");
+		   	newParticle.other = element;
+		    this.game.addEntity(newParticle);
+		} else {
+			console.log("deleting goop "+this.y)
+			this.removeFromWorld = true;			
+		}
 	}
 	if (this.particleId === BURROW_PART) {
 		var right = false;
@@ -2452,6 +2465,11 @@ Character.prototype.canCancel = function() {
 
 Character.prototype.update = function () {
 	var that = this;
+	if (this.game.currentPhase >= 0 && this.game.currentPhase <= 10) {
+	    /*var newParticle = new Particle(VOID_GOOP, this.game.liveCamera.x + Math.random() * this.game.liveCamera.width, this.game.liveCamera.y + this.game.liveCamera.height - 1, 
+				-4, 4, -6, -4, .2, 0, 0, 60, 10, 15, .5, .2, true, this.game);
+        this.game.addEntity(newParticle);*/
+	}
 	if (this.game.currentPhase === 7) {
  		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "???");
  		this.game.addEntity(chat);
