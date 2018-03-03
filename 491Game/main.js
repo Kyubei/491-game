@@ -89,6 +89,8 @@ var rocksSound = new Audio("./sounds/taliyahrocks.mp3");
 rocksSound.volume = 0.1;
 var jumpSound = new Audio("./sounds/jumpSound.mp3");
 jumpSound.volume = 0.3;
+var breakSound = new Audio("./sounds/rock_break.wav");
+breakSound.volume = 0.3;
 
 /**
     Useful methods
@@ -421,7 +423,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 13) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
@@ -434,7 +436,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     if (this.game.currentPhase === 0) {
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 13) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
         ctx.fillText("Malzahar", this.game.currentBoss.x + 10, this.game.currentBoss.y - 15);
     }
     ctx.fillStyle = tempColor;
@@ -587,14 +589,33 @@ Platform.prototype.update = function () {
 	    this.x += this.hSpeed;
 	    this.y += this.vSpeed;
 	}
+    if (this.game.currentPhase === 10 && !this.removeFromWorld) {
+        if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
+			for (i = 0; i < this.hitBox.width; i += 10) {
+	        	console.log("creating particle");
+	            playSound(breakSound);
+	            var particle = new Particle(SHAPE_PART, this.x + i, this.y, 4, -4, 0, -4, 0.15, 0.1, 0, 5, 0, 50, 1, 0, true, this.game);
+	            var element;
+	            if (this.specialId === 0)
+	            	element = new SquareElement(6 + Math.random() * 4, 6 + Math.random() * 4, "#123D5C", "#386586");
+	            else
+	            	element = new SquareElement(6 + Math.random() * 4, 6 + Math.random() * 4, "#39682D", "#41850B");
+	            particle.other = element;
+	            this.game.addEntity(particle);
+			}
+			this.removeFromWorld = true;
+        }
+    }
     Entity.prototype.update.call(this);
     drawHitBox(this);
 };
 
 Platform.prototype.draw = function (ctx) {
-    ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
-	drawHitBox(this, ctx);
-    Entity.prototype.draw.call(this);
+	if (!this.removeFromWorld) {
+	    ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
+		drawHitBox(this, ctx);
+	}
+	Entity.prototype.draw.call(this);
 }
 
 /**
@@ -693,7 +714,7 @@ function createPlatforms(game) {
 		
 		new Platform(game, 1440, 176),
 		
-		new Platform(game, 1504, 176, 0, -1, 96), //VERTICAL
+		new Platform(game, 1504, 176, 0, -2, 96 / 2), //VERTICAL
 		
 		new Platform(game, 1392, 80),
 		
@@ -727,7 +748,7 @@ function createPlatforms(game) {
 		
 		new Platform(game, 880, -160),
 		
-		new Platform(game, 816, -160, 0, -1, 160), //VERTICAL
+		new Platform(game, 816, -160, 0, -2, 160 / 2), //VERTICAL
 		
 		new Platform(game, 880, -320),
 		
@@ -763,7 +784,7 @@ function createPlatforms(game) {
 		
 		new Platform(game, 800, -512),
 		
-		new Platform(game, 1264, -512, 1, 0, 176), //HORIZONTAL
+		new Platform(game, 1264, -512, 2, 0, 176 / 2), //HORIZONTAL
 		
 		new Platform(game, 1536, -512, 0, 0, 0, 1), //BOUNCY
 		
@@ -849,7 +870,7 @@ function createPlatforms(game) {
 		
 		new Platform(game, 1024, -1104),
 		
-		new Platform(game, 1472, -1104, -1, 0, 80), //HORIZONTAL
+		new Platform(game, 1472, -1104, -2, 0, 80 / 2), //HORIZONTAL
 		
 		new Platform(game, 960, -1152),
 		
@@ -973,8 +994,8 @@ TextBox.prototype.update = function() {
         		this.game.step = 0;
         		this.game.cameraLock = false;
         		createPlatforms(this.game);
-        	} else if (this.game.currentPhase === 12) {
-                this.game.currentPhase = 13;
+        	} else if (this.game.currentPhase === 12 || this.game.currentPhase === 13 || this.game.currentPhase === 14) {
+                this.game.currentPhase = 14;
                 this.game.player1.canControl = true;
                 this.game.currentBoss.attackEnabled = true;
                 this.game.currentBoss.maxHealth = 100;
@@ -1747,71 +1768,19 @@ function Malzahar(game) {
     drawHitBox(this);
 }
 
-function Malzahar(game) {
-	// Number Variables
-	this.alpha = 1;
-	this.step = 0;
-    this.walkSpeed = 2;
-    this.autoDamage = 30;
-    this.spawnCount = 0;
-    this.spawnTimer = 0;
-    this.destinationX = -1;
-    this.attackIndex = 0;
-    this.attackCount = 0;
-    this.energy = 0; //denotes if an attack is charged
-    this.idleTimerMax = 110;
-    this.idleTimer = this.idleTimerMax;
-    this.maxHealth = 40.0;
-    this.currentHealth = this.maxHealth;
-    this.currentHealthTemp = this.currentHealth;   
-    // String Variables
-    this.state = "idle";
-	this.lastDirection = "Left";    
-    // Boolean Variables
-    this.attackEnabled = false;
-    this.dead = false;
-    this.solid = false;
-    this.attackable = true;
-    this.walkToDestination = false;
-    
-    /**
-     * Initial cooldowns of skills.
-     * Skill ids:
-     * 1) Walk to nearest edge, scream, and throw a barrage of void balls.
-     * 2) Undefined...
-     */
-    this.cooldown = [500, 0, 0, 0];
-    
-    // Animations
-	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, -20);
-	this.idleLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleLeft.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, -20);
-    this.idleAnimation = this.idleLeft;
-    this.walkAnimationRight = this.idleRight;
-    this.walkAnimationLeft = this.idleLeft;
-    this.walkAnimation = this.walkAnimationLeft;
-    this.attackAnimationRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ERight.png"), 0, 0, 114, 180, 0.1, 9, false, false, -10, -40);
-    this.attackAnimationLeft = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/ELeft.png"), 0, 0, 114, 180, 0.1, 9, false, false, 0, -40);
-    this.attackAnimation = this.attackAnimationLeft;  
-    this.currentAnimation = this.idleLeft;
- 
-    Entity.call(this, game, 1400, 235);
-    
-    this.hitBoxDef = {
-    	width: 80, height: 150, offsetX: 5, offsetY: -5, growthX: 0, growthY: 0
-    };
-    drawHitBox(this);
-}
-
 Malzahar.prototype.update = function() {
     for (i = 0; i < this.cooldown.length; i++) {
         if (this.cooldown[i] > 0)
             this.cooldown[i]--;
     }
 	if (this.alpha < 1 && !this.dead && this.energy === 0) {
-		//console.log("REAPPEARING INTO THE WORLD! "+this.x+","+this.y+", player is "+this.game.player1.x+", "+this.game.player1.y+", gamephase="+this.game.currentPhase);
 		this.alpha += 0.01;
-		if (this.alpha >= 1)
+		if (this.alpha >= 1) {
 			this.alpha = 1;
+			this.game.currentPhase = 14;
+		}
+		console.log("REAPPEARING INTO THE WORLD! "+this.x+","+this.y+", player is "+this.game.player1.x+", "+this.game.player1.y+", gamephase="+this.game.currentPhase);
+        this.state = "idle";
 	    var newParticle = new Particle(PART_SECONDARY, this.x + Math.random() * 100, this.y + Math.random() * 160, 
 				-2, 2, -2, 2, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game);
 	    var element = new CircleElement(6 + Math.random() * 3, "#240340", "#131d4f");
@@ -1886,13 +1855,13 @@ Malzahar.prototype.update = function() {
 		this.game.currentPhase = 12;
 		this.dead = false;
     } else if (this.game.currentPhase === 12) {
-        fadeClimbMusicOut();
+        //fadeClimbMusicOut();
         earthRumble.pause();
-    } else if (this.game.currentPhase === 13) {
-        fadeClimbMusicOut();
-        fadeBossMusicIn();
+    } else if (this.game.currentPhase === 14) {
+        //fadeClimbMusicOut();
+        //fadeBossMusicIn();
     }
-    if ((this.game.currentPhase === 2 || (this.game.currentPhase === 13 && this.alpha >= 1)) && this.attackEnabled) { // Malz attack code
+    if ((this.game.currentPhase === 2 || this.game.currentPhase === 14) && this.attackEnabled) { // Malz attack code
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
@@ -1932,6 +1901,7 @@ Malzahar.prototype.update = function() {
                     }
                     this.game.addEntity(particle);
 	            } else if (this.energy === 2) { //teleport
+			        console.log("supposedly teleporting?");
 	            	if (this.x != this.destinationX && this.destinationX != -1) {
 	            		//particles on the current body
 	            	    var newParticle = new Particle(PART_SECONDARY, this.x + Math.random() * 100, this.y + Math.random() * 160, 
@@ -1946,12 +1916,14 @@ Malzahar.prototype.update = function() {
 	            	   	newParticle.other = element;
 	            	    this.game.addEntity(newParticle);
 	            		this.alpha -= 0.01;
+	            		console.log("TELEPORTING from "+this.x+" to "+this.destinationX+", alpha = "+this.alpha);
 	            		if (this.alpha <= 0) {
 	            			this.alpha = 0;
 	            			this.x = this.destinationX;
 	            			this.destinationX = -1;
 	            		}
 	            	} else {
+	            		console.log("TELEPORTING ARRIVAL from "+this.x+" to "+this.destinationX+", alpha = "+this.alpha);
 	            		if (this.alpha < 1) {
 	            			this.alpha += .02;
 		            	    var newParticle = new Particle(PART_SECONDARY, this.x + Math.random() * 100, this.y + Math.random() * 160, 
@@ -1978,14 +1950,17 @@ Malzahar.prototype.update = function() {
 	                    this.destinationX = 50 + 800;
 	                }
 	                this.cooldown[0] = 750;
-	            } else if (this.cooldown[1] == 0 && !this.walkToDestination) {
-	            	this.cooldown[1] = 1000;
+	            } else if (this.cooldown[1] == 0 && !this.walkToDestination && this.game.currentPhase >= 14) {
+	            	this.cooldown[1] = 1500;
 	                this.energy = 2; //teleporting
 	                if (this.x < 325 + 800) {
 	                    this.destinationX = 600 + 800;
 	                } else {
 	                    this.destinationX = 50 + 800;
 	                }
+	                this.walkToDestination = false;
+	                this.state = "idle";
+	                console.log("TELEPORTIONG TO "+this.destinationX);
                     playSound(teleportSound);
 	            }
 	            if (this.walkToDestination)
