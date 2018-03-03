@@ -468,19 +468,6 @@ UI.prototype.draw = function (ctx) { //draw ui
         ctx.globalAlpha = 1.0;
     }
     if (this.game.currentPhase >= 6 && this.game.currentPhase <= 10) {
-        
-        /*
-        
-        
-        var speed = this.lastDirection === "Left" ? -10 : 10;
-        var particle = new Particle(VOID_BALL, originX, originY, 
-                speed, speed, -1.5 * this.attackCount, -1.5 * this.attackCount, 0.3, 0, 0, 100, 0, 10, 1, 0, false, this.game);
-        var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
-        
-        
-function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
-	gravity, friction, width, maxLife, fadeIn, fadeOut, maxAlpha, alphaVariance, shrink, game, anim) {
-        */
         var randomness = Math.random() * 100;
         if (randomness <= 10) {
             var randomSize = 2 + Math.random() * 13;
@@ -1717,7 +1704,7 @@ function Malzahar(game) {
 	// Number Variables
 	this.alpha = 1;
 	this.step = 0;
-    this.walkSpeed = 3;
+    this.walkSpeed = 4;
     this.autoDamage = 30;
     this.spawnCount = 0;
     this.spawnTimer = 0;
@@ -1903,6 +1890,13 @@ Malzahar.prototype.update = function() {
 	            } else if (this.energy === 2) { //teleport
 			        console.log("supposedly teleporting?");
 	            	if (this.x != this.destinationX && this.destinationX != -1) {
+                        if (this.destinationX > this.hitBox.x + this.hitBox.width) {
+                            this.lastDirection = "Right";
+                            this.walkAnimation = this.idleRight;
+                        } else if (this.destinationX < this.hitBox.x) {
+                            this.lastDirection = "Left";
+                            this.walkAnimation = this.idleLeft;
+                        }
 	            		//particles on the current body
 	            	    var newParticle = new Particle(PART_SECONDARY, this.x + Math.random() * 100, this.y + Math.random() * 160, 
 	            				-2, 2, -2, 2, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game);
@@ -1919,6 +1913,15 @@ Malzahar.prototype.update = function() {
 	            		console.log("TELEPORTING from "+this.x+" to "+this.destinationX+", alpha = "+this.alpha);
 	            		if (this.alpha <= 0) {
 	            			this.alpha = 0;
+                            if (this.x < this.destinationX) {
+                                this.lastDirection = "Left";
+                                this.idleAnimation = this.idleLeft;
+                                this.walkAnimation = this.idleLeft;
+                            } else {
+                                this.lastDirection = "Right";
+                                this.idleAnimation = this.idleRight;
+                                this.walkAnimation = this.idleRight;
+                            }
 	            			this.x = this.destinationX;
 	            			this.destinationX = -1;
 	            		}
