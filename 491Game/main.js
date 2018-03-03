@@ -3,8 +3,8 @@
 */
 
 var soundOn = true;
-var showHitBox = true;
-var testingMode = true; // W damage = 700
+var showHitBox = false;
+var testingMode = false; // W damage = 700
 
 /**
     General Variables
@@ -476,7 +476,7 @@ UI.prototype.draw = function (ctx) { //draw ui
                                             randomPosition,
                                             this.game.camera.y - 100, 
                                             0, 0, -3, -5, 0.3, 0, 0, 100, 0, 10, 1, 0, true, this.game);
-                                    var element = new SquareElement(randomSize, randomSize, "#8B4513", "#A52A2A");
+                                    var element = new SquareElement(randomSize, randomSize, "#2A2349", "#272144");
                                     particle.other = element;
                                     this.game.addEntity(particle);
         }
