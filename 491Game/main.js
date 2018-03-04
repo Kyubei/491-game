@@ -4,7 +4,7 @@
 
 var soundOn = true;
 var showHitBox = false;
-var testingMode = false; // W damage = 700
+var testingMode = true; // W damage = 700
 
 /**
     General Variables
@@ -86,7 +86,7 @@ burrowingSound.volume = 0.2;
 var unburrowingSound = new Audio("./sounds/ReksaiUnburrowing.mp3");
 unburrowingSound.volume = 0.2;
 var rocksSound = new Audio("./sounds/taliyahrocks.mp3");
-rocksSound.volume = 0.1;
+rocksSound.volume = 0.05;
 var jumpSound = new Audio("./sounds/jumpSound.mp3");
 jumpSound.volume = 0.3;
 var breakSound = new Audio("./sounds/rock_break.wav");
@@ -423,7 +423,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 13) {
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
@@ -436,7 +436,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     if (this.game.currentPhase === 0) {
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 13) {
         ctx.fillText("Malzahar", this.game.currentBoss.x + 10, this.game.currentBoss.y - 15);
     }
     ctx.fillStyle = tempColor;
@@ -981,8 +981,8 @@ TextBox.prototype.update = function() {
         		this.game.step = 0;
         		this.game.cameraLock = false;
         		createPlatforms(this.game);
-        	} else if (this.game.currentPhase === 12 || this.game.currentPhase === 13 || this.game.currentPhase === 14) {
-                this.game.currentPhase = 14;
+        	} else if (this.game.currentPhase === 12) {
+                this.game.currentPhase = 13;
                 this.game.player1.canControl = true;
                 this.game.currentBoss.attackEnabled = true;
                 this.game.currentBoss.maxHealth = 100;
@@ -1221,16 +1221,37 @@ Particle.prototype.update = function() {
         } else
         	this.x += Math.max(distance, -2);
         if (this.life % 3 === 0) {
-		    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
+            var randomSize = 5 + Math.random() * 8;
+            var particle = new Particle(SHAPE_PART,
+                                            this.x + (Math.random() * 21) - 10 + 25,
+                                            this.y + 30, 
+                                            -3, 3, -3, 0, 0.1, 0, 0, 60, 10, 10, 0.9, 0.1, true, this.game);
+                                    var element = new SquareElement(randomSize, randomSize, "#2A2349", "#272144");
+                                    particle.other = element;
+                                    this.game.addEntity(particle);
+                                    
+            
+		    var newParticle = new Particle(PART_SECONDARY, this.x + (Math.random() * 11) - 5, this.y, 
 					-2, 2, -3, 0, 0.1, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
 		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.06 + Math.random() * 0.02, 20, true, false, 15, 10));
 		    newParticle.absoluteSizeScale = .1 + Math.random() * .1;
 		    this.game.addEntity(newParticle);
+            
         }
 		if (this.life % 2 === 0 && this.life >= (this.maxLife * 3 / 4)) { //erupt!
-		    newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
+            rocksSound.volume = 0.2;
+            var randomSize = 10 + Math.random() * 5;
+            var particle = new Particle(SHAPE_PART,
+                                            this.x + (Math.random() * 21) - 10 + 25,
+                                            this.y + 30, 
+                                            -3, 3, -3, 0, 0.1, 0, 0, 60, 10, 10, 0.9, 0.1, true, this.game);
+                                    var element = new SquareElement(randomSize, randomSize, "#2A2349", "#272144");
+                                    particle.other = element;
+                                    this.game.addEntity(particle);
+        
+		    newParticle = new Particle(PART_SECONDARY, this.x + (Math.random() * 11) - 5, this.y - 5, 
 					-3, 3, -5, 0, 0.1, 0.1, 0, 30, 0, 15, .7, .2, true, this.game,
-		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 15, 10));
+		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/smoke.png"), 0, 0, 256, 256, 0.03 + Math.random() * 0.04, 20, true, false, 15, 5));
 		    newParticle.absoluteSizeScale = .2 + Math.random() * .2;
 		    this.game.addEntity(newParticle);
 		}
@@ -1714,7 +1735,7 @@ function Malzahar(game) {
     this.energy = 0; //denotes if an attack is charged
     this.idleTimerMax = 110;
     this.idleTimer = this.idleTimerMax;
-    this.maxHealth = 40.0;
+    this.maxHealth = 80.0;
     this.currentHealth = this.maxHealth;
     this.currentHealthTemp = this.currentHealth;   
     // String Variables
@@ -1764,7 +1785,7 @@ Malzahar.prototype.update = function() {
 		this.alpha += 0.01;
 		if (this.alpha >= 1) {
 			this.alpha = 1;
-			this.game.currentPhase = 14;
+			this.game.currentPhase = 13;
 		}
 		console.log("REAPPEARING INTO THE WORLD! "+this.x+","+this.y+", player is "+this.game.player1.x+", "+this.game.player1.y+", gamephase="+this.game.currentPhase);
         this.state = "idle";
@@ -1833,7 +1854,7 @@ Malzahar.prototype.update = function() {
         this.currentHealth = this.maxHealth;
     } else if (this.game.currentPhase === 11) {
         this.lastDirection = "left";
-    	this.y = -1460;
+    	this.y = -1470;
     	this.x = 1400;
         this.energy = 0;
         this.game.player1.canControl = false;
@@ -1841,22 +1862,22 @@ Malzahar.prototype.update = function() {
 		this.game.addEntity(chat);
 		this.game.currentPhase = 12;
 		this.dead = false;
-    } else if (this.game.currentPhase === 12) {
-        //fadeClimbMusicOut();
         earthRumble.pause();
-    } else if (this.game.currentPhase === 14) {
-        //fadeClimbMusicOut();
-        //fadeBossMusicIn();
+    } else if (this.game.currentPhase === 12 || this.game.currentPhase === 13) {
+        fadeClimbMusicOut();
+        fadeBossMusicIn();
     }
-    if ((this.game.currentPhase === 2 || this.game.currentPhase === 14) && this.attackEnabled) { // Malz attack code
+    if ((this.game.currentPhase === 2 || this.game.currentPhase === 13) && this.attackEnabled) { // Malz attack code
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
                 if (this.attackIndex == 2) {
                     this.idleTimer = this.idleTimerMax * 1.5;
+                } else if (this.attackIndex == 3) {
+                    this.idleTimer = this.idleTimerMax * 0.7;
                 } else {
                     this.idleTimer = this.idleTimerMax;
-                }                    
+                }                   
 	            this.attackAnimation.elapsedTime = 0;
 	        }
 	    }
@@ -1974,7 +1995,7 @@ Malzahar.prototype.update = function() {
 	                this.destinationX = -1;
 	                this.walkToDestination = false;
 	            }
-	            if (distance < 0) {
+	            if (distance < 0 && this.state != "attacking") {
 	                this.state = "walking";
 	                this.lastDirection = "Left";
 	                this.walkAnimation = this.walkAnimationLeft;
@@ -1983,7 +2004,7 @@ Malzahar.prototype.update = function() {
 	                    this.destinationX = -1;
 	                    this.walkToDestination = false;
 	                }
-	            } else if (distance > 0) {
+	            } else if (distance > 0 && this.state != "attacking") {
 	                this.state = "walking";
 	                this.lastDirection = "Right";
 	                this.walkAnimation = this.walkAnimationRight;
@@ -1992,7 +2013,7 @@ Malzahar.prototype.update = function() {
 	                    this.destinationX = -1;
 	                    this.walkToDestination = false;
 	                }
-	            } else if (distance === 0 && !this.walkToDestination && this.energy === 0) { //attack if not walking or charging attack
+	            } else if (distance === 0 && !this.walkToDestination && this.energy === 0 && this.state != "attacking") { //attack if not walking or charging attack            
                     var particle = new Particle(VOID_PORTAL, this.game.player1.x + this.game.player1.hitBox.width / 2, this.y + 150, 
                             0, 0, 0, 0, 0, 0, 0, 200, 0, 10, 0, 0, false, this.game);
                     var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
@@ -2148,6 +2169,7 @@ Reksai.prototype.update = function() {
             this.game.player1.hitByAttack = false;
 	        if (this.energy === 4) { //burrow 
 	        	this.energy = 5; //burrowed
+                                
 	            var particle = new Particle(BURROW_PART, this.x + this.hitBox.width / 2, this.y + 50, 
 	                    0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
 	            for (i = 0; i < 10; i++) {
@@ -2158,6 +2180,7 @@ Reksai.prototype.update = function() {
 	    		    this.game.addEntity(newParticle);
 	            }
                 playSound(burrowingSound);
+                rocksSound.volume = 0.05;
                 playSound(rocksSound);
 	            this.game.addEntity(particle);
 	        	this.y += 1000; //that's one way to do it!
