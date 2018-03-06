@@ -1888,7 +1888,6 @@ Malzahar.prototype.update = function() {
                     }
                     this.game.addEntity(particle);
 	            } else if (this.energy === 2) { //teleport
-			        console.log("supposedly teleporting?");
 	            	if (this.x != this.destinationX && this.destinationX != -1) {
                         if (this.destinationX > this.hitBox.x + this.hitBox.width) {
                             this.lastDirection = "Right";
@@ -1910,7 +1909,6 @@ Malzahar.prototype.update = function() {
 	            	   	newParticle.other = element;
 	            	    this.game.addEntity(newParticle);
 	            		this.alpha -= 0.01;
-	            		console.log("TELEPORTING from "+this.x+" to "+this.destinationX+", alpha = "+this.alpha);
 	            		if (this.alpha <= 0) {
 	            			this.alpha = 0;
                             if (this.x < this.destinationX) {
@@ -1926,7 +1924,6 @@ Malzahar.prototype.update = function() {
 	            			this.destinationX = -1;
 	            		}
 	            	} else {
-	            		console.log("TELEPORTING ARRIVAL from "+this.x+" to "+this.destinationX+", alpha = "+this.alpha);
 	            		if (this.alpha < 1) {
 	            			this.alpha += .02;
 		            	    var newParticle = new Particle(PART_SECONDARY, this.x + Math.random() * 100, this.y + Math.random() * 160, 
