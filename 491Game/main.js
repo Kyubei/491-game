@@ -6,6 +6,8 @@ var soundOn = true;
 var showHitBox = false;
 var testingMode = true; // W damage = 700
 
+var gameEngine;
+
 /**
     General Variables
 */
@@ -39,12 +41,18 @@ climbMusic.volume = 0.2;
 var earthRumble = new Audio("./sounds/earth_rumble.wav");
 earthRumble.loop = true;
 earthRumble.volume = 0.4;
+var fireSound = new Audio("./sounds/fire_burning.wav");
+fireSound.volume = 0.4;
 var healSound = new Audio("./sounds/heal.wav");
 healSound.volume = 0.1;
+var invulnSound = new Audio("./sounds/invulnerable.wav");
+invulnSound.volume = 0.1;
 var reksaiProjectileSound = new Audio("./sounds/rekProjHit.wav");
 reksaiProjectileSound.volume = 0.1;
 var lightningSound = new Audio("./sounds/lightning.wav");
 lightningSound.volume = 0.1;
+var burnSound = new Audio("./sounds/burn.wav");
+burnSound.volume = 0.2;
 var hitSound = new Audio("./sounds/punch.mp3");
 hitSound.volume = 0.5;
 var voidlingDeathSound = new Audio("./sounds/Death.mp3");
@@ -63,6 +71,8 @@ footsteps.volume = 0;
 if (soundOn) {
     this.footsteps.play();
 }
+var bounceSound = new Audio("./sounds/bounce.wav");
+bounceSound.volume = 0.3;
 var autoSound = new Audio("./sounds/rivenAuto.mp3");
 autoSound.volume = 0.1;
 var q1Sound = new Audio("./sounds/Q1.mp3");
@@ -80,6 +90,8 @@ hitSound.volume = 1;
 var teleportSound = new Audio("./sounds/teleport.wav");
 teleportSound.volume = 0.3;
 teleportSound.playbackRate = 1.5;
+var voidGateSound = new Audio("./sounds/voidgate.wav");
+voidGateSound.volume = 1;
 var laserSound = new Audio("./sounds/laser.wav");
 laserSound.volume = 0.2;
 var burrowingSound = new Audio("./sounds/ReksaiBurrowing.mp3");
@@ -292,12 +304,22 @@ Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy, linger) {
     var locX = x;
     var locY = y;
     var offset = vindex === 0 ? this.startX : 0;
-    ctx.drawImage(this.spriteSheet,
+    
+   ctx.drawImage(this.spriteSheet,
                   index * this.frameWidth + offset, vindex * this.frameHeight + this.startY,  // source from sheet
                   this.frameWidth, this.frameHeight,
                   locX, locY,
                   this.frameWidth * scale,
                   this.frameHeight * scale);
+   /*var imageData = ctx.getImageData(gameEngine.liveCamera.x, gameEngine.liveCamera.y,
+    		gameEngine.liveCamera.x + gameEngine.liveCamera.width, gameEngine.liveCamera.y + gameEngine.liveCamera.height);
+    var data = imageData.data;
+    for (var i = 0; i < data.length; i += 4) {
+    	data[i]     = 255 - data[i];     // red
+		data[i + 1] = 255 - data[i + 1]; // green
+		data[i + 2] = 255 - data[i + 2]; // blue
+	}
+	ctx.putImageData(imageData, 0, 0);*/
 };
 
 // Returns the current frame of an animation
@@ -327,6 +349,14 @@ Background.prototype.draw = function (ctx) {
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background.png"), 1600, 0);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background2.png"), 800 - 100, 0 - 855);
     ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 2);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 3);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 4);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 5);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 6);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 7);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 8);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 9);
+    ctx.drawImage(ASSET_MANAGER.getAsset("./img/Background3.png"), 800 - 100, 0 - 855 * 10);
     Entity.prototype.draw.call(this);
 };
 
@@ -538,7 +568,7 @@ function updateBossResources(entity, ui) {
 /**
     Platform
 */
-function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId) {
+function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId, stepOffset) {
     // Number Variables
     this.x = x;
     this.y = y;
@@ -548,11 +578,14 @@ function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId) {
     this.vSpeed = vSpeed || 0;
     this.switchDelay = switchDelay || 0;
 	this.specialId = specialId || 0;
-    this.step = 0;
+    this.step = stepOffset || 0;
     // Pictures and Animations
     this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/Platform.png");
     if (this.specialId === 1) {
         this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/PlatformBouncy.png");    	
+    }
+    if (this.specialId === 2) {
+        this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/PlatformFire.png");    	
     }
     
     Entity.call(this, game, x, y);
@@ -574,13 +607,32 @@ Platform.prototype.update = function () {
 			this.hSpeed *= -1;
 			this.vSpeed *= -1;
 		}
+		if (this.specialId === 2) {
+			if (this.step >= 150) {
+				if (this.step === 150)
+		            playSound(fireSound);
+				if (this.step % 2 === 0) {
+					for (i = 0; i < this.hitBox.width; i += 10) {
+						if (Math.random() >= 0.5) {
+				            var particle = new Particle(SHAPE_PART, this.x + i, this.y, 1, -1, 0, -4, 0, 0.1, 0, 5, 0, 50, 1, 0, true, this.game);
+				            var element;
+				            element = new SquareElement(4 + Math.random() * 2, 4 + Math.random() * 2, "#f27d30", "#eab120");
+				            particle.other = element;
+				            particle.attackId = 5;
+				            this.game.addEntity(particle);
+						}
+					}
+				}
+			}
+			if (this.step >= 200)
+				this.step = 0;
+		}
 	    this.x += this.hSpeed;
 	    this.y += this.vSpeed;
 	}
     if (this.game.currentPhase === 10 && !this.removeFromWorld) {
         if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
 			for (i = 0; i < this.hitBox.width; i += 10) {
-	        	console.log("creating particle");
 	            playSound(breakSound);
 	            var particle = new Particle(SHAPE_PART, this.x + i, this.y, 4, -4, 0, -4, 0.15, 0.1, 0, 5, 0, 50, 1, 0, true, this.game);
 	            var element;
@@ -599,9 +651,11 @@ Platform.prototype.update = function () {
 };
 
 Platform.prototype.draw = function (ctx) {
-	if (!this.removeFromWorld) {
-	    ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
-		drawHitBox(this, ctx);
+	if (isOnScreen(this)) {
+		if (!this.removeFromWorld) {
+		    ctx.drawImage(this.platformPicture, this.x, this.y, this.width, this.height); 
+			drawHitBox(this, ctx);
+		}
 	}
 	Entity.prototype.draw.call(this);
 }
@@ -611,9 +665,9 @@ Platform.prototype.draw = function (ctx) {
 */
 
 function Map(game) {
-    // Starting Platforms at start
+    // Starting Platforms
     this.platforms = [];
-	this.platforms.push(new Platform(game, 200, 315, 1, 0, 64));
+	this.platforms.push(new Platform(game, 200, 315));
 	this.platforms.push(new Platform(game, 500, 315));
     
     Entity.call(this, game, 0, 0);    
@@ -632,6 +686,513 @@ Map.prototype.draw = function (ctx) {
     Entity.prototype.draw.call(this);
 }
 
+function createPlatforms2(game) {
+	var powerups = [
+		new Powerup(game, 1184, -1904, 0), //health powerup
+		new Powerup(game, 832, -2048, 2), //void gate spawner
+		new Powerup(game, 896, -2368, 2), //void gate spawner
+		new Powerup(game, 848, -2528, 0), //health powerup
+		new Powerup(game, 992, -2976, 1), //invuln powerup
+		new Powerup(game, 1520, -3072, 2), //void gate spawner
+		new Powerup(game, 1200, -3504, 2), //void gate spawner
+		new Powerup(game, 816, -3408, 1), //invuln powerup
+		new Powerup(game, 1088, -3312, 0), //health powerup
+		new Powerup(game, 1472, -3648, 2), //void gate spawner
+		new Powerup(game, 1152, -3840, 2), //void gate spawner
+		new Powerup(game, 848, -3984, 2), //void gate spawner
+		new Powerup(game, 1184, -3984, 1), //invuln powerup
+		new Powerup(game, 1136, -4176, 0), //health powerup
+		new Powerup(game, 816, -4352, 2) //void gate spawner
+	]
+	var voidlings = [
+		new Voidling(game, 1312, -1616, "touch"),
+		new Voidling(game, 1424, -1616, "touch"),
+		new Voidling(game, 1232, -1760, "explode"),
+		new Voidling(game, 1344, -1760, "explode"),
+		new Voidling(game, 1168, -2048, "touch"),
+		new Voidling(game, 1312, -2048, "touch"),
+		new Voidling(game, 1456, -2048, "explode"),
+		new Voidling(game, 1120, -2176, "touch"),
+		new Voidling(game, 1280, -2176, "touch"),
+		new Voidling(game, 1152, -2624, "touch"),
+		new Voidling(game, 992, -2624, "touch"),
+		new Voidling(game, 928, -2784, "touch"),
+		new Voidling(game, 1232, -2784, "touch"),
+		new Voidling(game, 1264, -2784, "touch"),
+		new Voidling(game, 1296, -2784, "touch"),
+		new Voidling(game, 1328, -2784, "touch"),
+		new Voidling(game, 1360, -2784, "touch"),
+		new Voidling(game, 1392, -2784, "touch"),
+		new Voidling(game, 1248, -2784, "explode"),
+		new Voidling(game, 1296, -2784, "explode"),
+		new Voidling(game, 1344, -2784, "explode"),
+		new Voidling(game, 1392, -2784, "explode"),
+		new Voidling(game, 1168, -3072, "touch"),
+		new Voidling(game, 960, -3072, "touch"),
+		new Voidling(game, 992, -3456, "touch"),
+		new Voidling(game, 1024, -3456, "touch"),
+		new Voidling(game, 1056, -3456, "touch"),
+		new Voidling(game, 1088, -3456, "touch"),
+		new Voidling(game, 1120, -3456, "touch"),
+		new Voidling(game, 864, -3840, "explode"),
+		new Voidling(game, 1024, -4304, "explode"),
+		new Voidling(game, 1232, -4352, "explode")
+	];
+	var platforms = [
+
+new Platform(game, 1088, -1376),
+
+new Platform(game, 1168, -1424),
+
+new Platform(game, 1232, -1424, 0, -2, 80), //VERTICAL
+
+new Platform(game, 1296, -1568),
+
+new Platform(game, 1424, -1568),
+
+new Platform(game, 1488, -1568),
+
+new Platform(game, 1360, -1568),
+
+new Platform(game, 1552, -1568),
+
+new Platform(game, 1536, -1616),
+
+new Platform(game, 1536, -1664),
+
+new Platform(game, 1472, -1712),
+
+new Platform(game, 1408, -1712),
+
+new Platform(game, 1344, -1712),
+
+new Platform(game, 1280, -1712),
+
+new Platform(game, 1216, -1712),
+
+new Platform(game, 896, -1712),
+
+new Platform(game, 832, -1712),
+
+new Platform(game, 768, -1712),
+
+new Platform(game, 960, -1712, 2, 0, 128), //HORIZONTAL
+
+new Platform(game, 896, -1760),
+
+new Platform(game, 960, -1808),
+
+new Platform(game, 896, -1856),
+
+new Platform(game, 1040, -1856),
+
+new Platform(game, 1104, -1856),
+
+new Platform(game, 1168, -1856),
+
+new Platform(game, 832, -1904),
+
+new Platform(game, 768, -1952),
+
+new Platform(game, 1024, -1952),
+
+new Platform(game, 960, -1952),
+
+new Platform(game, 1088, -1952),
+
+new Platform(game, 1536, -1952, 0, 0, 0, 1), //BOUNCY
+
+new Platform(game, 832, -2000),
+
+new Platform(game, 1152, -2000),
+
+new Platform(game, 896, -2000),
+
+new Platform(game, 1216, -2000),
+
+new Platform(game, 1280, -2000),
+
+new Platform(game, 1344, -2000),
+
+new Platform(game, 1408, -2000),
+
+new Platform(game, 1472, -2000),
+
+new Platform(game, 1536, -2128),
+
+new Platform(game, 1472, -2128),
+
+new Platform(game, 1408, -2128),
+
+new Platform(game, 1344, -2128),
+
+new Platform(game, 1280, -2128),
+
+new Platform(game, 1216, -2128),
+
+new Platform(game, 1152, -2128),
+
+new Platform(game, 1088, -2128),
+
+new Platform(game, 1024, -2128, 0, -2, 48), //VERTICAL
+
+new Platform(game, 960, -2224),
+
+new Platform(game, 896, -2224),
+
+new Platform(game, 832, -2272, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 896, -2320),
+
+new Platform(game, 960, -2320),
+
+new Platform(game, 1024, -2320),
+
+new Platform(game, 1088, -2320),
+
+new Platform(game, 1152, -2320),
+
+new Platform(game, 1216, -2320),
+
+new Platform(game, 1280, -2320),
+
+new Platform(game, 1344, -2320),
+
+new Platform(game, 1408, -2320),
+
+new Platform(game, 1472, -2320),
+
+new Platform(game, 1536, -2320, 0, -2, 80), //VERTICAL
+
+new Platform(game, 1216, -2368),
+
+new Platform(game, 1088, -2368),
+
+new Platform(game, 1152, -2416),
+
+new Platform(game, 1472, -2480),
+
+new Platform(game, 832, -2480),
+
+new Platform(game, 768, -2464),
+
+new Platform(game, 960, -2512),
+
+new Platform(game, 896, -2496),
+
+new Platform(game, 1408, -2528),
+
+new Platform(game, 1344, -2528),
+
+new Platform(game, 1280, -2528),
+
+new Platform(game, 1216, -2528),
+
+new Platform(game, 1152, -2528),
+
+new Platform(game, 1088, -2528),
+
+new Platform(game, 1024, -2528),
+
+new Platform(game, 1344, -2576),
+
+new Platform(game, 1280, -2576),
+
+new Platform(game, 1216, -2576),
+
+new Platform(game, 1152, -2576),
+
+new Platform(game, 1088, -2576),
+
+new Platform(game, 1024, -2576),
+
+new Platform(game, 960, -2576),
+
+new Platform(game, 896, -2576),
+
+new Platform(game, 768, -2576),
+
+new Platform(game, 832, -2576, 0, 0, 0, 1), //BOUNCY
+
+new Platform(game, 1168, -2688, 0, 0, 0, 1), //BOUNCY
+
+new Platform(game, 1536, -2688, 0, 0, 0, 1), //BOUNCY
+
+new Platform(game, 832, -2736),
+
+new Platform(game, 896, -2736),
+
+new Platform(game, 960, -2736),
+
+new Platform(game, 1232, -2736),
+
+new Platform(game, 1296, -2736),
+
+new Platform(game, 1360, -2736),
+
+new Platform(game, 1424, -2736),
+
+new Platform(game, 1040, -2784),
+
+new Platform(game, 1168, -2832),
+
+new Platform(game, 1104, -2832),
+
+new Platform(game, 1536, -2832),
+
+new Platform(game, 1168, -2880),
+
+new Platform(game, 1536, -2880),
+
+new Platform(game, 1104, -2928),
+
+new Platform(game, 1040, -2928),
+
+new Platform(game, 976, -2928),
+
+new Platform(game, 1536, -2928),
+
+new Platform(game, 1536, -2976),
+
+new Platform(game, 1456, -3024, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1392, -3024, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1328, -3024),
+
+new Platform(game, 1264, -3024),
+
+new Platform(game, 1200, -3024),
+
+new Platform(game, 1136, -3024),
+
+new Platform(game, 1008, -3024),
+
+new Platform(game, 960, -3024),
+
+new Platform(game, 896, -3024),
+
+new Platform(game, 832, -3024),
+
+new Platform(game, 768, -3024),
+
+new Platform(game, 1072, -3024, 0, -2, 48), //VERTICAL
+
+new Platform(game, 800, -3072),
+
+new Platform(game, 864, -3120),
+
+new Platform(game, 1072, -3136),
+
+new Platform(game, 800, -3168),
+
+new Platform(game, 864, -3216),
+
+new Platform(game, 928, -3264),
+
+new Platform(game, 1072, -3264, 0, 0, 0, 1), //BOUNCY
+
+new Platform(game, 864, -3312),
+
+new Platform(game, 800, -3360),
+
+new Platform(game, 1072, -3408),
+
+new Platform(game, 1008, -3408),
+
+new Platform(game, 1136, -3408),
+
+new Platform(game, 1328, -3456, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1392, -3456, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1264, -3456, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1200, -3456, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1456, -3456),
+
+new Platform(game, 1520, -3456),
+
+new Platform(game, 1584, -3456),
+
+new Platform(game, 1520, -3504),
+
+new Platform(game, 1584, -3504),
+
+new Platform(game, 1520, -3552),
+
+new Platform(game, 1584, -3552),
+
+new Platform(game, 1520, -3600),
+
+new Platform(game, 1584, -3600),
+
+new Platform(game, 1456, -3600),
+
+new Platform(game, 1392, -3600),
+
+new Platform(game, 1328, -3600),
+
+new Platform(game, 1264, -3600, 0, -2, 48), //VERTICAL
+
+new Platform(game, 976, -3792),
+
+new Platform(game, 912, -3792),
+
+new Platform(game, 848, -3792),
+
+new Platform(game, 784, -3792),
+
+new Platform(game, 1136, -3792, 2, 0, 48), //HORIZONTAL
+
+new Platform(game, 1200, -3792, 0, -2, 48), //VERTICAL
+
+new Platform(game, 784, -3840),
+
+new Platform(game, 784, -3888),
+
+new Platform(game, 1040, -3936, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1168, -3936, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1296, -3936, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1360, -3936, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1424, -3936, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1488, -3936, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1552, -3936, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 848, -3936),
+
+new Platform(game, 912, -3936),
+
+new Platform(game, 1536, -3984),
+
+new Platform(game, 1472, -4032),
+
+new Platform(game, 1536, -4080),
+
+new Platform(game, 1408, -4128, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1344, -4128, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1152, -4128, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1088, -4128, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 896, -4128, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 832, -4128, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1280, -4128, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 1216, -4128, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 1024, -4128, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 960, -4128, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 1472, -4128),
+
+new Platform(game, 800, -4176, 0, 0, 0, 1), //BOUNCY
+
+new Platform(game, 992, -4256),
+
+new Platform(game, 1056, -4256),
+
+new Platform(game, 1120, -4256),
+
+new Platform(game, 800, -4304),
+
+new Platform(game, 864, -4304),
+
+new Platform(game, 928, -4304),
+
+new Platform(game, 1184, -4304),
+
+new Platform(game, 1248, -4304),
+
+new Platform(game, 1312, -4304),
+
+new Platform(game, 1376, -4304),
+
+new Platform(game, 1440, -4304),
+
+new Platform(game, 1504, -4304),
+
+new Platform(game, 1568, -4304),
+
+new Platform(game, 1376, -4352, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1440, -4352, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1504, -4352, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1568, -4352, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1440, -4400, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 1504, -4400, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 1568, -4400, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 1504, -4448, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1568, -4448, 0, 0, 0, 2), //FIRE
+
+new Platform(game, 1440, -4496, 0, 0, 0, 2, 100), //FIRE
+
+new Platform(game, 1376, -4496, 0, -2, 80), //VERTICAL
+
+new Platform(game, 1248, -4640, 0, 0, 0, 1), //BOUNCY
+
+new Platform(game, 1248, -4784),
+
+new Platform(game, 1184, -4784),
+
+new Platform(game, 800, -4784),
+
+new Platform(game, 864, -4784),
+
+new Platform(game, 928, -4784),
+
+new Platform(game, 992, -4784),
+
+new Platform(game, 1056, -4784),
+
+new Platform(game, 1120, -4784),
+
+new Platform(game, 1312, -4784),
+
+new Platform(game, 1376, -4784),
+
+new Platform(game, 1440, -4784),
+
+new Platform(game, 1504, -4784),
+
+new Platform(game, 1568, -4784)
+
+
+	];
+	for (i = 0; i < platforms.length; i++) {
+		var p = platforms[i];
+		console.log("adding new platform: "+p.x+","+p.y);
+		game.currentMap.platforms.push(p);
+	}
+	for (i = 0; i < voidlings.length; i++) {
+		var v = voidlings[i];
+		game.addEntity(v);
+	}
+	for (i = 0; i < powerups.length; i++) {
+		var v = powerups[i];
+		game.addEntity(v);
+	}
+}
+
 function createPlatforms(game) {
 	var powerups = [
 		
@@ -645,255 +1206,131 @@ function createPlatforms(game) {
 	]
 	var voidlings = [
 		new Voidling(game, 944, -208, "explode"),
-
 		new Voidling(game, 1024, 128, "touch"),
-
 		new Voidling(game, 1248, 128, "touch"),
-
 		new Voidling(game, 976, -1008, "explode"),
-
 		new Voidling(game, 1184, -1008, "touch"),
-
 		new Voidling(game, 1392, -1008, "touch"),
-
 		new Voidling(game, 1056, -1152, "touch"),
-
 		new Voidling(game, 1232, -1152, "touch"),
-
 		new Voidling(game, 992, -704, "touch"),
-
 		new Voidling(game, 1056, -704, "touch"),
-
 		new Voidling(game, 928, -368, "touch"),
-
 		new Voidling(game, 1104, -368, "touch"),
-
 		new Voidling(game, 864, -16, "explode"),
-
 		new Voidling(game, 960, -864, "touch"),
-
-		new Voidling(game, 1120, -864, "touch"),
+		new Voidling(game, 1120, -864, "touch")
 	];
 	var platforms = [
-		
-		new Platform(game, 800, 320),
-		
-		new Platform(game, 800, 272),
-		
-		new Platform(game, 800, 224),
-		
-		new Platform(game, 864, 176),
-		
-		new Platform(game, 928, 176),
-		
-		new Platform(game, 992, 176),
-		
-		new Platform(game, 1056, 176),
-		
-		new Platform(game, 1120, 176),
-		
-		new Platform(game, 1184, 176),
-		
-		new Platform(game, 1248, 176),
-		
-		new Platform(game, 1312, 176),
-		
-		new Platform(game, 1376, 176),
-		
-		new Platform(game, 1440, 176),
-		
-		new Platform(game, 1504, 176, 0, -2, 96 / 2), //VERTICAL
-		
-		new Platform(game, 1392, 80),
-		
-		new Platform(game, 1328, 32),
-		
-		new Platform(game, 1072, 32),
-		
-		new Platform(game, 1008, 32),
-		
-		new Platform(game, 944, 32),
-		
-		new Platform(game, 880, 32),
-		
-		new Platform(game, 816, 32),
-		
-		new Platform(game, 752, 32),
-		
-		new Platform(game, 1264, -16),
-		
-		new Platform(game, 1136, -16),
-		
-		new Platform(game, 1200, -64),
-		
-		new Platform(game, 1136, -112),
-		
-		new Platform(game, 1072, -160),
-		
-		new Platform(game, 1008, -160),
-		
-		new Platform(game, 944, -160),
-		
-		new Platform(game, 880, -160),
-		
-		new Platform(game, 816, -160, 0, -2, 160 / 2), //VERTICAL
-		
-		new Platform(game, 880, -320),
-		
-		new Platform(game, 944, -320),
-		
-		new Platform(game, 1008, -320),
-		
-		new Platform(game, 1072, -320),
-		
-		new Platform(game, 1136, -320),
-		
-		new Platform(game, 1200, -320),
-		
-		new Platform(game, 1312, -320),
-		
-		new Platform(game, 1424, -368),
-		
-		new Platform(game, 1344, -416),
-		
-		new Platform(game, 1216, -416),
-		
-		new Platform(game, 1088, -416),
-		
-		new Platform(game, 976, -416),
-		
-		new Platform(game, 880, -464),
-		
-		new Platform(game, 1200, -512),
-		
-		new Platform(game, 976, -512),
-		
-		new Platform(game, 1088, -512),
-		
-		new Platform(game, 800, -512),
-		
-		new Platform(game, 1264, -512, 2, 0, 176 / 2), //HORIZONTAL
-		
-		new Platform(game, 1536, -512, 0, 0, 0, 1), //BOUNCY
-		
-		new Platform(game, 1360, -656),
-		
-		new Platform(game, 1296, -656),
-		
-		new Platform(game, 1232, -656),
-		
-		new Platform(game, 1168, -656),
-		
-		new Platform(game, 1104, -656),
-		
-		new Platform(game, 1040, -656),
-		
-		new Platform(game, 976, -656),
-		
-		new Platform(game, 912, -656, 0, 0, 0, 1), //BOUNCY
-		
-		new Platform(game, 1536, -704),
-		
-		new Platform(game, 912, -816),
-		
-		new Platform(game, 976, -816),
-		
-		new Platform(game, 1040, -816),
-		
-		new Platform(game, 1104, -816),
-		
-		new Platform(game, 1168, -816),
-		
-		new Platform(game, 1296, -816),
-		
-		new Platform(game, 1424, -816),
-		
-		new Platform(game, 848, -864),
-		
-		new Platform(game, 784, -864),
-		
-		new Platform(game, 1488, -864),
-		
-		new Platform(game, 1552, -864),
-		
-		new Platform(game, 784, -912),
-		
-		new Platform(game, 784, -960),
-		
-		new Platform(game, 912, -960),
-		
-		new Platform(game, 976, -960),
-		
-		new Platform(game, 1040, -960),
-		
-		new Platform(game, 1104, -960),
-		
-		new Platform(game, 1168, -960),
-		
-		new Platform(game, 1232, -960),
-		
-		new Platform(game, 1296, -960),
-		
-		new Platform(game, 1360, -960),
-		
-		new Platform(game, 1424, -960),
-		
-		new Platform(game, 1488, -960),
-		
-		new Platform(game, 1552, -960),
-		
-		new Platform(game, 1536, -1008),
-		
-		new Platform(game, 1536, -1056),
-		
-		new Platform(game, 1536, -1104),
-		
-		new Platform(game, 1280, -1104),
-		
-		new Platform(game, 1216, -1104),
-		
-		new Platform(game, 1152, -1104),
-		
-		new Platform(game, 1088, -1104),
-		
-		new Platform(game, 1024, -1104),
-		
-		new Platform(game, 1472, -1104, -2, 0, 80 / 2), //HORIZONTAL
-		
-		new Platform(game, 960, -1152),
-		
-		new Platform(game, 896, -1200),
-		
-		new Platform(game, 1120, -1200, 0, 0, 0, 1), //BOUNCY
-		
-		new Platform(game, 960, -1248),
-		
-		new Platform(game, 800, -1328),
-		
-		new Platform(game, 864, -1328),
-		
-		new Platform(game, 928, -1328),
-		
-		new Platform(game, 992, -1328),
-		
-		new Platform(game, 1056, -1328),
-		
-		new Platform(game, 1120, -1328),
-		
-		new Platform(game, 1184, -1328),
-		
-		new Platform(game, 1248, -1328),
-		
-		new Platform(game, 1312, -1328),
-		
-		new Platform(game, 1376, -1328),
-		
-		new Platform(game, 1440, -1328),
-		
-		new Platform(game, 1504, -1328),
-		
-		new Platform(game, 1568, -1328),
-
+		new Platform(game, 800, 320),		
+		new Platform(game, 800, 272),		
+		new Platform(game, 800, 224),		
+		new Platform(game, 864, 176),		
+		new Platform(game, 928, 176),		
+		new Platform(game, 992, 176),		
+		new Platform(game, 1056, 176),		
+		new Platform(game, 1120, 176),		
+		new Platform(game, 1184, 176),		
+		new Platform(game, 1248, 176),		
+		new Platform(game, 1312, 176),		
+		new Platform(game, 1376, 176),		
+		new Platform(game, 1440, 176),		
+		new Platform(game, 1504, 176, 0, -2, 96 / 2), //VERTICAL		
+		new Platform(game, 1392, 80),		
+		new Platform(game, 1328, 32),		
+		new Platform(game, 1072, 32),		
+		new Platform(game, 1008, 32),		
+		new Platform(game, 944, 32),		
+		new Platform(game, 880, 32),		
+		new Platform(game, 816, 32),		
+		new Platform(game, 752, 32),		
+		new Platform(game, 1264, -16),		
+		new Platform(game, 1136, -16),		
+		new Platform(game, 1200, -64),		
+		new Platform(game, 1136, -112),		
+		new Platform(game, 1072, -160),		
+		new Platform(game, 1008, -160),		
+		new Platform(game, 944, -160),		
+		new Platform(game, 880, -160),		
+		new Platform(game, 816, -160, 0, -2, 160 / 2), //VERTICAL		
+		new Platform(game, 880, -320),		
+		new Platform(game, 944, -320),		
+		new Platform(game, 1008, -320),		
+		new Platform(game, 1072, -320),		
+		new Platform(game, 1136, -320),		
+		new Platform(game, 1200, -320),		
+		new Platform(game, 1312, -320),		
+		new Platform(game, 1424, -368),		
+		new Platform(game, 1344, -416),		
+		new Platform(game, 1216, -416),		
+		new Platform(game, 1088, -416),		
+		new Platform(game, 976, -416),		
+		new Platform(game, 880, -464),		
+		new Platform(game, 1200, -512),		
+		new Platform(game, 976, -512),		
+		new Platform(game, 1088, -512),		
+		new Platform(game, 800, -512),		
+		new Platform(game, 1264, -512, 2, 0, 176 / 2), //HORIZONTAL		
+		new Platform(game, 1536, -512, 0, 0, 0, 1), //BOUNCY		
+		new Platform(game, 1360, -656),		
+		new Platform(game, 1296, -656),		
+		new Platform(game, 1232, -656),		
+		new Platform(game, 1168, -656),		
+		new Platform(game, 1104, -656),		
+		new Platform(game, 1040, -656),		
+		new Platform(game, 976, -656),		
+		new Platform(game, 912, -656, 0, 0, 0, 1), //BOUNCY		
+		new Platform(game, 1536, -704),		
+		new Platform(game, 912, -816),		
+		new Platform(game, 976, -816),		
+		new Platform(game, 1040, -816),		
+		new Platform(game, 1104, -816),		
+		new Platform(game, 1168, -816),		
+		new Platform(game, 1296, -816),		
+		new Platform(game, 1424, -816),		
+		new Platform(game, 848, -864),		
+		new Platform(game, 784, -864),		
+		new Platform(game, 1488, -864),		
+		new Platform(game, 1552, -864),		
+		new Platform(game, 784, -912),		
+		new Platform(game, 784, -960),		
+		new Platform(game, 912, -960),		
+		new Platform(game, 976, -960),		
+		new Platform(game, 1040, -960),		
+		new Platform(game, 1104, -960),		
+		new Platform(game, 1168, -960),		
+		new Platform(game, 1232, -960),		
+		new Platform(game, 1296, -960),		
+		new Platform(game, 1360, -960),		
+		new Platform(game, 1424, -960),		
+		new Platform(game, 1488, -960),		
+		new Platform(game, 1552, -960),		
+		new Platform(game, 1536, -1008),		
+		new Platform(game, 1536, -1056),		
+		new Platform(game, 1536, -1104),		
+		new Platform(game, 1280, -1104),		
+		new Platform(game, 1216, -1104),		
+		new Platform(game, 1152, -1104),		
+		new Platform(game, 1088, -1104),		
+		new Platform(game, 1024, -1104),		
+		new Platform(game, 1472, -1104, -2, 0, 80 / 2), //HORIZONTAL		
+		new Platform(game, 960, -1152),		
+		new Platform(game, 896, -1200),		
+		new Platform(game, 1120, -1200, 0, 0, 0, 1), //BOUNCY		
+		new Platform(game, 960, -1248),		
+		new Platform(game, 800, -1328),		
+		new Platform(game, 864, -1328),		
+		new Platform(game, 928, -1328),		
+		new Platform(game, 992, -1328),		
+		new Platform(game, 1056, -1328),		
+		new Platform(game, 1120, -1328),		
+		new Platform(game, 1184, -1328),		
+		new Platform(game, 1248, -1328),		
+		new Platform(game, 1312, -1328),		
+		new Platform(game, 1376, -1328),		
+		new Platform(game, 1440, -1328),		
+		new Platform(game, 1504, -1328),		
+		new Platform(game, 1568, -1328)
 	];
 	for (i = 0; i < platforms.length; i++) {
 		var p = platforms[i];
@@ -991,7 +1428,21 @@ TextBox.prototype.update = function() {
                 this.game.currentBoss.currentHealth = 100;
                 this.game.currentBoss.currentHealthTemp = 100;
                 this.game.currentBoss.dead = false;
-            }
+            } else if (this.game.currentPhase === 15) {
+        		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "All must bow down to the void... or be CONSUMED by it!");
+        		this.game.addEntity(chat);
+        		this.game.currentPhase = 16;
+        	} else if (this.game.currentPhase === 16) {
+         		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "...here we go again!");
+         		this.game.addEntity(chat);
+        		this.game.currentPhase = 17;
+        		this.game.step = 0;
+        		this.game.cameraLock = false;
+                if (soundOn) {
+                    earthRumble.play();
+                }
+        		createPlatforms2(this.game);
+        	}
 		}
 	}
 	if (this.step % this.game.textSpeed === 0) {
@@ -1193,11 +1644,12 @@ Particle.prototype.update = function() {
 	    this.game.addEntity(newParticle);
 	}
 	if (this.particleId === VOID_GATE) {
-		if (this.life >= 150) {
+		if (this.life === 150) {
 			if (this.direction === "Right")
-				this.hSpeed += .4;
+				this.hSpeed = 30;
 			else
-				this.hSpeed -= .4;
+				this.hSpeed = -30;
+			this.friction = 0.5;
 		}
 		if (this.life % 1 === 0) {
 			var distanceFromSide = this.x - this.game.liveCamera.x;
@@ -1354,7 +1806,7 @@ Particle.prototype.update = function() {
 	};
     if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
     	if (this.attackId === 1) { // Reksai Void Ball
-            if (this.game.player1.vulnerable) {
+            if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
                 this.game.player1.vulnerable = false;
                 var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
             			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -1379,7 +1831,7 @@ Particle.prototype.update = function() {
             }
     	}
     	if (this.attackId === 2) { //malzahar void eruption
-            if (this.game.player1.vulnerable) {
+            if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
                 this.game.player1.vulnerable = false;
                 var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
             			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -1404,7 +1856,7 @@ Particle.prototype.update = function() {
             }
     	}
     	if (this.attackId === 3) { //malzahar void storm
-            if (this.game.player1.vulnerable) {
+            if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
                 this.game.player1.vulnerable = false;
                 var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
             			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -1429,7 +1881,7 @@ Particle.prototype.update = function() {
             }
     	}
     	if (this.attackId === 4) {
-            if (this.game.player1.vulnerable) {
+            if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
                 this.game.player1.vulnerable = false;
                 var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
             			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -1442,6 +1894,31 @@ Particle.prototype.update = function() {
                 this.game.player1.invulnTimer = this.game.player1.invulnTimerMax * 2;
                 this.game.player1.hitByAttack = true;
                 playSound(lightningSound);
+                if (this.hSpeed < 0) {
+                    this.game.player1.xVelocity = -3;
+                    this.game.player1.lastDirection = "Right";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                } else {
+                    this.game.player1.xVelocity = 3;
+                    this.game.player1.lastDirection = "Left";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                }
+            }
+    	}
+    	if (this.attackId === 5 && this.life < this.maxLife / 4) { //platform fire
+            if ((this.game.player1.hitBox.y + this.game.player1.hitBox.height <= this.y + 3) && this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
+                this.game.player1.vulnerable = false;
+                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+            			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                var damage = 20;
+            	damageText.text = damage;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                this.game.player1.currentHealth -= damage;
+                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                this.game.player1.hitByAttack = true;
+                playSound(burnSound);
                 if (this.hSpeed < 0) {
                     this.game.player1.xVelocity = -3;
                     this.game.player1.lastDirection = "Right";
@@ -1483,7 +1960,12 @@ function Powerup(game, x, y, type) {
 	this.step = 0;
 	this.x = x;
 	this.y = y;
+	this.type = type;
+	this.animation = null;
     Entity.call(this, game, x, y);
+    if (type === 1) { //invuln
+    	this.animation = new Animation(ASSET_MANAGER.getAsset("./img/Particle/invuln.png"), 0, 0, 32, 32, 0.03, 20, true, false, 0, 0);
+    }
 	
     this.hitBoxDef = {
     	width: 32, height: 32, offsetX: 0, offsetY: 0, growthX: 0, growthY: 0
@@ -1493,30 +1975,69 @@ function Powerup(game, x, y, type) {
 
 Powerup.prototype.update = function () {
 	// Only update when in the screen
+	this.step++;
 	if (isOnScreen(this)) {
-		this.game.addEntity(new Particle(IMG_PART, this.x, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
-			new Animation(ASSET_MANAGER.getAsset("./img/pink_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
-        if (checkCollision(this, this.game.player1)) {
-            playSound(healSound);
-            
-            var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-                    0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-            var damageText = new TextElement("", "Lucida Console", 25, "#ADFF2F", "black");
-            var damage = 30;
-            damageText.text = damage;
-            damageParticle.other = damageText;
-            this.game.addEntity(damageParticle);
-            this.game.player1.currentHealth += damage;
-            if (this.game.player1.currentHealth >= this.game.player1.maxHealth) {
-            	this.game.player1.currentHealth = this.game.player1.maxHealth;
-            }
-            this.removeFromWorld = true;
-        }
+		if (this.type === 0) { //health powerup
+			this.game.addEntity(new Particle(IMG_PART, this.x, this.y - 10, 0.2, -0.2, 0.2, -0.2, 0, 0, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
+				new Animation(ASSET_MANAGER.getAsset("./img/Particle/pink_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
+	        if (checkCollision(this, this.game.player1)) {
+	            playSound(healSound);
+	            
+	            var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+	                    0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+	            var damageText = new TextElement("", "Lucida Console", 25, "#ADFF2F", "black");
+	            var damage = 30;
+	            damageText.text = damage;
+	            damageParticle.other = damageText;
+	            this.game.addEntity(damageParticle);
+	            this.game.player1.currentHealth += damage;
+	            if (this.game.player1.currentHealth >= this.game.player1.maxHealth) {
+	            	this.game.player1.currentHealth = this.game.player1.maxHealth;
+	            }
+	            this.removeFromWorld = true;
+	        }
+		}
+		if (this.type === 1) { //invuln powerup
+			if (this.step % 4 === 0)
+				this.game.addEntity(new Particle(IMG_PART, this.x, this.y - 10, -0.2, 0.3, -0.3, 0.3, 0, 0.1, 5, 5, 10, 50, 0.7, 0.2, true, this.game,
+						new Animation(ASSET_MANAGER.getAsset("./img/Particle/orange_flare.png"), 0, 0, 64, 64, 0.03, 16, true, false, 0, 0)));
+	        if (checkCollision(this, this.game.player1)) {
+	            playSound(invulnSound);
+	            
+	            var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+	                    0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+	            var damageText = new TextElement("", "Lucida Console", 25, "#ffd43a", "black");
+	            damageText.text = "Invulnerable!";
+	            damageParticle.other = damageText;
+	            this.game.player1.invincTimer = 400;
+	            this.game.addEntity(damageParticle);
+	            this.removeFromWorld = true;
+	        }
+		}
+		if (this.type === 2) { //void gate spawner
+	        if (checkCollision(this, this.game.player1)) {
+                var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, this.y, 
+                        0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
+                particle.direction = "Right";
+                var particle2 = new Particle(VOID_GATE, this.game.liveCamera.x + this.game.camera.width - 30, this.y, 
+                        0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
+                particle2.direction = "Left";
+                var element = new CircleElement(40, "#240340", "#131d4f");
+                particle.other = element;
+                particle2.other = element;
+                this.game.addEntity(particle);
+                this.game.addEntity(particle2);
+	            this.removeFromWorld = true;
+	        }
+		}
 	}
     Entity.prototype.update.call(this);
 };
 
 Powerup.prototype.draw = function (ctx) { 
+	if (this.animation != null) 
+		this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX,
+				this.y + this.animation.offsetY, 1, 1);
     Entity.prototype.draw.call(this);
 }
 
@@ -1565,202 +2086,205 @@ function Voidling(game, x, y, voidlingType) {
 }
 
 Voidling.prototype.update = function() {
-    if (this.attackableTimer > 0) {
-        this.attackableTimer--;
-        if (this.attackableTimer <= 0) {
-            this.attackable = true;
-        }
-    }
-    
-    if (this.attackable) {
-    	if (this.game.player1.y >= this.y + 30) {
-    		// Don't hit the head
-    	} else if (this.type == "explode") {
-            if (checkCollision(this, this.game.player1)) {
-                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
-                    this.currentHealth = 0;
-                    playSound(lightningSound);
-                    this.game.player1.vulnerable = false;
-                    var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-                            0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-                    var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                    var damage = this.explosionDamage;
-                    damageText.text = damage;
-                    damageParticle.other = damageText;
-                    this.game.addEntity(damageParticle);
-                    this.game.player1.currentHealth -= this.explosionDamage;
-                    this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
-                    this.game.player1.hitByAttack = true;   
-                    if (this.lastDirection == "Left") {
-                        this.game.player1.xVelocity = -2;
-                        this.game.player1.lastDirection = "Right";
-                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
-                    } else if (this.lastDirection == "Right") {
-                        this.game.player1.xVelocity = 2;
-                        this.game.player1.lastDirection = "Left";
-                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
-                    }
-                }
-            }
-        } else if (this.type == "touch") {
-            if (checkCollision(this, this.game.player1)) {
-                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
-                    playSound(hitSound);                    
-                    this.game.player1.vulnerable = false;
-                    var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
-                            0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
-                    var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                    var damage = this.touchDamage;
-                    damageText.text = damage;
-                    this.walkSpeed *= -1;
-                    damageParticle.other = damageText;
-                    this.game.addEntity(damageParticle);
-                    this.game.player1.currentHealth -= this.touchDamage;
-                    this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
-                    this.game.player1.hitByAttack = true;   
-                    if (this.lastDirection == "Left") {
-                        this.game.player1.xVelocity = -2;
-                        this.game.player1.lastDirection = "Right";
-                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
-                    } else if (this.lastDirection == "Right") {
-                        this.game.player1.xVelocity = 2;
-                        this.game.player1.lastDirection = "Left";
-                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
-                    }
-                }
-            }
-            
-        }
-    }
-    
-    // Death
-    if (this.currentHealth <= 0 && !this.dead) {
-        playSound(voidlingDeathSound);
-        this.dead = true;
-        this.attackable = false;
-        this.solid = false;
-        var particle = new Particle(PART_GENERATOR,
-                this.x + this.hitBox.width / 2,
-                this.y + this.hitBox.height / 2, 
-                0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, false, this.game);
-        var element = new CircleElement(2 + Math.random() * 1, "#290d4c", "#160f3d");
-        particle.other = element;
-        this.game.addEntity(particle);
-        this.removeFromWorld = true;
-    }
-    var that = this;
-    var switchDirection = false;
-    
-    // Platform detection
-    var platformFound = false;
-    this.game.currentMap.platforms.forEach(function(currentPlatform) {
-        if (currentPlatform.hSpeed == 0 && currentPlatform.vSpeed == 0) {
-            if (that.hitBox.x > currentPlatform.hitBox.x && that.walkSpeed < 0) {
-                if (that.hitBox.x <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                    if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
-                        if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
-                            platformFound = true;
-                        }
-                    }
-                }
-            } else if (that.walkSpeed < 0) {
-                var platformFound2 = false;
-                that.game.currentMap.platforms.forEach(function(currentPlatform2) {
-                    if (currentPlatform.hitBox.x - 2 >= currentPlatform2.hitBox.x) {
-                        if (currentPlatform.hitBox.x - 2 <= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width) {
-                            if (currentPlatform.hitBox.y + 2 + that.hitBox.height / 2 >= currentPlatform2.hitBox.y) {
-                                if (currentPlatform.hitBox.y + 2 <= currentPlatform2.hitBox.y + currentPlatform2.hitBox.height) {
-                                    if (currentPlatform2.hSpeed == 0 && currentPlatform2.vSpeed == 0) {
-                                        platformFound2 = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                if (platformFound2) {
-                    if (that.hitBox.x <= currentPlatform.hitBox.x && that.hitBox.x + that.hitBox.width >= currentPlatform.hitBox.x) {
-                        if (that.hitBox.x + that.hitBox.width <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                            if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
-                                if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
-                                    platformFound = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (that.walkSpeed > 0) {
-                var platformFound2 = false;
-                that.game.currentMap.platforms.forEach(function(currentPlatform2) {
-                    if (currentPlatform.hitBox.x + currentPlatform.hitBox.width + 2 >= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width) {
-                        if (currentPlatform.hitBox.x + currentPlatform.hitBox.width + 2 <= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width * 2) {
-                            if (currentPlatform.hitBox.y + 2 + that.hitBox.height / 2 >= currentPlatform2.hitBox.y) {
-                                if (currentPlatform.hitBox.y + 2 <= currentPlatform2.hitBox.y + currentPlatform2.hitBox.height) {
-                                    if (currentPlatform2.hSpeed == 0 && currentPlatform2.vSpeed == 0) {
-                                        platformFound2 = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                if (platformFound2) {
-                    if (that.hitBox.x <= currentPlatform.hitBox.x && that.hitBox.x + that.hitBox.width >= currentPlatform.hitBox.x) {
-                        if (that.hitBox.x <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                            if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
-                                if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
-                                    platformFound = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    });
-    
-    if (this.hitBox.y + this.hitBox.height >= 380) {
-        platformFound = true;
-    }
-    if (!platformFound) {
-        switchDirection = true;
-    }
-    if ((this.x + this.walkSpeed <= this.game.liveCamera.x && this.walkSpeed < 0) ||
-    		(this.x + this.hitBox.width >= this.game.liveCamera.x + this.game.liveCamera.width && this.walkSpeed > 0)) {
-    	switchDirection = true;
-    }
-    if (switchDirection) {
-    	//console.log("voidling at "+this.x+", "+this.y+" SWAP");
-    	that.walkSpeed *= -1;
-    }
-    this.x += this.walkSpeed;
-    if (this.walkSpeed < 0) {
-        this.lastDirection = "Left";
-    } else {
-        this.lastDirection = "Right";
-    }
-    
+	if (isOnScreen(this)) {
+	    if (this.attackableTimer > 0) {
+	        this.attackableTimer--;
+	        if (this.attackableTimer <= 0) {
+	            this.attackable = true;
+	        }
+	    }
+	    
+	    if (this.attackable) {
+	    	if (this.game.player1.y >= this.y + 30) {
+	    		// Don't hit the head
+	    	} else if (this.type == "explode") {
+	            if (checkCollision(this, this.game.player1)) {
+	                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
+	                    this.currentHealth = 0;
+	                    playSound(lightningSound);
+	                    this.game.player1.vulnerable = false;
+	                    var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+	                            0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+	                    var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+	                    var damage = this.explosionDamage;
+	                    damageText.text = damage;
+	                    damageParticle.other = damageText;
+	                    this.game.addEntity(damageParticle);
+	                    this.game.player1.currentHealth -= this.explosionDamage;
+	                    this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+	                    this.game.player1.hitByAttack = true;   
+	                    if (this.lastDirection == "Left") {
+	                        this.game.player1.xVelocity = -2;
+	                        this.game.player1.lastDirection = "Right";
+	                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+	                    } else if (this.lastDirection == "Right") {
+	                        this.game.player1.xVelocity = 2;
+	                        this.game.player1.lastDirection = "Left";
+	                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+	                    }
+	                }
+	            }
+	        } else if (this.type == "touch") {
+	            if (checkCollision(this, this.game.player1)) {
+	                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
+	                    playSound(hitSound);                    
+	                    this.game.player1.vulnerable = false;
+	                    var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+	                            0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+	                    var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+	                    var damage = this.touchDamage;
+	                    damageText.text = damage;
+	                    this.walkSpeed *= -1;
+	                    damageParticle.other = damageText;
+	                    this.game.addEntity(damageParticle);
+	                    this.game.player1.currentHealth -= this.touchDamage;
+	                    this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+	                    this.game.player1.hitByAttack = true;   
+	                    if (this.lastDirection == "Left") {
+	                        this.game.player1.xVelocity = -2;
+	                        this.game.player1.lastDirection = "Right";
+	                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+	                    } else if (this.lastDirection == "Right") {
+	                        this.game.player1.xVelocity = 2;
+	                        this.game.player1.lastDirection = "Left";
+	                        this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+	                    }
+	                }
+	            }
+	            
+	        }
+	    }
+	    
+	    // Death
+	    if (this.currentHealth <= 0 && !this.dead) {
+	        playSound(voidlingDeathSound);
+	        this.dead = true;
+	        this.attackable = false;
+	        this.solid = false;
+	        var particle = new Particle(PART_GENERATOR,
+	                this.x + this.hitBox.width / 2,
+	                this.y + this.hitBox.height / 2, 
+	                0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, false, this.game);
+	        var element = new CircleElement(2 + Math.random() * 1, "#290d4c", "#160f3d");
+	        particle.other = element;
+	        this.game.addEntity(particle);
+	        this.removeFromWorld = true;
+	    }
+	    var that = this;
+	    var switchDirection = false;
+	    
+	    // Platform detection
+	    var platformFound = false;
+	    this.game.currentMap.platforms.forEach(function(currentPlatform) {
+	        if (currentPlatform.hSpeed == 0 && currentPlatform.vSpeed == 0) {
+	            if (that.hitBox.x > currentPlatform.hitBox.x && that.walkSpeed < 0) {
+	                if (that.hitBox.x <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+	                    if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
+	                        if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
+	                            platformFound = true;
+	                        }
+	                    }
+	                }
+	            } else if (that.walkSpeed < 0) {
+	                var platformFound2 = false;
+	                that.game.currentMap.platforms.forEach(function(currentPlatform2) {
+	                    if (currentPlatform.hitBox.x - 2 >= currentPlatform2.hitBox.x) {
+	                        if (currentPlatform.hitBox.x - 2 <= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width) {
+	                            if (currentPlatform.hitBox.y + 2 + that.hitBox.height / 2 >= currentPlatform2.hitBox.y) {
+	                                if (currentPlatform.hitBox.y + 2 <= currentPlatform2.hitBox.y + currentPlatform2.hitBox.height) {
+	                                    if (currentPlatform2.hSpeed == 0 && currentPlatform2.vSpeed == 0) {
+	                                        platformFound2 = true;
+	                                    }
+	                                }
+	                            }
+	                        }
+	                    }
+	                });
+	                
+	                if (platformFound2) {
+	                    if (that.hitBox.x <= currentPlatform.hitBox.x && that.hitBox.x + that.hitBox.width >= currentPlatform.hitBox.x) {
+	                        if (that.hitBox.x + that.hitBox.width <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+	                            if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
+	                                if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
+	                                    platformFound = true;
+	                                }
+	                            }
+	                        }
+	                    }
+	                }
+	            } else if (that.walkSpeed > 0) {
+	                var platformFound2 = false;
+	                that.game.currentMap.platforms.forEach(function(currentPlatform2) {
+	                    if (currentPlatform.hitBox.x + currentPlatform.hitBox.width + 2 >= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width) {
+	                        if (currentPlatform.hitBox.x + currentPlatform.hitBox.width + 2 <= currentPlatform2.hitBox.x + currentPlatform2.hitBox.width * 2) {
+	                            if (currentPlatform.hitBox.y + 2 + that.hitBox.height / 2 >= currentPlatform2.hitBox.y) {
+	                                if (currentPlatform.hitBox.y + 2 <= currentPlatform2.hitBox.y + currentPlatform2.hitBox.height) {
+	                                    if (currentPlatform2.hSpeed == 0 && currentPlatform2.vSpeed == 0) {
+	                                        platformFound2 = true;
+	                                    }
+	                                }
+	                            }
+	                        }
+	                    }
+	                });
+	                
+	                if (platformFound2) {
+	                    if (that.hitBox.x <= currentPlatform.hitBox.x && that.hitBox.x + that.hitBox.width >= currentPlatform.hitBox.x) {
+	                        if (that.hitBox.x <= (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
+	                            if (that.hitBox.y + that.hitBox.height / 2 <= currentPlatform.hitBox.y) {
+	                                if (that.hitBox.y + that.hitBox.height >= currentPlatform.hitBox.y) {
+	                                    platformFound = true;
+	                                }
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+	        }
+	    });
+	    
+	    if (this.hitBox.y + this.hitBox.height >= 380) {
+	        platformFound = true;
+	    }
+	    if (!platformFound) {
+	        switchDirection = true;
+	    }
+	    if ((this.x + this.walkSpeed <= this.game.liveCamera.x && this.walkSpeed < 0) ||
+	    		(this.x + this.hitBox.width >= this.game.liveCamera.x + this.game.liveCamera.width && this.walkSpeed > 0)) {
+	    	switchDirection = true;
+	    }
+	    if (switchDirection) {
+	    	//console.log("voidling at "+this.x+", "+this.y+" SWAP");
+	    	that.walkSpeed *= -1;
+	    }
+	    this.x += this.walkSpeed;
+	    if (this.walkSpeed < 0) {
+	        this.lastDirection = "Left";
+	    } else {
+	        this.lastDirection = "Right";
+	    }
+	}
 	Entity.prototype.update.call(this);
 }
 
 Voidling.prototype.draw = function (ctx) {
-	ctx.globalAlpha = 1;
-    if (!this.attackable) {
-        ctx.globalAlpha = 0.5;
-    }
-	if (!this.dead) {
-		if (this.walkSpeed > 0) {
-			this.walkAnimation = this.walkAnimationRight;
-		} else {
-			this.walkAnimation = this.walkAnimationLeft;
-        }
-        this.walkAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimation.offsetX, this.y + this.walkAnimation.offsetY);
+	if (isOnScreen(this)) {
+		ctx.globalAlpha = 1;
+	    if (!this.attackable) {
+	        ctx.globalAlpha = 0.5;
+	    }
+		if (!this.dead) {
+			if (this.walkSpeed > 0) {
+				this.walkAnimation = this.walkAnimationRight;
+			} else {
+				this.walkAnimation = this.walkAnimationLeft;
+	        }
+	        this.walkAnimation.drawFrame(this.game.clockTick, ctx, this.x + this.walkAnimation.offsetX, this.y + this.walkAnimation.offsetY);
+		}
+		drawHitBox(this, ctx);
+		Entity.prototype.draw.call(this);
+		ctx.globalAlpha = 1;
 	}
-	drawHitBox(this, ctx);
-	Entity.prototype.draw.call(this);
-	ctx.globalAlpha = 1;
 }
 
 /**
@@ -1882,7 +2406,16 @@ Malzahar.prototype.update = function() {
 		this.game.addEntity(chat);
         playSound(disappearSound);
 	}
-    if (this.game.currentPhase === 3) {
+	if (this.game.currentPhase === 14 && this.currentHealth <= 0) { // Phase transition
+		this.game.currentPhase = 15;
+		this.dead = true;
+        this.attackable = false;
+        this.attackEnabled = false;
+		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "Why do you resist?");
+		this.game.addEntity(chat);
+        playSound(disappearSound);
+	}
+    if (this.game.currentPhase === 3 || this.game.currentPhase === 15) {
     	if (this.alpha > 0) {
     		this.alpha -= 0.01;
     	    var newParticle = new Particle(PART_SECONDARY, this.x + Math.random() * 100, this.y + Math.random() * 160, 
@@ -2029,18 +2562,19 @@ Malzahar.prototype.update = function() {
 	                this.state = "idle";
                     playSound(teleportSound);
 	            } else if (this.cooldown[2] == 0 && !this.walkToDestination && this.game.currentPhase >= 0) {
-                    var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, this.game.liveCamera.y + 300, 
-                            0, 0, 0, 0, 0, 0, 0, 300, 0, 10, 0, 0, false, this.game);
+                    var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, this.game.liveCamera.y + 350, 
+                            0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
                     particle.direction = "Right";
-                    var particle2 = new Particle(VOID_GATE, this.game.liveCamera.x + this.game.camera.width - 30, this.game.liveCamera.y + 300, 
-                            0, 0, 0, 0, 0, 0, 0, 300, 0, 10, 0, 0, false, this.game);
+                    var particle2 = new Particle(VOID_GATE, this.game.liveCamera.x + this.game.camera.width - 30, this.game.liveCamera.y + 350, 
+                            0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
                     particle2.direction = "Left";
                     var element = new CircleElement(40, "#240340", "#131d4f");
                     particle.other = element;
+                    particle2.other = element;
                     this.game.addEntity(particle);
                     this.game.addEntity(particle2);
                     this.cooldown[2] = 500;
-                    playSound(chargedBurstSound);
+                    playSound(voidGateSound);
                     this.state = "attacking";
                     this.attackIndex = 1; //basic attack
                     if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
@@ -2261,7 +2795,7 @@ Reksai.prototype.update = function() {
                 }
                 if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
                     
-                    if (this.game.player1.vulnerable) {
+                    if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
                         this.game.player1.vulnerable = false;
                         var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
                                 0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -2292,7 +2826,7 @@ Reksai.prototype.update = function() {
                     playSound(unburrowingSound);
                 }
                 if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
-                    if (this.game.player1.vulnerable) {
+                    if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
                         this.game.player1.vulnerable = false;
                         var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
                                 0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
@@ -2475,6 +3009,8 @@ function Character(game) {
     this.comboTime = 0; // The timer before the combo drops off
     this.invulnTimerMax = 20;
     this.invulnTimer = 0;
+    this.invincTimer = 500; //invulnerability from powerup
+    this.bounceTimer = 0;
     this.ground = 370; 
     this.autoDamage = 2;
     this.autoScaling = 1;
@@ -2581,6 +3117,18 @@ Character.prototype.update = function () {
         if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
             this.currentHealth = 0;
         }
+    }
+    if (this.bounceTimer > 0) {
+    	this.bounceTimer--;
+    	if (this.bounceTimer % 2 === 0) {
+            var particle = new Particle(SHAPE_PART,
+                    this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
+                    this.game.player1.hitBox.y + this.game.player1.hitBox.height / 2 - 10 + Math.random() * 20, 
+                    0, 0, 0, 0, 0, 0.1, 0, 5, 10, 50, .6, .2, true, this.game);
+            var element = new SquareElement(10, 10, "#00f6cb", "#70fe37");
+            particle.other = element;
+            this.game.addEntity(particle);
+    	}
     }
     if (this.currentHealth <= 0 && !this.dead) {
         playSound(lightningSound);
@@ -2853,7 +3401,7 @@ Character.prototype.update = function () {
                 }            
             }
         }
-        if (this.attacking) {            
+        if (this.attacking) {
             this.game.entities.forEach(function(entity) {
                 if (entity.attackable && that.targetHit.indexOf(entity) === -1) {
                     if (checkCollision(that, entity)) {
@@ -2896,6 +3444,18 @@ Character.prototype.update = function () {
                 this.hitBoxDef.offsetX = this.hitBoxDef.originalOffsetX;
             }
         }
+    	if (this.invincTimer > 0) {
+    		this.invincTimer--;
+    		if (this.invincTimer % 4 === 0) {
+                var particle = new Particle(SHAPE_PART,
+                        this.game.player1.hitBox.x + this.game.player1.hitBox.width / 2 - 10 + Math.random() * 20,
+                        this.game.player1.hitBox.y + this.game.player1.hitBox.height * Math.random(), 
+                        2, -2, 2, -2, 0, 0.05, 0, 5, 10, 50, 1, 0, false, this.game);
+                var element = new SquareElement(4 + Math.random() * 4, 4 + Math.random() * 4, "#ffffff", "#ffffff");
+                particle.other = element;
+                this.game.addEntity(particle);
+    		}
+    	}
     }
 	
     var platformFound = false;
@@ -2908,9 +3468,10 @@ Character.prototype.update = function () {
                         platformFound = true;
                         if (currentPlatform.specialId === 1) { //bouncy platform
                         	that.yVelocity = 15;
+                        	that.bounceTimer = 30;
                         	that.jumpSpeed = 0;
                             that.jumping = true;
-                            playSound(jumpSound);
+                            playSound(bounceSound);
                         } else {
 	                    	that.x += currentPlatform.hSpeed;
 	                    	that.y += currentPlatform.vSpeed;
@@ -3030,9 +3591,11 @@ var ASSET_MANAGER = new AssetManager();
 
 ASSET_MANAGER.queueDownload("./img/arrow.png");
 ASSET_MANAGER.queueDownload("./img/arrow_start.png");
-ASSET_MANAGER.queueDownload("./img/pink_flare.png");
 ASSET_MANAGER.queueDownload("./img/small_flare.png");
 
+ASSET_MANAGER.queueDownload("./img/Particle/invuln.png");
+ASSET_MANAGER.queueDownload("./img/Particle/pink_flare.png");
+ASSET_MANAGER.queueDownload("./img/Particle/orange_flare.png");
 ASSET_MANAGER.queueDownload("./img/Particle/bubbleleft.png");
 ASSET_MANAGER.queueDownload("./img/Particle/bubbleright.png");
 ASSET_MANAGER.queueDownload("./img/Particle/smoke.png");
@@ -3096,6 +3659,7 @@ ASSET_MANAGER.queueDownload("./img/UI/StaminaBar.png");
 ASSET_MANAGER.queueDownload("./img/UI/StaminaBarLight.png");
 ASSET_MANAGER.queueDownload("./img/UI/Platform.png");
 ASSET_MANAGER.queueDownload("./img/UI/PlatformBouncy.png");
+ASSET_MANAGER.queueDownload("./img/UI/PlatformFire.png");
 ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
 ASSET_MANAGER.queueDownload("./img/Chat/ChatSquare.png");
 ASSET_MANAGER.queueDownload("./img/Chat/MalzSquare.png");
@@ -3105,7 +3669,7 @@ ASSET_MANAGER.downloadAll(function () {
     var canvas = document.getElementById('gameWorld');
     var ctx = canvas.getContext('2d');
 
-    var gameEngine = new GameEngine();
+    gameEngine = new GameEngine();
     var bg = new Background(gameEngine);
 	var reksai = new Reksai(gameEngine);
 	var malzahar = new Malzahar(gameEngine);

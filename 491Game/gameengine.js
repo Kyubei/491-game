@@ -99,8 +99,16 @@ GameEngine.prototype.startInput = function () {
 		} else if (String.fromCharCode(e.which) === ' ') {
             that.textSpeed = 3;
         }
+        if (String.fromCharCode(e.which) === 'T') {
+			
+        	that.player1.yVelocity = 15;
+        	that.player1.bounceTimer = 30;
+        	that.player1.jumpSpeed = 0;
+            that.player1.jumping = true;
+		}
         if (String.fromCharCode(e.which) === 'R') {
 			that.r = true;
+			console.log("Camera coords: (" + that.camera.x+", "+that.camera.y+")");
 		}
         e.preventDefault();
     }, false);
@@ -187,6 +195,9 @@ GameEngine.prototype.update = function () {
 				this.camera.y = 0 - (this.step - 100) / 2;
 			}
 		}
+		if (this.currentPhase === 17) {
+			this.camera.y = -1700 - (this.step - 100) / 2;
+		}
 	    if (this.liveCamera.x != this.camera.x) {
 	    	if (this.liveCamera.x < this.camera.x) {
 	    		this.liveCamera.x = Math.min(this.camera.x, this.liveCamera.x + this.cameraSpeed);
@@ -201,7 +212,7 @@ GameEngine.prototype.update = function () {
 	    		this.liveCamera.y = Math.max(this.camera.y, this.liveCamera.y - this.cameraSpeed);	    		
 	    	}
 	    }
-        if (this.camera.y <= -1700) {
+        if (this.currentPhase === 10 && this.camera.y <= -1700) {
             this.currentPhase = 11;
             this.camera.x = 800;
             this.camera.y = -1700;
@@ -209,9 +220,17 @@ GameEngine.prototype.update = function () {
             this.liveCamera.y = -1700;
             this.cameraLock = true;
         }
+        if (this.currentPhase === 17 && this.camera.y <= -5250) {
+            this.currentPhase = 18;
+            this.camera.x = 800;
+            this.camera.y = -5250;
+            this.liveCamera.x = 800;
+            this.liveCamera.y = -5250;
+            this.cameraLock = true;
+        }
 	}
 	//CAMERA SHAKE
-	if (this.currentPhase >= 6 && this.currentPhase <= 10) {
+	if ((this.currentPhase >= 6 && this.currentPhase <= 10) || this.currentPhase === 17) {
 		this.liveCamera.x += -5 + Math.random() * 10;
 		this.liveCamera.y += -5 + Math.random() * 10;
 	}
