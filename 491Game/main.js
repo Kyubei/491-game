@@ -28,6 +28,7 @@ var IMG_FLASH_PART = 9;
 var BURROW_PART = 10;
 var VOID_STORM = 11;
 var VOID_GOOP = 12;
+var VOID_GATE = 13;
 // Sounds
 var bossMusic = new Audio("./sounds/map1BGMusic.mp3");
 bossMusic.loop = true;
@@ -423,7 +424,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 13) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
@@ -436,7 +437,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     if (this.game.currentPhase === 0) {
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 13) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
         ctx.fillText("Malzahar", this.game.currentBoss.x + 10, this.game.currentBoss.y - 15);
     }
     ctx.fillStyle = tempColor;
@@ -981,8 +982,8 @@ TextBox.prototype.update = function() {
         		this.game.step = 0;
         		this.game.cameraLock = false;
         		createPlatforms(this.game);
-        	} else if (this.game.currentPhase === 12) {
-                this.game.currentPhase = 13;
+        	} else if (this.game.currentPhase === 12 || this.game.currentPhase === 13) {
+                this.game.currentPhase = 14;
                 this.game.player1.canControl = true;
                 this.game.currentBoss.attackEnabled = true;
                 this.game.currentBoss.maxHealth = 100;
@@ -1172,13 +1173,13 @@ Particle.prototype.update = function() {
 	if (this.particleId === VOID_PORTAL && this.life % 2 === 0) {
 	    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
 				-3, 3, -2, 0, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game);
-	    var element = new CircleElement(4 + Math.random() * 2, "#240340", "#131d4f");
+	    var element = new CircleElement(4 + Math.random() * 2, "#9321c4", "#722f8e"); //"#240340", "#131d4f");
 	   	newParticle.other = element;
 	    this.game.addEntity(newParticle);
 		if (this.life >= (this.maxLife / 2)) { //erupt!
 		    newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
 					-3, 3, -10, -15, -.5, 0.1, 0, 30, 0, 15, .7, .2, true, this.game);
-		    element = new CircleElement(10 + Math.random() * 4, "#240340", "#131d4f");
+		    element = new CircleElement(10 + Math.random() * 4, "#9321c4", "#722f8e");
 		   	newParticle.other = element;
 		   	newParticle.attackId = 2;
 		    this.game.addEntity(newParticle);
@@ -1187,15 +1188,35 @@ Particle.prototype.update = function() {
 	if (this.attackId === 3 && this.life % 2 === 0) { //void storm attack
 	    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
 				-2, 2, -2, 2, 0, 0.2, 0, 20, 0, 15, .5, .2, true, this.game);
-	    var element = new CircleElement(10 + Math.random() * 4, "#240340", "#131d4f");
+	    var element = new CircleElement(10 + Math.random() * 4, "#9321c4", "#722f8e");
 	   	newParticle.other = element;
 	    this.game.addEntity(newParticle);
+	}
+	if (this.particleId === VOID_GATE) {
+		if (this.life >= 150) {
+			if (this.direction === "Right")
+				this.hSpeed += .4;
+			else
+				this.hSpeed -= .4;
+		}
+		if (this.life % 1 === 0) {
+			var distanceFromSide = this.x - this.game.liveCamera.x;
+			var squareSize = Math.abs(distanceFromSide - this.game.camera.width / 2) / 15 + 8;
+		    var newParticle = new Particle(PART_SECONDARY, this.x - 30 + Math.random() * 60, this.y - 30 + Math.random() * 60, 
+					0, 0, 0, 0, 0, 0, 0, 30, 0, 15, .5, .2, false, this.game);
+		    var element = new SquareElement(squareSize + Math.random() * squareSize * .2, squareSize + Math.random() * squareSize * .2, "#9321c4", "#671ca5");
+		   	newParticle.other = element;
+			if (this.life >= 150) //only do damage after a certain period of windup
+				newParticle.attackId = 4;
+			console.log("Void gate particle at: "+this.x+", "+this.y+". Player: "+this.game.player1.x+", "+this.game.player1.y);
+		    this.game.addEntity(newParticle);
+		}
 	}
 	if (this.particleId === VOID_STORM && this.life % 2 === 0) {
 		var speed = this.direction === "Right" ? 8 : -8;
 	    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
 				speed, speed, -4, 4, 0, 0, 0, 60, 0, 15, .5, .2, true, this.game);
-	    var element = new CircleElement(10 + Math.random() * 4, "#240340", "#131d4f");
+	    var element = new CircleElement(10 + Math.random() * 4, "#9321c4", "#722f8e");
 	   	newParticle.other = element;
 	   	newParticle.attackId = 3;
 	    this.game.addEntity(newParticle);
@@ -1392,8 +1413,33 @@ Particle.prototype.update = function() {
             	damageText.text = damage;
                 damageParticle.other = damageText;
                 this.game.addEntity(damageParticle);
-                this.game.player1.currentHealth -= 30;
+                this.game.player1.currentHealth -= damage;
                 this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                this.game.player1.hitByAttack = true;
+                playSound(lightningSound);
+                if (this.hSpeed < 0) {
+                    this.game.player1.xVelocity = -3;
+                    this.game.player1.lastDirection = "Right";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                } else {
+                    this.game.player1.xVelocity = 3;
+                    this.game.player1.lastDirection = "Left";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                }
+            }
+    	}
+    	if (this.attackId === 4) {
+            if (this.game.player1.vulnerable) {
+                this.game.player1.vulnerable = false;
+                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+            			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                var damage = 20; //usually around 2 hits
+            	damageText.text = damage;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                this.game.player1.currentHealth -= damage;
+                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax * 2;
                 this.game.player1.hitByAttack = true;
                 playSound(lightningSound);
                 if (this.hSpeed < 0) {
@@ -1863,11 +1909,11 @@ Malzahar.prototype.update = function() {
 		this.game.currentPhase = 12;
 		this.dead = false;
         earthRumble.pause();
-    } else if (this.game.currentPhase === 12 || this.game.currentPhase === 13) {
+    } else if (this.game.currentPhase === 12 || this.game.currentPhase === 14) {
         fadeClimbMusicOut();
         fadeBossMusicIn();
     }
-    if ((this.game.currentPhase === 2 || this.game.currentPhase === 13) && this.attackEnabled) { // Malz attack code
+    if ((this.game.currentPhase === 2 || this.game.currentPhase === 14) && this.attackEnabled) { // Malz attack code
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
@@ -1896,7 +1942,7 @@ Malzahar.prototype.update = function() {
 	            if (this.energy === 3) { //blast attack
 	            	this.energy = 4; //to prevent an autoattack
                     var particle = new Particle(VOID_STORM, this.x + this.hitBox.width / 2, this.y + 25, 
-                            0, 0, 0, 0, 0, 0, 0, 50, 0, 10, 0, 0, false, this.game);
+                            0, 0, 0, 0, 0, 0, 0, 80, 0, 10, 0, 0, false, this.game);
                     playSound(laserSound);
                     this.state = "attacking";
                     this.attackIndex = 1; //basic attack
@@ -1981,8 +2027,32 @@ Malzahar.prototype.update = function() {
 	                }
 	                this.walkToDestination = false;
 	                this.state = "idle";
-	                console.log("TELEPORTIONG TO "+this.destinationX);
                     playSound(teleportSound);
+	            } else if (this.cooldown[2] == 0 && !this.walkToDestination && this.game.currentPhase >= 0) {
+                    var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, this.game.liveCamera.y + 300, 
+                            0, 0, 0, 0, 0, 0, 0, 300, 0, 10, 0, 0, false, this.game);
+                    particle.direction = "Right";
+                    var particle2 = new Particle(VOID_GATE, this.game.liveCamera.x + this.game.camera.width - 30, this.game.liveCamera.y + 300, 
+                            0, 0, 0, 0, 0, 0, 0, 300, 0, 10, 0, 0, false, this.game);
+                    particle2.direction = "Left";
+                    var element = new CircleElement(40, "#240340", "#131d4f");
+                    particle.other = element;
+                    this.game.addEntity(particle);
+                    this.game.addEntity(particle2);
+                    this.cooldown[2] = 500;
+                    playSound(chargedBurstSound);
+                    this.state = "attacking";
+                    this.attackIndex = 1; //basic attack
+                    if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
+                        this.lastDirection = "Right";
+                    } else {
+                        this.lastDirection = "Left";
+                    }
+                    if (this.lastDirection == "Left") {
+                        this.attackAnimation = this.attackAnimationLeft;
+                    } else {
+                        this.attackAnimation = this.attackAnimationRight;
+                    }
 	            }
 	            if (this.walkToDestination)
 	                distance = this.destinationX - this.x;
