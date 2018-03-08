@@ -31,6 +31,7 @@ var BURROW_PART = 10;
 var VOID_STORM = 11;
 var VOID_GOOP = 12;
 var VOID_GATE = 13;
+var VOID_LIGHTNING = 14;
 // Sounds
 var bossMusic = new Audio("./sounds/map1BGMusic.mp3");
 bossMusic.loop = true;
@@ -51,6 +52,10 @@ var reksaiProjectileSound = new Audio("./sounds/rekProjHit.wav");
 reksaiProjectileSound.volume = 0.1;
 var lightningSound = new Audio("./sounds/lightning.wav");
 lightningSound.volume = 0.1;
+var lightningExSound = new Audio("./sounds/void_lightning.mp3");
+lightningExSound.volume = 0.2;
+var explosionSound = new Audio("./sounds/explosion.wav");
+explosionSound.volume = 0.4;
 var burnSound = new Audio("./sounds/burn.wav");
 burnSound.volume = 0.2;
 var hitSound = new Audio("./sounds/punch.mp3");
@@ -647,7 +652,6 @@ Platform.prototype.update = function () {
         }
     }
     Entity.prototype.update.call(this);
-    drawHitBox(this);
 };
 
 Platform.prototype.draw = function (ctx) {
@@ -688,21 +692,48 @@ Map.prototype.draw = function (ctx) {
 
 function createPlatforms2(game) {
 	var powerups = [
+		
 		new Powerup(game, 1184, -1904, 0), //health powerup
-		new Powerup(game, 832, -2048, 2), //void gate spawner
+		
+		new Powerup(game, 848, -2064, 2), //void gate spawner
+		
 		new Powerup(game, 896, -2368, 2), //void gate spawner
+		
 		new Powerup(game, 848, -2528, 0), //health powerup
-		new Powerup(game, 992, -2976, 1), //invuln powerup
+		
+		new Powerup(game, 1184, -2928, 1), //invuln powerup
+		
 		new Powerup(game, 1520, -3072, 2), //void gate spawner
+		
 		new Powerup(game, 1200, -3504, 2), //void gate spawner
+		
 		new Powerup(game, 816, -3408, 1), //invuln powerup
+		
 		new Powerup(game, 1088, -3312, 0), //health powerup
-		new Powerup(game, 1472, -3648, 2), //void gate spawner
+		
 		new Powerup(game, 1152, -3840, 2), //void gate spawner
+		
 		new Powerup(game, 848, -3984, 2), //void gate spawner
+		
 		new Powerup(game, 1184, -3984, 1), //invuln powerup
+		
 		new Powerup(game, 1136, -4176, 0), //health powerup
-		new Powerup(game, 816, -4352, 2) //void gate spawner
+		
+		new Powerup(game, 816, -4368, 2), //void gate spawner
+		
+		new Powerup(game, 816, -4592, 0), //health powerup
+		
+		new Powerup(game, 944, -4688, 2), //void gate spawner
+		
+		new Powerup(game, 880, -4640, 0), //health powerup
+		
+		new Powerup(game, 1056, -4976, 0), //health powerup
+		
+		new Powerup(game, 1312, -4976, 0), //health powerup
+		
+		new Powerup(game, 1056, -5072, 0), //health powerup
+		
+		new Powerup(game, 1312, -5072, 0) //health powerup
 	]
 	var voidlings = [
 		new Voidling(game, 1312, -1616, "touch"),
@@ -739,448 +770,476 @@ function createPlatforms2(game) {
 		new Voidling(game, 1232, -4352, "explode")
 	];
 	var platforms = [
-
-new Platform(game, 1088, -1376),
-
-new Platform(game, 1168, -1424),
-
-new Platform(game, 1232, -1424, 0, -2, 80), //VERTICAL
-
-new Platform(game, 1296, -1568),
-
-new Platform(game, 1424, -1568),
-
-new Platform(game, 1488, -1568),
-
-new Platform(game, 1360, -1568),
-
-new Platform(game, 1552, -1568),
-
-new Platform(game, 1536, -1616),
-
-new Platform(game, 1536, -1664),
-
-new Platform(game, 1472, -1712),
-
-new Platform(game, 1408, -1712),
-
-new Platform(game, 1344, -1712),
-
-new Platform(game, 1280, -1712),
-
-new Platform(game, 1216, -1712),
-
-new Platform(game, 896, -1712),
-
-new Platform(game, 832, -1712),
-
-new Platform(game, 768, -1712),
-
-new Platform(game, 960, -1712, 2, 0, 128), //HORIZONTAL
-
-new Platform(game, 896, -1760),
-
-new Platform(game, 960, -1808),
-
-new Platform(game, 896, -1856),
-
-new Platform(game, 1040, -1856),
-
-new Platform(game, 1104, -1856),
-
-new Platform(game, 1168, -1856),
-
-new Platform(game, 832, -1904),
-
-new Platform(game, 768, -1952),
-
-new Platform(game, 1024, -1952),
-
-new Platform(game, 960, -1952),
-
-new Platform(game, 1088, -1952),
-
-new Platform(game, 1536, -1952, 0, 0, 0, 1), //BOUNCY
-
-new Platform(game, 832, -2000),
-
-new Platform(game, 1152, -2000),
-
-new Platform(game, 896, -2000),
-
-new Platform(game, 1216, -2000),
-
-new Platform(game, 1280, -2000),
-
-new Platform(game, 1344, -2000),
-
-new Platform(game, 1408, -2000),
-
-new Platform(game, 1472, -2000),
-
-new Platform(game, 1536, -2128),
-
-new Platform(game, 1472, -2128),
-
-new Platform(game, 1408, -2128),
-
-new Platform(game, 1344, -2128),
-
-new Platform(game, 1280, -2128),
-
-new Platform(game, 1216, -2128),
-
-new Platform(game, 1152, -2128),
-
-new Platform(game, 1088, -2128),
-
-new Platform(game, 1024, -2128, 0, -2, 48), //VERTICAL
-
-new Platform(game, 960, -2224),
-
-new Platform(game, 896, -2224),
-
-new Platform(game, 832, -2272, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 896, -2320),
-
-new Platform(game, 960, -2320),
-
-new Platform(game, 1024, -2320),
-
-new Platform(game, 1088, -2320),
-
-new Platform(game, 1152, -2320),
-
-new Platform(game, 1216, -2320),
-
-new Platform(game, 1280, -2320),
-
-new Platform(game, 1344, -2320),
-
-new Platform(game, 1408, -2320),
-
-new Platform(game, 1472, -2320),
-
-new Platform(game, 1536, -2320, 0, -2, 80), //VERTICAL
-
-new Platform(game, 1216, -2368),
-
-new Platform(game, 1088, -2368),
-
-new Platform(game, 1152, -2416),
-
-new Platform(game, 1472, -2480),
-
-new Platform(game, 832, -2480),
-
-new Platform(game, 768, -2464),
-
-new Platform(game, 960, -2512),
-
-new Platform(game, 896, -2496),
-
-new Platform(game, 1408, -2528),
-
-new Platform(game, 1344, -2528),
-
-new Platform(game, 1280, -2528),
-
-new Platform(game, 1216, -2528),
-
-new Platform(game, 1152, -2528),
-
-new Platform(game, 1088, -2528),
-
-new Platform(game, 1024, -2528),
-
-new Platform(game, 1344, -2576),
-
-new Platform(game, 1280, -2576),
-
-new Platform(game, 1216, -2576),
-
-new Platform(game, 1152, -2576),
-
-new Platform(game, 1088, -2576),
-
-new Platform(game, 1024, -2576),
-
-new Platform(game, 960, -2576),
-
-new Platform(game, 896, -2576),
-
-new Platform(game, 768, -2576),
-
-new Platform(game, 832, -2576, 0, 0, 0, 1), //BOUNCY
-
-new Platform(game, 1168, -2688, 0, 0, 0, 1), //BOUNCY
-
-new Platform(game, 1536, -2688, 0, 0, 0, 1), //BOUNCY
-
-new Platform(game, 832, -2736),
-
-new Platform(game, 896, -2736),
-
-new Platform(game, 960, -2736),
-
-new Platform(game, 1232, -2736),
-
-new Platform(game, 1296, -2736),
-
-new Platform(game, 1360, -2736),
-
-new Platform(game, 1424, -2736),
-
-new Platform(game, 1040, -2784),
-
-new Platform(game, 1168, -2832),
-
-new Platform(game, 1104, -2832),
-
-new Platform(game, 1536, -2832),
-
-new Platform(game, 1168, -2880),
-
-new Platform(game, 1536, -2880),
-
-new Platform(game, 1104, -2928),
-
-new Platform(game, 1040, -2928),
-
-new Platform(game, 976, -2928),
-
-new Platform(game, 1536, -2928),
-
-new Platform(game, 1536, -2976),
-
-new Platform(game, 1456, -3024, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1392, -3024, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1328, -3024),
-
-new Platform(game, 1264, -3024),
-
-new Platform(game, 1200, -3024),
-
-new Platform(game, 1136, -3024),
-
-new Platform(game, 1008, -3024),
-
-new Platform(game, 960, -3024),
-
-new Platform(game, 896, -3024),
-
-new Platform(game, 832, -3024),
-
-new Platform(game, 768, -3024),
-
-new Platform(game, 1072, -3024, 0, -2, 48), //VERTICAL
-
-new Platform(game, 800, -3072),
-
-new Platform(game, 864, -3120),
-
-new Platform(game, 1072, -3136),
-
-new Platform(game, 800, -3168),
-
-new Platform(game, 864, -3216),
-
-new Platform(game, 928, -3264),
-
-new Platform(game, 1072, -3264, 0, 0, 0, 1), //BOUNCY
-
-new Platform(game, 864, -3312),
-
-new Platform(game, 800, -3360),
-
-new Platform(game, 1072, -3408),
-
-new Platform(game, 1008, -3408),
-
-new Platform(game, 1136, -3408),
-
-new Platform(game, 1328, -3456, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1392, -3456, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1264, -3456, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1200, -3456, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1456, -3456),
-
-new Platform(game, 1520, -3456),
-
-new Platform(game, 1584, -3456),
-
-new Platform(game, 1520, -3504),
-
-new Platform(game, 1584, -3504),
-
-new Platform(game, 1520, -3552),
-
-new Platform(game, 1584, -3552),
-
-new Platform(game, 1520, -3600),
-
-new Platform(game, 1584, -3600),
-
-new Platform(game, 1456, -3600),
-
-new Platform(game, 1392, -3600),
-
-new Platform(game, 1328, -3600),
-
-new Platform(game, 1264, -3600, 0, -2, 48), //VERTICAL
-
-new Platform(game, 976, -3792),
-
-new Platform(game, 912, -3792),
-
-new Platform(game, 848, -3792),
-
-new Platform(game, 784, -3792),
-
-new Platform(game, 1136, -3792, 2, 0, 48), //HORIZONTAL
-
-new Platform(game, 1200, -3792, 0, -2, 48), //VERTICAL
-
-new Platform(game, 784, -3840),
-
-new Platform(game, 784, -3888),
-
-new Platform(game, 1040, -3936, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1168, -3936, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1296, -3936, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1360, -3936, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1424, -3936, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1488, -3936, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1552, -3936, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 848, -3936),
-
-new Platform(game, 912, -3936),
-
-new Platform(game, 1536, -3984),
-
-new Platform(game, 1472, -4032),
-
-new Platform(game, 1536, -4080),
-
-new Platform(game, 1408, -4128, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1344, -4128, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1152, -4128, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1088, -4128, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 896, -4128, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 832, -4128, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1280, -4128, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 1216, -4128, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 1024, -4128, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 960, -4128, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 1472, -4128),
-
-new Platform(game, 800, -4176, 0, 0, 0, 1), //BOUNCY
-
-new Platform(game, 992, -4256),
-
-new Platform(game, 1056, -4256),
-
-new Platform(game, 1120, -4256),
-
-new Platform(game, 800, -4304),
-
-new Platform(game, 864, -4304),
-
-new Platform(game, 928, -4304),
-
-new Platform(game, 1184, -4304),
-
-new Platform(game, 1248, -4304),
-
-new Platform(game, 1312, -4304),
-
-new Platform(game, 1376, -4304),
-
-new Platform(game, 1440, -4304),
-
-new Platform(game, 1504, -4304),
-
-new Platform(game, 1568, -4304),
-
-new Platform(game, 1376, -4352, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1440, -4352, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1504, -4352, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1568, -4352, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1440, -4400, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 1504, -4400, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 1568, -4400, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 1504, -4448, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1568, -4448, 0, 0, 0, 2), //FIRE
-
-new Platform(game, 1440, -4496, 0, 0, 0, 2, 100), //FIRE
-
-new Platform(game, 1376, -4496, 0, -2, 80), //VERTICAL
-
-new Platform(game, 1248, -4640, 0, 0, 0, 1), //BOUNCY
-
-new Platform(game, 1248, -4784),
-
-new Platform(game, 1184, -4784),
-
-new Platform(game, 800, -4784),
-
-new Platform(game, 864, -4784),
-
-new Platform(game, 928, -4784),
-
-new Platform(game, 992, -4784),
-
-new Platform(game, 1056, -4784),
-
-new Platform(game, 1120, -4784),
-
-new Platform(game, 1312, -4784),
-
-new Platform(game, 1376, -4784),
-
-new Platform(game, 1440, -4784),
-
-new Platform(game, 1504, -4784),
-
-new Platform(game, 1568, -4784)
-
+		
+		new Platform(game, 1088, -1376),
+		
+		new Platform(game, 1168, -1424),
+		
+		new Platform(game, 1232, -1424, 0, -2, 80), //VERTICAL
+		
+		new Platform(game, 1296, -1568),
+		
+		new Platform(game, 1424, -1568),
+		
+		new Platform(game, 1488, -1568),
+		
+		new Platform(game, 1360, -1568),
+		
+		new Platform(game, 1552, -1568),
+		
+		new Platform(game, 1536, -1616),
+		
+		new Platform(game, 1536, -1664),
+		
+		new Platform(game, 1472, -1712),
+		
+		new Platform(game, 1408, -1712),
+		
+		new Platform(game, 1344, -1712),
+		
+		new Platform(game, 1280, -1712),
+		
+		new Platform(game, 1216, -1712),
+		
+		new Platform(game, 896, -1712),
+		
+		new Platform(game, 832, -1712),
+		
+		new Platform(game, 768, -1712),
+		
+		new Platform(game, 960, -1712, 2, 0, 112), //HORIZONTAL
+		
+		new Platform(game, 896, -1760),
+		
+		new Platform(game, 960, -1808),
+		
+		new Platform(game, 896, -1856),
+		
+		new Platform(game, 1040, -1856),
+		
+		new Platform(game, 1104, -1856),
+		
+		new Platform(game, 1168, -1856),
+		
+		new Platform(game, 832, -1904),
+		
+		new Platform(game, 768, -1952),
+		
+		new Platform(game, 1024, -1952),
+		
+		new Platform(game, 1088, -1952),
+		
+		new Platform(game, 1536, -1952, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 832, -2000),
+		
+		new Platform(game, 1152, -2000),
+		
+		new Platform(game, 896, -2000),
+		
+		new Platform(game, 1216, -2000),
+		
+		new Platform(game, 1280, -2000),
+		
+		new Platform(game, 1344, -2000),
+		
+		new Platform(game, 1408, -2000),
+		
+		new Platform(game, 1472, -2000),
+		
+		new Platform(game, 960, -2000),
+		
+		new Platform(game, 1536, -2128),
+		
+		new Platform(game, 1472, -2128),
+		
+		new Platform(game, 1408, -2128),
+		
+		new Platform(game, 1344, -2128),
+		
+		new Platform(game, 1280, -2128),
+		
+		new Platform(game, 1216, -2128),
+		
+		new Platform(game, 1152, -2128),
+		
+		new Platform(game, 1088, -2128),
+		
+		new Platform(game, 1024, -2128, 0, -2, 48), //VERTICAL
+		
+		new Platform(game, 960, -2224),
+		
+		new Platform(game, 896, -2224),
+		
+		new Platform(game, 832, -2272, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 896, -2320),
+		
+		new Platform(game, 960, -2320),
+		
+		new Platform(game, 1024, -2320),
+		
+		new Platform(game, 1088, -2320),
+		
+		new Platform(game, 1152, -2320),
+		
+		new Platform(game, 1216, -2320),
+		
+		new Platform(game, 1280, -2320),
+		
+		new Platform(game, 1344, -2320),
+		
+		new Platform(game, 1408, -2320),
+		
+		new Platform(game, 1472, -2320),
+		
+		new Platform(game, 1536, -2320, 0, -2, 80), //VERTICAL
+		
+		new Platform(game, 1216, -2368),
+		
+		new Platform(game, 1088, -2368),
+		
+		new Platform(game, 1152, -2416),
+		
+		new Platform(game, 1472, -2480),
+		
+		new Platform(game, 832, -2480),
+		
+		new Platform(game, 768, -2464),
+		
+		new Platform(game, 960, -2512),
+		
+		new Platform(game, 896, -2496),
+		
+		new Platform(game, 1408, -2528),
+		
+		new Platform(game, 1344, -2528),
+		
+		new Platform(game, 1280, -2528),
+		
+		new Platform(game, 1216, -2528),
+		
+		new Platform(game, 1152, -2528),
+		
+		new Platform(game, 1088, -2528),
+		
+		new Platform(game, 1024, -2528),
+		
+		new Platform(game, 1344, -2576),
+		
+		new Platform(game, 1280, -2576),
+		
+		new Platform(game, 1216, -2576),
+		
+		new Platform(game, 1152, -2576),
+		
+		new Platform(game, 1088, -2576),
+		
+		new Platform(game, 1024, -2576),
+		
+		new Platform(game, 960, -2576),
+		
+		new Platform(game, 896, -2576),
+		
+		new Platform(game, 768, -2576),
+		
+		new Platform(game, 832, -2576, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 1536, -2688, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 832, -2736),
+		
+		new Platform(game, 896, -2736),
+		
+		new Platform(game, 960, -2736),
+		
+		new Platform(game, 1232, -2736),
+		
+		new Platform(game, 1296, -2736),
+		
+		new Platform(game, 1360, -2736),
+		
+		new Platform(game, 1424, -2736),
+		
+		new Platform(game, 1040, -2784),
+		
+		new Platform(game, 1104, -2832),
+		
+		new Platform(game, 1536, -2832),
+		
+		new Platform(game, 1168, -2880),
+		
+		new Platform(game, 1536, -2880),
+		
+		new Platform(game, 1536, -2928),
+		
+		new Platform(game, 1536, -2976),
+		
+		new Platform(game, 1456, -3024, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1392, -3024, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1264, -3024),
+		
+		new Platform(game, 1200, -3024),
+		
+		new Platform(game, 1136, -3024),
+		
+		new Platform(game, 1008, -3024),
+		
+		new Platform(game, 960, -3024),
+		
+		new Platform(game, 896, -3024),
+		
+		new Platform(game, 832, -3024),
+		
+		new Platform(game, 768, -3024),
+		
+		new Platform(game, 1072, -3024),
+		
+		new Platform(game, 1328, -3024, 0, -2, 48), //VERTICAL
+		
+		new Platform(game, 800, -3072),
+		
+		new Platform(game, 864, -3120),
+		
+		new Platform(game, 1328, -3136),
+		
+		new Platform(game, 800, -3168),
+		
+		new Platform(game, 864, -3216),
+		
+		new Platform(game, 928, -3264),
+		
+		new Platform(game, 1072, -3264, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 864, -3312),
+		
+		new Platform(game, 800, -3360),
+		
+		new Platform(game, 1072, -3408),
+		
+		new Platform(game, 1008, -3408),
+		
+		new Platform(game, 1136, -3408),
+		
+		new Platform(game, 1328, -3456, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1392, -3456, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1264, -3456, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1200, -3456, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1456, -3456),
+		
+		new Platform(game, 1520, -3456),
+		
+		new Platform(game, 1584, -3456),
+		
+		new Platform(game, 1520, -3504),
+		
+		new Platform(game, 1584, -3504),
+		
+		new Platform(game, 1520, -3552),
+		
+		new Platform(game, 1584, -3552),
+		
+		new Platform(game, 1520, -3600),
+		
+		new Platform(game, 1584, -3600),
+		
+		new Platform(game, 1456, -3600),
+		
+		new Platform(game, 1392, -3600),
+		
+		new Platform(game, 1328, -3600),
+		
+		new Platform(game, 1264, -3600, 0, -2, 48, 0, 128), //VERTICAL
+		
+		new Platform(game, 976, -3792),
+		
+		new Platform(game, 912, -3792),
+		
+		new Platform(game, 848, -3792),
+		
+		new Platform(game, 784, -3792),
+		
+		new Platform(game, 1136, -3792, -2, 0, 48), //HORIZONTAL
+		
+		new Platform(game, 1200, -3792, 0, 2, 48), //VERTICAL
+		
+		new Platform(game, 784, -3840),
+		
+		new Platform(game, 784, -3888),
+		
+		new Platform(game, 1040, -3936, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1168, -3936, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1296, -3936, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1360, -3936, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1424, -3936, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1488, -3936, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1552, -3936, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 848, -3936),
+		
+		new Platform(game, 912, -3936),
+		
+		new Platform(game, 1536, -3984),
+		
+		new Platform(game, 1472, -4032),
+		
+		new Platform(game, 1536, -4080),
+		
+		new Platform(game, 1408, -4128, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1344, -4128, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1152, -4128, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1088, -4128, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 896, -4128, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 832, -4128, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1280, -4128, 0, 0, 0, 2, 100), //FIRE
+		
+		new Platform(game, 1216, -4128, 0, 0, 0, 2, 100), //FIRE
+		
+		new Platform(game, 1024, -4128, 0, 0, 0, 2, 100), //FIRE
+		
+		new Platform(game, 960, -4128, 0, 0, 0, 2, 100), //FIRE
+		
+		new Platform(game, 1472, -4128),
+		
+		new Platform(game, 800, -4176, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 992, -4256),
+		
+		new Platform(game, 1056, -4256),
+		
+		new Platform(game, 1120, -4256),
+		
+		new Platform(game, 800, -4304),
+		
+		new Platform(game, 864, -4304),
+		
+		new Platform(game, 928, -4304),
+		
+		new Platform(game, 1184, -4304),
+		
+		new Platform(game, 1248, -4304),
+		
+		new Platform(game, 1312, -4304),
+		
+		new Platform(game, 1376, -4304),
+		
+		new Platform(game, 1440, -4304),
+		
+		new Platform(game, 1504, -4304),
+		
+		new Platform(game, 1568, -4304),
+		
+		new Platform(game, 1376, -4352, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1440, -4352, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1504, -4352, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1568, -4352, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1440, -4400, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1504, -4400, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1568, -4400, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1504, -4448, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1568, -4448, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1440, -4496, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1376, -4496, 0, -2, 80), //VERTICAL
+		
+		new Platform(game, 800, -4544),
+		
+		new Platform(game, 864, -4592),
+		
+		new Platform(game, 1248, -4640),
+		
+		new Platform(game, 1056, -4640),
+		
+		new Platform(game, 928, -4640),
+		
+		new Platform(game, 1184, -4640),
+		
+		new Platform(game, 1120, -4640, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 1120, -4672),
+		
+		new Platform(game, 1184, -4672),
+		
+		new Platform(game, 864, -4784),
+		
+		new Platform(game, 928, -4784),
+		
+		new Platform(game, 992, -4784),
+		
+		new Platform(game, 1056, -4784),
+		
+		new Platform(game, 1120, -4784),
+		
+		new Platform(game, 800, -4784),
+		
+		new Platform(game, 1232, -4784),
+		
+		new Platform(game, 1296, -4784),
+		
+		new Platform(game, 1360, -4784),
+		
+		new Platform(game, 1424, -4784),
+		
+		new Platform(game, 1488, -4784),
+		
+		new Platform(game, 1552, -4784),
+		
+		new Platform(game, 1168, -4784, 0, 0, 0, 1), //BOUNCY
+		
+		new Platform(game, 1168, -4928),
+		
+		new Platform(game, 1296, -4928),
+		
+		new Platform(game, 1040, -4928),
+		
+		new Platform(game, 1424, -4928),
+		
+		new Platform(game, 912, -4928),
+		
+		new Platform(game, 816, -4976),
+		
+		new Platform(game, 1520, -4976),
+		
+		new Platform(game, 912, -5024),
+		
+		new Platform(game, 1040, -5024),
+		
+		new Platform(game, 1168, -5024),
+		
+		new Platform(game, 1296, -5024),
+		
+		new Platform(game, 1424, -5024)
 
 	];
 	for (i = 0; i < platforms.length; i++) {
 		var p = platforms[i];
-		console.log("adding new platform: "+p.x+","+p.y);
 		game.currentMap.platforms.push(p);
 	}
 	for (i = 0; i < voidlings.length; i++) {
@@ -1412,7 +1471,7 @@ TextBox.prototype.update = function() {
          		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "Not good! Better get out of here!");
          		this.game.addEntity(chat);
          		this.game.currentPhase = 9;
-         		this.game.addEntity(new Particle(IMG_FLASH_PART, 1200, 300, 0, 0, 0, 0, 0, 0, 0, 500, 0, 0, 1, 0, false, this.game,
+         		this.game.addEntity(new Particle(IMG_FLASH_PART, 1000, 300, 0, 0, 0, 0, 0, 0, 0, 500, 0, 0, 1, 0, false, this.game,
          				new Animation(ASSET_MANAGER.getAsset("./img/ArrowGoUp.png"), 0, 0, 269, 83, 1, 1, true, false, 0, 0)));
         	} else if (this.game.currentPhase === 9) {
          		this.game.currentPhase = 10;
@@ -1533,7 +1592,7 @@ function CircleElement(radius, color1, color2) {
 
 CircleElement.prototype.draw = function(ctx, x, y, sizeScale) {
     var tempColor = ctx.fillStyle;
-    var trueRadius = this.radius * sizeScale;
+    var trueRadius = Math.max(0, this.radius * sizeScale);
     ctx.beginPath();
     ctx.fillStyle = this.color;
     ctx.arc(x, y, trueRadius, 0, 2 * Math.PI, false);
@@ -1571,6 +1630,7 @@ TextElement.prototype.draw = function(ctx, x, y, sizeScale) {
 // PARTICLE ID
 function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
 	gravity, friction, width, maxLife, fadeIn, fadeOut, maxAlpha, alphaVariance, shrink, game, anim) {
+	this.explodeTime = 0;
 	this.particleId = particleId;
 	this.GRAVITY_CAP = 30;
 	this.animation = anim || null;
@@ -1583,6 +1643,7 @@ function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
 	this.fadeIn = fadeIn;
 	this.fadeOut = fadeOut;
 	this.shrink = shrink;
+	this.grow = false;
 	this.sizeScale = 1;
 	this.absoluteSizeScale = 1;
 	this.width = width;
@@ -1590,6 +1651,7 @@ function Particle(particleId, x, y, minHSpeed, maxHSpeed, minVSpeed, maxVSpeed,
 	this.other = null;
 	this.snapEntity = null;
 	this.attackId = -1;
+	this.acceleration = 0;
 	this.direction = "none";
 	if (fadeIn > 0) {
 		this.alpha = 0;
@@ -1672,6 +1734,69 @@ Particle.prototype.update = function() {
 	   	newParticle.other = element;
 	   	newParticle.attackId = 3;
 	    this.game.addEntity(newParticle);
+	}
+	if (this.particleId === VOID_LIGHTNING) {
+		if (this.life % 4 === 0 && this.explodeTime === 0) {
+		    var newParticle = new Particle(PART_SECONDARY, this.x + 40, this.y + 41, 
+					-2, 2, -1, 0, 0, 0.1, 0, 30, 0, 30, .5, .2, true, this.game);
+		    var element = new CircleElement(4 + Math.random() * 2, "#ffffff", "#ae9fcc");
+		   	newParticle.other = element;
+		   	newParticle.grow = true;
+		    this.game.addEntity(newParticle);
+		}
+		if (this.explodeTime > 0) {
+			this.explodeTime--;
+			for (i = 0; i < 1 + Math.random() * 2; i++) {
+			    var newParticle = new Particle(PART_SECONDARY, this.x + 40, this.y + 41, 
+						-10, 10, -10, 10, 0, 0, 20, 0, 0, 30, .7, .2, true, this.game);
+			    var element = new CircleElement(17 + Math.random() * 6, "#ffffff", "#ae9fcc");
+			   	newParticle.other = element;
+			   	newParticle.acceleration = 0.1;
+			   	newParticle.grow = true;
+			    this.game.addEntity(newParticle);
+			}
+		   	this.alpha = 0;
+		   	this.vSpeed = 0;
+		   	this.y = 330;
+		    if (this.explodeTime === 0)
+		    	this.removeFromWorld = true; //-4784
+		} else if (this.y >= 330 && this.explodeTime === 0) {
+	    	this.life = 0;
+	    	this.explodeTime = 20;
+	    	this.y = 330;
+	    	lightningExSound.play();
+	    	explosionSound.play();
+	    	this.game.cameraShakeTime = 20;
+	    	this.game.cameraShakeAmount = 20;
+	    	this.game.cameraShakeDecay = 1;
+	    	var newParticle = new Particle(IMG_PART, this.game.liveCamera.x - 50, this.game.liveCamera.y - 30, 
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0.7, 0, false, this.game,
+		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/flash.png"), 0, 0, 907, 564, 0.03, 1, true, false, 0, 0));
+		    this.game.addEntity(newParticle);
+            if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
+                this.game.player1.vulnerable = false;
+                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+            			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+                var damage = 40;
+            	damageText.text = damage;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                this.game.player1.currentHealth -= 40;
+                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                this.game.player1.hitByAttack = true;
+                playSound(reksaiProjectileSound);
+                if (this.hSpeed < 0) {
+                    this.game.player1.xVelocity = -3;
+                    this.game.player1.lastDirection = "Right";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                } else {
+                    this.game.player1.xVelocity = 3;
+                    this.game.player1.lastDirection = "Left";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                }
+            }
+	    }
 	}
 	if (this.particleId === VOID_GOOP && this.life % 2 === 0) {
 		if (this.y <= this.game.liveCamera.y + this.game.liveCamera.height) {
@@ -1760,9 +1885,6 @@ Particle.prototype.update = function() {
 	if (this.life > this.maxLife + this.fadeOut) {
 		this.removeFromWorld = true;	
 	}
-	if (this.shrink) {
-		this.sizeScale = 1 - this.life / (this.maxLife + this.fadeOut);
-	}
 	if (this.hSpeed > 0) {
 		this.hSpeed -= this.friction;
 		if (this.hSpeed <= 0)
@@ -1786,8 +1908,9 @@ Particle.prototype.update = function() {
 	this.vSpeed += this.gravity;
 	if (this.vSpeed > this.GRAVITY_CAP)
 		this.vSpeed = this.GRAVITY_CAP;
-	this.x += this.hSpeed;
-	this.y += this.vSpeed;
+	var accelMultiplier = 1 + this.acceleration * this.life;
+	this.x += this.hSpeed * accelMultiplier;
+	this.y += this.vSpeed * accelMultiplier;
 	if (this.y >= 600) {
 		this.removeFromWorld = true;
     }
@@ -1801,21 +1924,56 @@ Particle.prototype.update = function() {
     this.hitBox = { //update hitbox as we move
     	x: this.x - this.width / 2 + this.width, 
 		y: this.y - this.width / 2 + this.width,
-		width: this.width, 
-		height: this.width
+		width: Math.max(1, this.width), 
+		height: Math.max(1, this.width)
 	};
+    if (this.particleId === VOID_LIGHTNING) {
+    	this.hitBox.x += 16;
+    	this.hitBox.y += 16;
+    }
     if (checkCollision(this, this.game.player1) && !this.game.player1.hitByAttack) {
+    	if (this.particleId === VOID_LIGHTNING && this.explodeTime === 0) {
+    		if (this.game.player1.attacking) {
+    			this.removeFromWorld = true;
+    			burnSound.play();
+    		} else {
+    			var damage = 10;
+    			if (this.game.player1.invincTimer > 0)
+    				damage = 0;
+                var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
+            			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
+                var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
+            	damageText.text = damage;
+                damageParticle.other = damageText;
+                this.game.addEntity(damageParticle);
+                this.game.player1.currentHealth -= damage;
+                this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
+                this.game.player1.hitByAttack = true;
+                playSound(reksaiProjectileSound);
+                if (this.hSpeed < 0) {
+                    this.game.player1.xVelocity = -3;
+                    this.game.player1.lastDirection = "Right";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationRight;
+                } else {
+                    this.game.player1.xVelocity = 3;
+                    this.game.player1.lastDirection = "Left";
+                    this.game.player1.hurtAnimation = this.game.player1.hurtAnimationLeft;
+                }
+    			this.removeFromWorld = true;
+    			burnSound.play();
+    		}
+    	}
     	if (this.attackId === 1) { // Reksai Void Ball
             if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
                 this.game.player1.vulnerable = false;
                 var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
             			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
                 var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                var damage = 40;
+                var damage = 25;
             	damageText.text = damage;
                 damageParticle.other = damageText;
                 this.game.addEntity(damageParticle);
-                this.game.player1.currentHealth -= 40;
+                this.game.player1.currentHealth -= damage;
                 this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
                 this.game.player1.hitByAttack = true;
                 playSound(reksaiProjectileSound);
@@ -1836,11 +1994,11 @@ Particle.prototype.update = function() {
                 var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
             			0.2, -0.2, -3, -3, 0, 0.1, 0, 5, 10, 50, 1, 0, false, this.game);
                 var damageText = new TextElement("", "Lucida Console", 25, "red", "black");
-                var damage = 40;
+                var damage = 25;
             	damageText.text = damage;
                 damageParticle.other = damageText;
                 this.game.addEntity(damageParticle);
-                this.game.player1.currentHealth -= 30;
+                this.game.player1.currentHealth -= damage;
                 this.game.player1.invulnTimer = this.game.player1.invulnTimerMax;
                 this.game.player1.hitByAttack = true;
                 playSound(lightningSound);
@@ -1935,13 +2093,23 @@ Particle.prototype.update = function() {
 };
 
 Particle.prototype.draw = function (ctx) {
+	if (this.grow) {
+		this.sizeScale = this.life / (this.maxLife + this.fadeOut);
+	} else if (this.shrink) {
+		this.sizeScale = 1 - this.life / (this.maxLife + this.fadeOut);
+	}
 	if (this.particleId === IMG_FLASH_PART) {
 		this.sizeScale = 0.4;
 	    if (this.life % 30 === 0)
 	    	this.alpha = this.alpha === 1 ? 0 : 1;
 	}
 	ctx.globalAlpha = this.alpha * this.maxAlpha;
-	if (this.other == null) {
+	if (this.particleId === VOID_LIGHTNING) {
+		this.other.drawFrame(this.game.clockTick, ctx, this.x + this.other.offsetX,
+				this.y + this.other.offsetY, this.sizeScale * this.absoluteSizeScale, this.sizeScale * this.absoluteSizeScale);
+		this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX,
+				this.y + this.animation.offsetY, this.sizeScale * this.absoluteSizeScale, this.sizeScale * this.absoluteSizeScale);
+	} else if (this.other == null) {
 		if (this.animation !== null)
 			this.animation.drawFrame(this.game.clockTick, ctx, this.x + this.animation.offsetX,
 					this.y + this.animation.offsetY, this.sizeScale * this.absoluteSizeScale, this.sizeScale * this.absoluteSizeScale);
@@ -1950,6 +2118,7 @@ Particle.prototype.draw = function (ctx) {
 	}
     Entity.prototype.draw.call(this);
 	ctx.globalAlpha = 1;
+    drawHitBox(this, ctx);
 };
 
 /**
@@ -2025,6 +2194,7 @@ Powerup.prototype.update = function () {
                 var element = new CircleElement(40, "#240340", "#131d4f");
                 particle.other = element;
                 particle2.other = element;
+                playSound(voidGateSound);
                 this.game.addEntity(particle);
                 this.game.addEntity(particle2);
 	            this.removeFromWorld = true;
@@ -2099,7 +2269,7 @@ Voidling.prototype.update = function() {
 	    		// Don't hit the head
 	    	} else if (this.type == "explode") {
 	            if (checkCollision(this, this.game.player1)) {
-	                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
+	                if (this.game.player1.vulnerable && (!this.game.player1.attacking) && this.game.player1.invincTimer === 0) {
 	                    this.currentHealth = 0;
 	                    playSound(lightningSound);
 	                    this.game.player1.vulnerable = false;
@@ -2126,7 +2296,7 @@ Voidling.prototype.update = function() {
 	            }
 	        } else if (this.type == "touch") {
 	            if (checkCollision(this, this.game.player1)) {
-	                if (this.game.player1.vulnerable && (!this.game.player1.attacking)) {
+	                if (this.game.player1.vulnerable && (!this.game.player1.attacking) && this.game.player1.invincTimer === 0) {
 	                    playSound(hitSound);                    
 	                    this.game.player1.vulnerable = false;
 	                    var damageParticle = new Particle(TEXT_PART, this.game.player1.hitBox.x, this.game.player1.hitBox.y, 
@@ -2561,7 +2731,7 @@ Malzahar.prototype.update = function() {
 	                this.walkToDestination = false;
 	                this.state = "idle";
                     playSound(teleportSound);
-	            } else if (this.cooldown[2] == 0 && !this.walkToDestination && this.game.currentPhase >= 0) {
+	            } else if (this.cooldown[2] === 0 && !this.walkToDestination && this.game.currentPhase >= 15) {
                     var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, this.game.liveCamera.y + 350, 
                             0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
                     particle.direction = "Right";
@@ -2587,6 +2757,14 @@ Malzahar.prototype.update = function() {
                     } else {
                         this.attackAnimation = this.attackAnimationRight;
                     }
+	            } else if (this.cooldown[3] === 0 && !this.walkToDestination) {
+	    		    var newParticle = new Particle(VOID_LIGHTNING, this.game.liveCamera.x + Math.random() * this.game.camera.width,
+	    		    		this.game.liveCamera.y, 
+	    					0, 0, 1.5, 1.5, 0, 0, 0, 10000, 0, 15, .7, 0, true, this.game,
+	    		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/void_lightning.png"), 0, 0, 80, 82, 0.03, 12, true, false, 0, 0));
+	    		    newParticle.other = new Animation(ASSET_MANAGER.getAsset("./img/Particle/void_lightning_large.png"), 0, 0, 200, 204, 0.03, 30, true, false, -60, -60);
+	    		    newParticle.width = 30;
+                    this.game.addEntity(newParticle);
 	            }
 	            if (this.walkToDestination)
 	                distance = this.destinationX - this.x;
@@ -2669,7 +2847,7 @@ function Reksai(game) {
     // Number Variables
 	this.step = 0;
     this.walkSpeed = 2;
-    this.autoDamage = 30;
+    this.autoDamage = 15;
     this.destinationX = -1;
     this.attackIndex = 0;
     this.attackCount = 0;
@@ -3009,7 +3187,7 @@ function Character(game) {
     this.comboTime = 0; // The timer before the combo drops off
     this.invulnTimerMax = 20;
     this.invulnTimer = 0;
-    this.invincTimer = 500; //invulnerability from powerup
+    this.invincTimer = 0; //invulnerability from powerup
     this.bounceTimer = 0;
     this.ground = 370; 
     this.autoDamage = 2;
@@ -3593,13 +3771,15 @@ ASSET_MANAGER.queueDownload("./img/arrow.png");
 ASSET_MANAGER.queueDownload("./img/arrow_start.png");
 ASSET_MANAGER.queueDownload("./img/small_flare.png");
 
+ASSET_MANAGER.queueDownload("./img/Particle/flash.png");
 ASSET_MANAGER.queueDownload("./img/Particle/invuln.png");
 ASSET_MANAGER.queueDownload("./img/Particle/pink_flare.png");
 ASSET_MANAGER.queueDownload("./img/Particle/orange_flare.png");
 ASSET_MANAGER.queueDownload("./img/Particle/bubbleleft.png");
 ASSET_MANAGER.queueDownload("./img/Particle/bubbleright.png");
 ASSET_MANAGER.queueDownload("./img/Particle/smoke.png");
-
+ASSET_MANAGER.queueDownload("./img/Particle/void_lightning.png");
+ASSET_MANAGER.queueDownload("./img/Particle/void_lightning_large.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenPortrait.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleRight.png");
 ASSET_MANAGER.queueDownload("./img/Riven/RivenIdleLeft.png");

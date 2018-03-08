@@ -34,6 +34,9 @@ function GameEngine() {
 }
 
 GameEngine.prototype.init = function (ctx) {
+	this.cameraShakeAmount = 0;
+	this.cameraShakeTime = 0;
+	this.cameraShakeDecay = 0;
     this.ctx = ctx;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
@@ -167,6 +170,11 @@ GameEngine.prototype.draw = function () {
     this.ctx.restore();
 };
 
+GameEngine.prototype.cameraShake = function(amount, time) {
+	this.cameraShakeAmount = amount;
+	this.cameraShakeTime = time;
+}
+
 GameEngine.prototype.update = function () {
 	this.step++;
 	if (this.currentPhase === 6) {
@@ -233,6 +241,15 @@ GameEngine.prototype.update = function () {
 	if ((this.currentPhase >= 6 && this.currentPhase <= 10) || this.currentPhase === 17) {
 		this.liveCamera.x += -5 + Math.random() * 10;
 		this.liveCamera.y += -5 + Math.random() * 10;
+	}
+	if (this.cameraShakeTime > 0) {
+		this.cameraShakeTime--;
+		this.cameraShakeAmount -= this.cameraShakeDecay;
+		this.liveCamera.x += -this.cameraShakeAmount / 2 + Math.random() * this.cameraShakeAmount / 2;
+		this.liveCamera.y += -this.cameraShakeAmount / 2 + Math.random() * this.cameraShakeAmount / 2;
+		if (this.cameraShakeAmount <= 0) {
+			this.cameraShakeTime = 0;
+		}
 	}
     var entitiesCount = this.entities.length;
     for (var i = 0; i < entitiesCount; i++) {
