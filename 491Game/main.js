@@ -3303,7 +3303,7 @@ Character.prototype.update = function () {
  		this.game.addEntity(chat);
  		this.game.currentPhase = 8;
 	}
-    if (this.game.currentPhase === 10) {
+    if (this.game.currentPhase === 10 || this.game.currentPhase === 17) {
         if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
             this.currentHealth = 0;
         }
