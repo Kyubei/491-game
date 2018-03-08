@@ -560,6 +560,7 @@ UI.prototype.draw = function (ctx) { //draw ui
         document.getElementById("image").src = "img/UI/MusicOff.png";
         
         bossMusic.volume = 0;
+        finalMusic.volume = 0;
         climbMusic.loop = 0;
         climbMusic.volume = 0;
         earthRumble.volume = 0;
@@ -569,6 +570,7 @@ UI.prototype.draw = function (ctx) { //draw ui
         reksaiProjectileSound.volume = 0;
         lightningSound.volume = 0;
         lightningExSound.volume = 0;
+        lightningFallSound.volume = 0;
         explosionSound.volume = 0;
         burnSound.volume = 0;
         hitSound.volume = 0;
@@ -1344,7 +1346,7 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 1552, -4784),
 		
-		new Platform(game, 1168, -4784, 0, 0, 0, 1), //BOUNCY
+		new Platform(game, 1168, -4785, 0, 0, 0, 1), //BOUNCY
 		
 		new Platform(game, 1168, -4928),
 		
@@ -2911,8 +2913,9 @@ Malzahar.prototype.update = function() {
 	            		}
 	            	} else
 	            		this.meteorCount--;
+            		this.cooldown[3] = 1000;
 	            	this.idleTimer = 250;
-	            	var targetY = this.game.liveCamera.y;
+	            	var targetY = this.game.liveCamera.y - 50;
 	            	if (this.firstMeteor) {
 	            		targetY -= 750; //give the chat some time to read out
 	            	}
@@ -2924,6 +2927,16 @@ Malzahar.prototype.update = function() {
 	    		    newParticle.width = 30;
                     this.game.addEntity(newParticle);
             		this.firstMeteor = false;
+                    if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
+                        this.lastDirection = "Right";
+                    } else {
+                        this.lastDirection = "Left";
+                    }
+                    if (this.lastDirection == "Left") {
+                        this.attackAnimation = this.attackAnimationLeft;
+                    } else {
+                        this.attackAnimation = this.attackAnimationRight;
+                    }
 	            } else if (this.cooldown[0] == 0 && !this.walkToDestination) {
 	                this.energy = 1;
 	                this.walkToDestination = true;

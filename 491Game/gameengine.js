@@ -107,15 +107,12 @@ GameEngine.prototype.startInput = function () {
             that.player1.wDamage = 700;
         }
         if (String.fromCharCode(e.which) === 'T') {
-			
-        	that.player1.yVelocity = 15;
-        	that.player1.bounceTimer = 30;
-        	that.player1.jumpSpeed = 0;
-            that.player1.jumping = true;
-		}
-        if (String.fromCharCode(e.which) === 'R') {
-			that.r = true;
-			console.log("Camera coords: (" + that.camera.x+", "+that.camera.y+")");
+			if (that.player1.wDamage === 700) {
+	        	that.player1.yVelocity = 15;
+	        	that.player1.bounceTimer = 30;
+	        	that.player1.jumpSpeed = 0;
+	            that.player1.jumping = true;
+			}
 		}
         e.preventDefault();
     }, false);
