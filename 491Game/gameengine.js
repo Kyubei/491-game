@@ -232,12 +232,14 @@ GameEngine.prototype.update = function () {
             this.liveCamera.y = -1700;
             this.cameraLock = true;
         }
-        if (this.currentPhase === 17 && this.camera.y <= -5250) {
+        if (this.currentPhase === 17 && this.camera.y <= -5175) {
             this.currentPhase = 18;
             this.camera.x = 800;
-            this.camera.y = -5250;
+            this.camera.y = -5175;
+            this.camera.minY = this.camera.y;
+            this.camera.maxY = this.camera.y + this.camera.height;
             this.liveCamera.x = 800;
-            this.liveCamera.y = -5250;
+            this.liveCamera.y = -5175;
             this.cameraLock = true;
         }
 	}
@@ -249,8 +251,8 @@ GameEngine.prototype.update = function () {
 	if (this.cameraShakeTime > 0) {
 		this.cameraShakeTime--;
 		this.cameraShakeAmount -= this.cameraShakeDecay;
-		this.liveCamera.x += -this.cameraShakeAmount / 2 + Math.random() * this.cameraShakeAmount / 2;
-		this.liveCamera.y += -this.cameraShakeAmount / 2 + Math.random() * this.cameraShakeAmount / 2;
+		this.liveCamera.x = this.camera.minX -this.cameraShakeAmount / 2 + Math.random() * this.cameraShakeAmount / 2;
+		this.liveCamera.y = this.camera.minY + this.cameraShakeAmount / 2 + Math.random() * this.cameraShakeAmount / 2;
 		if (this.cameraShakeAmount <= 0) {
 			this.cameraShakeTime = 0;
             this.liveCamera.x = this.camera.x;

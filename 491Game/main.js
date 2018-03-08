@@ -38,6 +38,9 @@ bossMusic.volume = bossMusicVolume;
 var climbMusic = new Audio("./sounds/malz.mp3");
 climbMusic.loop = true;
 climbMusic.volume = 0.2;
+var finalMusic = new Audio("./sounds/finalmusic.ogg");
+finalMusic.loop = true;
+finalMusic.volume = 0.3;
 var earthRumble = new Audio("./sounds/earth_rumble.wav");
 earthRumble.loop = true;
 earthRumble.volume = 0.4;
@@ -53,6 +56,8 @@ var lightningSound = new Audio("./sounds/lightning.wav");
 lightningSound.volume = 0.1;
 var lightningExSound = new Audio("./sounds/void_lightning.mp3");
 lightningExSound.volume = 0.2;
+var lightningFallSound = new Audio("./sounds/comet_fall.wav");
+lightningFallSound.volume = 0.5;
 var explosionSound = new Audio("./sounds/explosion.wav");
 explosionSound.volume = 0.4;
 var burnSound = new Audio("./sounds/burn.wav");
@@ -458,7 +463,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     	ctx.drawImage(ASSET_MANAGER.getAsset("./img/Reksai/ReksaiPortrait.png"), this.bossPortraitX + this.game.liveCamera.x, this.bossPortraitY + this.game.liveCamera.y, this.bossPortraitWidth, this.bossPortraitHeight);
         ctx.fillText("Rek'sai                        " + this.game.currentBoss.currentHealth + " / " + this.game.currentBoss.maxHealth,this.bossPortraitX + 80,45);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 14 || this.game.currentPhase === 21) {
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/BarBack.png"), this.bossBarX + this.game.liveCamera.x, this.bossBarY + this.game.liveCamera.y, this.bossBarWidth, this.bossBarHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBarLight.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealthTemp / this.game.currentBoss.maxHealth), this.bossHealthHeight);
         ctx.drawImage(ASSET_MANAGER.getAsset("./img/UI/HealthBar.png"), this.bossHealthX + this.game.liveCamera.x, this.bossHealthY + this.game.liveCamera.y, this.bossHealthWidth * (this.game.currentBoss.currentHealth / this.game.currentBoss.maxHealth), this.bossHealthHeight);
@@ -471,7 +476,7 @@ UI.prototype.draw = function (ctx) { //draw ui
     if (this.game.currentPhase === 0) {
         ctx.fillText("Rek'sai", this.game.currentBoss.x + 50, this.game.currentBoss.y - 5);
     }
-    if (this.game.currentPhase === 2 || this.game.currentPhase === 14) {
+    if (this.game.currentPhase === 2 || this.game.currentPhase === 14 || this.game.currentPhase === 21) {
         ctx.fillText("Malzahar", this.game.currentBoss.x + 10, this.game.currentBoss.y - 15);
     }
     ctx.fillStyle = tempColor;
@@ -502,7 +507,7 @@ UI.prototype.draw = function (ctx) { //draw ui
         }
         ctx.globalAlpha = 1.0;
     }
-    if (this.game.currentPhase >= 6 && this.game.currentPhase <= 10) {
+    if (this.game.currentPhase >= 6 && this.game.currentPhase <= 10 || this.game.currentPhase === 17) {
         var randomness = Math.random() * 100;
         if (randomness <= 10) {
             var randomSize = 2 + Math.random() * 13;
@@ -584,7 +589,7 @@ function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId, stepOffset
 	this.specialId = specialId || 0;
     this.step = stepOffset || 0;
     this.delay = 0;
-    if (this.vSpeed != 0 && this.step > 0) {
+    if (this.vSpeed !== 0 && this.step > 0) {
     	this.delay = this.step;
     	this.step = 0;
     }
@@ -643,7 +648,7 @@ Platform.prototype.update = function () {
 		    this.y += this.vSpeed;
 		}
 	}
-    if (this.game.currentPhase === 10 && !this.removeFromWorld) {
+    if ((this.game.currentPhase === 17 || this.game.currentPhase === 10) && !this.removeFromWorld) {
         if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
 			for (i = 0; i < this.hitBox.width; i += 10) {
 	            playSound(breakSound);
@@ -651,8 +656,10 @@ Platform.prototype.update = function () {
 	            var element;
 	            if (this.specialId === 0)
 	            	element = new SquareElement(6 + Math.random() * 4, 6 + Math.random() * 4, "#123D5C", "#386586");
-	            else
+	            else if (this.specialId === 1)
 	            	element = new SquareElement(6 + Math.random() * 4, 6 + Math.random() * 4, "#39682D", "#41850B");
+	            else
+	            	element = new SquareElement(6 + Math.random() * 4, 6 + Math.random() * 4, "#3A1F0E", "#7F5336");	            	
 	            particle.other = element;
 	            this.game.addEntity(particle);
 			}
@@ -700,85 +707,63 @@ Map.prototype.draw = function (ctx) {
 
 function createPlatforms2(game) {
 	var powerups = [
-		
-		new Powerup(game, 1184, -1904, 0), //health powerup
-		
-		new Powerup(game, 848, -2064, 2), //void gate spawner
-		
-		new Powerup(game, 896, -2368, 2), //void gate spawner
-		
-		new Powerup(game, 848, -2528, 0), //health powerup
-		
-		new Powerup(game, 1184, -2928, 1), //invuln powerup
-		
-		new Powerup(game, 1520, -3072, 2), //void gate spawner
-		
-		new Powerup(game, 1200, -3504, 2), //void gate spawner
-		
-		new Powerup(game, 816, -3408, 1), //invuln powerup
-		
-		new Powerup(game, 1088, -3312, 0), //health powerup
-		
-		new Powerup(game, 1152, -3840, 2), //void gate spawner
-		
-		new Powerup(game, 848, -3984, 2), //void gate spawner
-		
-		new Powerup(game, 1184, -3984, 1), //invuln powerup
-		
-		new Powerup(game, 1136, -4176, 0), //health powerup
-		
-		new Powerup(game, 816, -4368, 2), //void gate spawner
-		
-		new Powerup(game, 816, -4592, 0), //health powerup
-		
-		new Powerup(game, 944, -4688, 2), //void gate spawner
-		
-		new Powerup(game, 880, -4640, 0), //health powerup
-		
-		new Powerup(game, 1056, -4976, 0), //health powerup
-		
-		new Powerup(game, 1312, -4976, 0), //health powerup
-		
-		new Powerup(game, 1056, -5072, 0), //health powerup
-		
-		new Powerup(game, 1312, -5072, 0) //health powerup
-	]
+		new Powerup(game, 1184, -1904, 0), //health powerup		
+		new Powerup(game, 848, -2064, 2), //void gate spawner		
+		new Powerup(game, 896, -2368, 2), //void gate spawner		
+		new Powerup(game, 832, -2512, 0), //health powerup		
+		new Powerup(game, 1184, -2832, 1), //invuln powerup		
+		new Powerup(game, 1520, -3072, 2), //void gate spawner		
+		new Powerup(game, 1200, -3504, 2), //void gate spawner		
+		new Powerup(game, 816, -3312, 1), //invuln powerup		
+		new Powerup(game, 1152, -3840, 2), //void gate spawner		
+		new Powerup(game, 848, -3984, 2), //void gate spawner		
+		new Powerup(game, 928, -3984, 1), //invuln powerup		
+		new Powerup(game, 1136, -4176, 0), //health powerup		
+		new Powerup(game, 816, -4368, 2), //void gate spawner		
+		new Powerup(game, 816, -4592, 0), //health powerup		
+		new Powerup(game, 944, -4688, 2), //void gate spawner		
+		new Powerup(game, 880, -4640, 0), //health powerup		
+		new Powerup(game, 1056, -4976, 0), //health powerup		
+		new Powerup(game, 1312, -4976, 0), //health powerup		
+		new Powerup(game, 1056, -5072, 0), //health powerup		
+		new Powerup(game, 1312, -5072, 0), //health powerup		
+		new Powerup(game, 1168, -3648, 0), //health powerup		
+		new Powerup(game, 816, -2928, 0) //health powerup
+	];
 	var voidlings = [
 		new Voidling(game, 1312, -1616, "touch"),
-		new Voidling(game, 1424, -1616, "touch"),
-		new Voidling(game, 1232, -1760, "explode"),
-		new Voidling(game, 1344, -1760, "explode"),
-		new Voidling(game, 1168, -2048, "touch"),
-		new Voidling(game, 1312, -2048, "touch"),
-		new Voidling(game, 1456, -2048, "explode"),
-		new Voidling(game, 1120, -2176, "touch"),
-		new Voidling(game, 1280, -2176, "touch"),
-		new Voidling(game, 1152, -2624, "touch"),
-		new Voidling(game, 992, -2624, "touch"),
-		new Voidling(game, 928, -2784, "touch"),
-		new Voidling(game, 1232, -2784, "touch"),
-		new Voidling(game, 1264, -2784, "touch"),
-		new Voidling(game, 1296, -2784, "touch"),
-		new Voidling(game, 1328, -2784, "touch"),
-		new Voidling(game, 1360, -2784, "touch"),
-		new Voidling(game, 1392, -2784, "touch"),
-		new Voidling(game, 1248, -2784, "explode"),
-		new Voidling(game, 1296, -2784, "explode"),
-		new Voidling(game, 1344, -2784, "explode"),
-		new Voidling(game, 1392, -2784, "explode"),
-		new Voidling(game, 1168, -3072, "touch"),
-		new Voidling(game, 960, -3072, "touch"),
-		new Voidling(game, 992, -3456, "touch"),
-		new Voidling(game, 1024, -3456, "touch"),
-		new Voidling(game, 1056, -3456, "touch"),
-		new Voidling(game, 1088, -3456, "touch"),
-		new Voidling(game, 1120, -3456, "touch"),
-		new Voidling(game, 864, -3840, "explode"),
-		new Voidling(game, 1024, -4304, "explode"),
-		new Voidling(game, 1232, -4352, "explode")
+		new Voidling(game, 1424, -1616, "touch"),		
+		new Voidling(game, 1232, -1760, "explode"),		
+		new Voidling(game, 1344, -1760, "explode"),		
+		new Voidling(game, 1168, -2048, "touch"),		
+		new Voidling(game, 1312, -2048, "touch"),		
+		new Voidling(game, 1456, -2048, "explode"),		
+		new Voidling(game, 1120, -2176, "touch"),		
+		new Voidling(game, 1280, -2176, "touch"),		
+		new Voidling(game, 1152, -2624, "touch"),		
+		new Voidling(game, 992, -2624, "touch"),		
+		new Voidling(game, 928, -2784, "touch"),		
+		new Voidling(game, 1232, -2784, "touch"),		
+		new Voidling(game, 1280, -2784, "explode"),		
+		new Voidling(game, 1360, -2784, "explode"),		
+		new Voidling(game, 1168, -3072, "touch"),		
+		new Voidling(game, 960, -3072, "touch"),		
+		new Voidling(game, 992, -3456, "touch"),		
+		new Voidling(game, 1024, -3456, "touch"),		
+		new Voidling(game, 1056, -3456, "touch"),		
+		new Voidling(game, 1088, -3456, "touch"),		
+		new Voidling(game, 1120, -3456, "touch"),		
+		new Voidling(game, 864, -3840, "explode"),		
+		new Voidling(game, 1024, -4304, "explode"),		
+		new Voidling(game, 1232, -4352, "explode"),		
+		new Voidling(game, 880, -3168, "explode"),		
+		new Voidling(game, 1344, -3744, "touch"),		
+		new Voidling(game, 1424, -3744, "touch"),		
+		new Voidling(game, 1264, -3744, "explode"),		
+		new Voidling(game, 1328, -2784, "touch"),		
+		new Voidling(game, 1408, -2784, "touch")
 	];
-	var platforms = [
-		
+	var platforms = [		
 		new Platform(game, 1088, -1376),
 		
 		new Platform(game, 1168, -1424),
@@ -815,7 +800,7 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 768, -1712),
 		
-		new Platform(game, 960, -1712, 2, 0, 112), //HORIZONTAL
+		new Platform(game, 960, -1712, 2, 0, 96), //HORIZONTAL
 		
 		new Platform(game, 896, -1760),
 		
@@ -911,13 +896,13 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 1472, -2480),
 		
-		new Platform(game, 832, -2480),
-		
 		new Platform(game, 768, -2464),
 		
-		new Platform(game, 960, -2512),
+		new Platform(game, 832, -2464),
 		
 		new Platform(game, 896, -2496),
+		
+		new Platform(game, 960, -2496),
 		
 		new Platform(game, 1408, -2528),
 		
@@ -969,17 +954,39 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 1424, -2736),
 		
-		new Platform(game, 1040, -2784),
+		new Platform(game, 1168, -2784),
 		
-		new Platform(game, 1104, -2832),
+		new Platform(game, 1104, -2784),
+		
+		new Platform(game, 1040, -2784),
 		
 		new Platform(game, 1536, -2832),
 		
-		new Platform(game, 1168, -2880),
+		new Platform(game, 1472, -2880),
 		
-		new Platform(game, 1536, -2880),
+		new Platform(game, 1408, -2880),
 		
-		new Platform(game, 1536, -2928),
+		new Platform(game, 1344, -2880),
+		
+		new Platform(game, 1280, -2880),
+		
+		new Platform(game, 1216, -2880),
+		
+		new Platform(game, 1152, -2880),
+		
+		new Platform(game, 1088, -2880),
+		
+		new Platform(game, 1024, -2880),
+		
+		new Platform(game, 960, -2880),
+		
+		new Platform(game, 896, -2880),
+		
+		new Platform(game, 832, -2880),
+		
+		new Platform(game, 768, -2880),
+		
+		new Platform(game, 1280, -2928, 2, 0, 96), //HORIZONTAL
 		
 		new Platform(game, 1536, -2976),
 		
@@ -1009,21 +1016,21 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 800, -3072),
 		
-		new Platform(game, 864, -3120),
+		new Platform(game, 864, -3120, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 928, -3120, 0, 0, 0, 2), //FIRE
 		
 		new Platform(game, 1328, -3136),
 		
-		new Platform(game, 800, -3168),
+		new Platform(game, 992, -3168),
 		
-		new Platform(game, 864, -3216),
+		new Platform(game, 864, -3216, 0, 0, 0, 2), //FIRE
 		
-		new Platform(game, 928, -3264),
+		new Platform(game, 928, -3216, 0, 0, 0, 2), //FIRE
 		
-		new Platform(game, 1072, -3264, 0, 0, 0, 1), //BOUNCY
+		new Platform(game, 800, -3264),
 		
-		new Platform(game, 864, -3312),
-		
-		new Platform(game, 800, -3360),
+		new Platform(game, 1056, -3264, 0, 0, 0, 1), //BOUNCY
 		
 		new Platform(game, 1072, -3408),
 		
@@ -1049,21 +1056,61 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 1584, -3504),
 		
+		new Platform(game, 816, -3536, 0, 0, 0, 1), //BOUNCY
+		
 		new Platform(game, 1520, -3552),
 		
 		new Platform(game, 1584, -3552),
 		
-		new Platform(game, 1520, -3600),
+		new Platform(game, 1456, -3552),
 		
-		new Platform(game, 1584, -3600),
+		new Platform(game, 1392, -3552),
 		
-		new Platform(game, 1456, -3600),
+		new Platform(game, 1328, -3552),
 		
-		new Platform(game, 1392, -3600),
+		new Platform(game, 1008, -3600),
 		
-		new Platform(game, 1328, -3600),
+		new Platform(game, 944, -3600),
 		
-		new Platform(game, 1264, -3600, 0, -2, 48, 0, 128), //VERTICAL
+		new Platform(game, 880, -3600),
+		
+		new Platform(game, 1264, -3600, -2, 0, 96), //HORIZONTAL
+		
+		new Platform(game, 1328, -3696),
+		
+		new Platform(game, 1392, -3696),
+		
+		new Platform(game, 1456, -3696),
+		
+		new Platform(game, 1520, -3696),
+		
+		new Platform(game, 1584, -3696),
+		
+		new Platform(game, 816, -3696),
+		
+		new Platform(game, 880, -3696),
+		
+		new Platform(game, 944, -3696),
+		
+		new Platform(game, 1008, -3696),
+		
+		new Platform(game, 1072, -3696),
+		
+		new Platform(game, 1136, -3696),
+		
+		new Platform(game, 1200, -3696),
+		
+		new Platform(game, 1264, -3696),
+		
+		new Platform(game, 1520, -3744),
+		
+		new Platform(game, 1584, -3744),
+		
+		new Platform(game, 1200, -3792, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1456, -3792, 0, 0, 0, 2), //FIRE
+		
+		new Platform(game, 1328, -3792, 0, 0, 0, 2, 100), //FIRE
 		
 		new Platform(game, 976, -3792),
 		
@@ -1074,8 +1121,6 @@ function createPlatforms2(game) {
 		new Platform(game, 784, -3792),
 		
 		new Platform(game, 1136, -3792, -2, 0, 48), //HORIZONTAL
-		
-		new Platform(game, 1200, -3792, 0, 2, 48), //VERTICAL
 		
 		new Platform(game, 784, -3840),
 		
@@ -1244,7 +1289,6 @@ function createPlatforms2(game) {
 		new Platform(game, 1296, -5024),
 		
 		new Platform(game, 1424, -5024)
-
 	];
 	for (i = 0; i < platforms.length; i++) {
 		var p = platforms[i];
@@ -1509,6 +1553,16 @@ TextBox.prototype.update = function() {
                     earthRumble.play();
                 }
         		createPlatforms2(this.game);
+        	} else if (this.game.currentPhase === 20) {
+                this.game.currentPhase = 21;
+                this.game.player1.canControl = true;
+                this.game.currentBoss.attackEnabled = true;
+                this.game.currentBoss.maxHealth = 200;
+                this.game.currentBoss.attackable = true;
+                this.game.currentBoss.currentHealth = 200;
+                this.game.currentBoss.currentHealthTemp = 200;
+                this.game.currentBoss.dead = false;
+        		this.game.cameraLock = true;
         	}
 		}
 	}
@@ -1737,7 +1791,7 @@ Particle.prototype.update = function() {
 	if (this.particleId === VOID_STORM && this.life % 2 === 0) {
 		var speed = this.direction === "Right" ? 8 : -8;
 	    var newParticle = new Particle(PART_SECONDARY, this.x, this.y, 
-				speed, speed, -4, 4, 0, 0, 0, 60, 0, 15, .5, .2, true, this.game);
+				speed, speed, -4, 4, 0, 0, 0, 90, 0, 15, .5, .2, true, this.game);
 	    var element = new CircleElement(10 + Math.random() * 4, "#9321c4", "#722f8e");
 	   	newParticle.other = element;
 	   	newParticle.attackId = 3;
@@ -1765,20 +1819,20 @@ Particle.prototype.update = function() {
 			}
 		   	this.alpha = 0;
 		   	this.vSpeed = 0;
-		   	this.y = 330;
+		   	this.y = -4800;
 		    if (this.explodeTime === 0)
 		    	this.removeFromWorld = true; //-4784
-		} else if (((this.y >= 330 && this.game.currentPhase < 14) || this.y >= -1340 && this.game.currentPhase == 14) && this.explodeTime === 0) {
+		} else if (this.y >= -4800 && this.explodeTime === 0) {
 	    	this.life = 0;
 	    	this.explodeTime = 20;
-	    	this.y = 330;
+	    	this.y = -4800;
 	    	lightningExSound.play();
 	    	explosionSound.play();
 	    	this.game.cameraShakeTime = 20;
-	    	this.game.cameraShakeAmount = 20;
+	    	this.game.cameraShakeAmount = 40;
 	    	this.game.cameraShakeDecay = 1;
 	    	var newParticle = new Particle(IMG_PART, this.game.liveCamera.x - 50, this.game.liveCamera.y - 30, 
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0.7, 0, false, this.game,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0.3, 0, false, this.game,
 		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/flash.png"), 0, 0, 907, 564, 0.03, 1, true, false, 0, 0));
 		    this.game.addEntity(newParticle);
             if (this.game.player1.vulnerable && this.game.player1.invincTimer === 0) {
@@ -2265,6 +2319,9 @@ function Voidling(game, x, y, voidlingType) {
 
 Voidling.prototype.update = function() {
 	if (isOnScreen(this)) {
+		this.step++;
+		if (this.step >= 1000)
+			this.currentHealth = 0;
 	    if (this.attackableTimer > 0) {
 	        this.attackableTimer--;
 	        if (this.attackableTimer <= 0) {
@@ -2273,7 +2330,7 @@ Voidling.prototype.update = function() {
 	    }
 	    
 	    if (this.attackable) {
-	    	if (this.game.player1.y >= this.y + 30) {
+	    	if (this.game.player1.y >= this.y) {
 	    		// Don't hit the head
 	    	} else if (this.type == "explode") {
 	            if (checkCollision(this, this.game.player1)) {
@@ -2475,6 +2532,7 @@ function Malzahar(game) {
 	this.step = 0;
     this.walkSpeed = 4;
     this.autoDamage = 30;
+    this.meteorCount = 0;
     this.spawnCount = 0;
     this.spawnTimer = 0;
     this.destinationX = -1;
@@ -2495,14 +2553,16 @@ function Malzahar(game) {
     this.solid = false;
     this.attackable = true;
     this.walkToDestination = false;
+    this.firstMeteor = true;
     
     /**
      * Initial cooldowns of skills.
      * Skill ids:
-     * 1) Walk to nearest edge, scream, and throw a barrage of void balls.
-     * 2) Undefined...
+     * 1) Summon voidlings
+     * 2) Teleport + void storm
+     * 3) Summon meteors
      */
-    this.cooldown = [500, 0, 0, 0];
+    this.cooldown = [500, 1000, 1000, 0];
     
     // Animations
 	this.idleRight = new Animation(ASSET_MANAGER.getAsset("./img/Malzahar/IdleRight.png"), 0, 0, 85, 150, 0.2, 12, true, false, 0, -20);
@@ -2533,7 +2593,7 @@ Malzahar.prototype.update = function() {
 		this.alpha += 0.01;
 		if (this.alpha >= 1) {
 			this.alpha = 1;
-			this.game.currentPhase = 13;
+			this.game.currentPhase++;
 		}
 		console.log("REAPPEARING INTO THE WORLD! "+this.x+","+this.y+", player is "+this.game.player1.x+", "+this.game.player1.y+", gamephase="+this.game.currentPhase);
         this.state = "idle";
@@ -2600,6 +2660,15 @@ Malzahar.prototype.update = function() {
 		this.game.addEntity(chat);
         playSound(disappearSound);
 	}
+	if (this.game.currentPhase === 21 && this.currentHealth <= 0) { // Phase transition
+		this.game.currentPhase = 22;
+		this.dead = true;
+        this.attackable = false;
+        this.attackEnabled = false;
+		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "...impossible...");
+		this.game.addEntity(chat);
+        playSound(disappearSound);
+	}
     if (this.game.currentPhase === 3 || this.game.currentPhase === 15) {
     	if (this.alpha > 0) {
     		this.alpha -= 0.01;
@@ -2628,10 +2697,23 @@ Malzahar.prototype.update = function() {
 		this.dead = false;
         earthRumble.pause();
     } else if (this.game.currentPhase === 12 || this.game.currentPhase === 14) {
-        fadeClimbMusicOut();
-        fadeBossMusicIn();
+        /*fadeClimbMusicOut();
+        fadeBossMusicIn();*/
+    } else if (this.game.currentPhase === 18) { //2nd climb ended
+        this.lastDirection = "left";
+    	this.y = -4934;
+    	this.x = 1400;
+        this.energy = 0;
+        this.game.player1.canControl = false;
+		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "You still stand? Then come forth, hero, and witness your demise!");
+		this.game.addEntity(chat);
+		this.game.currentPhase = 19;
+		this.dead = false;
+        earthRumble.pause();
+        climbMusic.pause();
+        finalMusic.play();
     }
-    if ((this.game.currentPhase === 2 || this.game.currentPhase === 14) && this.attackEnabled) { // Malz attack code
+    if ((this.game.currentPhase === 2 || this.game.currentPhase === 14 || this.game.currentPhase === 21) && this.attackEnabled) { // Malz attack code
 	    if (this.state == "attacking") {
 	        if (this.attackAnimation.currentFrame() >= this.attackAnimation.frames) {
 	            this.state = "idle";
@@ -2726,7 +2808,35 @@ Malzahar.prototype.update = function() {
                     this.spawnTimer = 0;
                     this.state = "attacking";
                     this.attackIndex = 2;
-                } else if (this.cooldown[0] == 0 && !this.walkToDestination) {
+                } else if ((this.meteorCount > 0 || this.cooldown[3] === 0) && !this.walkToDestination && this.game.currentPhase >= 15) {
+	            	if (this.cooldown[3] === 0) {
+	            		this.cooldown[2] = 0; //reset void gate
+	            		this.cooldown[3] = 1000;
+	            		if ((this.currentHealth / this.maxHealth) <= 0.5)
+	            			this.meteorCount = 5;
+	            		else
+	            			this.meteorCount = 1;
+	            		if (this.firstMeteor) {
+	            	 		var chat = new TextBox(this.game, "./img/Chat/EzrealSquare.png", "Look out, Riven! Don't let that meteor hit the floor!");
+	            	 		this.game.addEntity(chat);
+	            	 		this.meteorCount = 0;
+	            		}
+	            	} else
+	            		this.meteorCount--;
+	            	this.idleTimer = 250;
+	            	var targetY = this.game.liveCamera.y;
+	            	if (this.firstMeteor) {
+	            		targetY -= 750; //give the chat some time to read out
+	            	}
+	    		    var newParticle = new Particle(VOID_LIGHTNING, this.game.liveCamera.x + 50 + Math.random() * (this.game.camera.width - 150),
+	    		    		targetY, 0, 0, 1.5, 1.5, 0, 0, 0, 10000, 0, 15, .7, 0, true, this.game,
+	    		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/void_lightning.png"), 0, 0, 80, 82, 0.03, 12, true, false, 0, 0));
+	    		    lightningFallSound.play();
+	    		    newParticle.other = new Animation(ASSET_MANAGER.getAsset("./img/Particle/void_lightning_large.png"), 0, 0, 200, 204, 0.03, 30, true, false, -60, -60);
+	    		    newParticle.width = 30;
+                    this.game.addEntity(newParticle);
+            		this.firstMeteor = false;
+	            } else if (this.cooldown[0] == 0 && !this.walkToDestination) {
 	                this.energy = 1;
 	                this.walkToDestination = true;
 	                if (this.x < 325 + 800) {
@@ -2747,10 +2857,17 @@ Malzahar.prototype.update = function() {
 	                this.state = "idle";
                     playSound(teleportSound);
 	            } else if (this.cooldown[2] === 0 && !this.walkToDestination && this.game.currentPhase >= 15) {
-                    var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, this.game.liveCamera.y + 350, 
+	            	var yTarget = this.game.liveCamera.y + 350;
+	            	if (this.meteorCount > 0) { //create on the upper platforms... maybe
+	            		if (Math.random() >= 0.66)
+	            			yTarget = -4960;
+	            		else if (Math.random() >= 0.50)
+	            			yTarget = -5056;
+	            	}
+                    var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, yTarget, 
                             0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
                     particle.direction = "Right";
-                    var particle2 = new Particle(VOID_GATE, this.game.liveCamera.x + this.game.camera.width - 30, this.game.liveCamera.y + 350, 
+                    var particle2 = new Particle(VOID_GATE, this.game.liveCamera.x + this.game.camera.width - 30, yTarget, 
                             0, 0, 0, 0, 0, 0, 0, 400, 0, 10, 0, 0, false, this.game);
                     particle2.direction = "Left";
                     var element = new CircleElement(40, "#240340", "#131d4f");
@@ -2772,14 +2889,6 @@ Malzahar.prototype.update = function() {
                     } else {
                         this.attackAnimation = this.attackAnimationRight;
                     }
-	            } else if (this.cooldown[3] === 0 && !this.walkToDestination) {
-	    		    var newParticle = new Particle(VOID_LIGHTNING, this.game.liveCamera.x + Math.random() * this.game.camera.width,
-	    		    		this.game.liveCamera.y, 
-	    					0, 0, 1.5, 1.5, 0, 0, 0, 10000, 0, 15, .7, 0, true, this.game,
-	    		        	new Animation(ASSET_MANAGER.getAsset("./img/Particle/void_lightning.png"), 0, 0, 80, 82, 0.03, 12, true, false, 0, 0));
-	    		    newParticle.other = new Animation(ASSET_MANAGER.getAsset("./img/Particle/void_lightning_large.png"), 0, 0, 200, 204, 0.03, 30, true, false, -60, -60);
-	    		    newParticle.width = 30;
-                    this.game.addEntity(newParticle);
 	            }
 	            if (this.walkToDestination)
 	                distance = this.destinationX - this.x;
@@ -2807,7 +2916,8 @@ Malzahar.prototype.update = function() {
 	                    this.destinationX = -1;
 	                    this.walkToDestination = false;
 	                }
-	            } else if (distance === 0 && !this.walkToDestination && this.energy === 0 && this.state != "attacking") { //attack if not walking or charging attack            
+	            } else if (distance === 0 && !this.walkToDestination && this.meteorCount === 0
+	            		&& this.energy === 0 && this.state != "attacking") { //attack if not walking or charging attack            
                     var particle = new Particle(VOID_PORTAL, this.game.player1.x + this.game.player1.hitBox.width / 2, this.y + 150, 
                             0, 0, 0, 0, 0, 0, 0, 200, 0, 10, 0, 0, false, this.game);
                     var element = new CircleElement(20 + Math.random() * 8, "#240340", "#131d4f");
@@ -3209,7 +3319,7 @@ function Character(game) {
     this.autoScaling = 1;
     this.qDamage = 4;
     this.qScaling = 2;
-    this.wDamage = 4;
+    this.wDamage = 6;
     // String Variables
 	this.lastDirection = "Right";
     // Boolean Variables
@@ -3856,6 +3966,7 @@ ASSET_MANAGER.queueDownload("./img/Reksai/ScreamLeft.png");
 ASSET_MANAGER.queueDownload("./img/Chat/ChatSquare.png");
 ASSET_MANAGER.queueDownload("./img/Chat/MalzSquare.png");
 ASSET_MANAGER.queueDownload("./img/Chat/RivenSquare.png");
+ASSET_MANAGER.queueDownload("./img/Chat/EzrealSquare.png");
 
 ASSET_MANAGER.downloadAll(function () {
     var canvas = document.getElementById('gameWorld');
