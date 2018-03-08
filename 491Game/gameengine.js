@@ -208,7 +208,7 @@ GameEngine.prototype.update = function () {
 			}
 		}
 		if (this.currentPhase === 17) {
-			this.camera.y = -1700 - (this.step - 100) / 2;
+            this.camera.y = -1700 - (this.step - 100) / 2;
 		}
 	    if (this.liveCamera.x != this.camera.x) {
 	    	if (this.liveCamera.x < this.camera.x) {

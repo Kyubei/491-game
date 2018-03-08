@@ -521,7 +521,86 @@ UI.prototype.draw = function (ctx) { //draw ui
                                     this.game.addEntity(particle);
         }
 	}
+    if (soundOn) {
+        document.getElementById("image").src = "img/UI/MusicOn.png";
+        bossMusic.volume = bossMusicVolume;
+        climbMusic.volume = 0.2;
+        earthRumble.volume = 0.4;
+        fireSound.volume = 0.4;
+        healSound.volume = 0.1;
+        invulnSound.volume = 0.1;
+        reksaiProjectileSound.volume = 0.1;
+        lightningSound.volume = 0.1;
+        lightningExSound.volume = 0.2;
+        explosionSound.volume = 0.4;
+        burnSound.volume = 0.2;
+        hitSound.volume = 0.5;
+        voidlingDeathSound.volume = 0.1;
+        screamSound.volume = 0.1;
+        shootSound.volume = 0.1;
+        spawnSound.volume = 0.1;
+        disappearSound.volume = 1.0;
+        bounceSound.volume = 0.3;
+        autoSound.volume = 0.1;
+        q1Sound.volume = 0.1;
+        q2Sound.volume = 0.1;
+        q3Sound.volume = 0.1;
+        eSound.volume = 0.1;
+        wSound.volume = 0.1;
+        hitSound.volume = 1;
+        teleportSound.volume = 0.3;
+        voidGateSound.volume = 1;
+        laserSound.volume = 0.2;
+        burrowingSound.volume = 0.2;
+        unburrowingSound.volume = 0.2;
+        rocksSound.volume = 0.05;
+        jumpSound.volume = 0.3;
+        breakSound.volume = 0.3;   
+    } else {
+        document.getElementById("image").src = "img/UI/MusicOff.png";
+        
+        bossMusic.volume = 0;
+        climbMusic.loop = 0;
+        climbMusic.volume = 0;
+        earthRumble.volume = 0;
+        fireSound.volume = 0;
+        healSound.volume = 0;
+        invulnSound.volume = 0;
+        reksaiProjectileSound.volume = 0;
+        lightningSound.volume = 0;
+        lightningExSound.volume = 0;
+        explosionSound.volume = 0;
+        burnSound.volume = 0;
+        hitSound.volume = 0;
+        voidlingDeathSound.volume = 0;
+        screamSound.volume = 0;
+        shootSound.volume = 0;
+        spawnSound.volume = 0;
+        disappearSound.volume = 0;
+        bounceSound.volume = 0;
+        autoSound.volume = 0;
+        q1Sound.volume = 0;
+        q2Sound.volume = 0;
+        q3Sound.volume = 0;
+        eSound.volume = 0;
+        wSound.volume = 0;
+        hitSound.volume = 0;
+        teleportSound.volume = 0;
+        voidGateSound.volume = 0;
+        laserSound.volume = 0;
+        burrowingSound.volume = 0;
+        unburrowingSound.volume = 0;
+        rocksSound.volume = 0;
+        jumpSound.volume = 0;
+        breakSound.volume = 0;
+        
+    }
     Entity.prototype.draw.call(this);	
+};
+
+function musicControl() {
+    soundOn = !soundOn;
+    document.getElementById("gameWorld").focus();
 };
 
 // Updates given player's resources
@@ -648,7 +727,7 @@ Platform.prototype.update = function () {
 		    this.y += this.vSpeed;
 		}
 	}
-    if ((this.game.currentPhase === 17 || this.game.currentPhase === 10) && !this.removeFromWorld) {
+    if ((this.game.currentPhase === 10 || this.game.currentPhase === 17) && !this.removeFromWorld) {
         if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
 			for (i = 0; i < this.hitBox.width; i += 10) {
 	            playSound(breakSound);
@@ -707,27 +786,27 @@ Map.prototype.draw = function (ctx) {
 
 function createPlatforms2(game) {
 	var powerups = [
-		new Powerup(game, 1184, -1904, 0), //health powerup		
-		new Powerup(game, 848, -2064, 2), //void gate spawner		
-		new Powerup(game, 896, -2368, 2), //void gate spawner		
-		new Powerup(game, 832, -2512, 0), //health powerup		
-		new Powerup(game, 1184, -2832, 1), //invuln powerup		
-		new Powerup(game, 1520, -3072, 2), //void gate spawner		
-		new Powerup(game, 1200, -3504, 2), //void gate spawner		
-		new Powerup(game, 816, -3312, 1), //invuln powerup		
-		new Powerup(game, 1152, -3840, 2), //void gate spawner		
-		new Powerup(game, 848, -3984, 2), //void gate spawner		
-		new Powerup(game, 928, -3984, 1), //invuln powerup		
-		new Powerup(game, 1136, -4176, 0), //health powerup		
-		new Powerup(game, 816, -4368, 2), //void gate spawner		
-		new Powerup(game, 816, -4592, 0), //health powerup		
-		new Powerup(game, 944, -4688, 2), //void gate spawner		
-		new Powerup(game, 880, -4640, 0), //health powerup		
-		new Powerup(game, 1056, -4976, 0), //health powerup		
-		new Powerup(game, 1312, -4976, 0), //health powerup		
-		new Powerup(game, 1056, -5072, 0), //health powerup		
+		new Powerup(game, 1184, -1904, 0), //health powerup
+		new Powerup(game, 848, -2064, 2), //void gate spawner
+		new Powerup(game, 896, -2368, 2), //void gate spawner
+		new Powerup(game, 832, -2512, 0), //health powerup
+		new Powerup(game, 1184, -2832, 1), //invuln powerup
+		new Powerup(game, 1520, -3072, 2), //void gate spawner
+		new Powerup(game, 1200, -3504, 2), //void gate spawner
+		new Powerup(game, 816, -3312, 1), //invuln powerup
+		new Powerup(game, 1152, -3840, 2), //void gate spawner
+		new Powerup(game, 848, -3984, 2), //void gate spawner
+		new Powerup(game, 928, -3984, 1), //invuln powerup
+		new Powerup(game, 1136, -4176, 0), //health powerup
+		new Powerup(game, 816, -4368, 2), //void gate spawner
+		new Powerup(game, 816, -4592, 0), //health powerup
+		new Powerup(game, 944, -4688, 2), //void gate spawner
+		new Powerup(game, 880, -4640, 0), //health powerup
+		new Powerup(game, 1056, -4976, 0), //health powerup
+		new Powerup(game, 1312, -4976, 0), //health powerup
+		new Powerup(game, 1056, -5072, 0), //health powerup
 		new Powerup(game, 1312, -5072, 0), //health powerup		
-		new Powerup(game, 1168, -3648, 0), //health powerup		
+		new Powerup(game, 1168, -3648, 0), //health powerup
 		new Powerup(game, 816, -2928, 0) //health powerup
 	];
 	var voidlings = [
@@ -763,7 +842,8 @@ function createPlatforms2(game) {
 		new Voidling(game, 1328, -2784, "touch"),		
 		new Voidling(game, 1408, -2784, "touch")
 	];
-	var platforms = [		
+	var platforms = [
+
 		new Platform(game, 1088, -1376),
 		
 		new Platform(game, 1168, -1424),
@@ -1288,7 +1368,9 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 1296, -5024),
 		
-		new Platform(game, 1424, -5024)
+		new Platform(game, 1424, -5024),
+
+
 	];
 	for (i = 0; i < platforms.length; i++) {
 		var p = platforms[i];
@@ -1322,7 +1404,7 @@ function createPlatforms(game) {
 		new Voidling(game, 976, -1008, "explode"),
 		new Voidling(game, 1184, -1008, "touch"),
 		new Voidling(game, 1392, -1008, "touch"),
-		new Voidling(game, 1056, -1152, "touch"),
+		new Voidling(game, 1100, -1152, "touch"),
 		new Voidling(game, 1232, -1152, "touch"),
 		new Voidling(game, 992, -704, "touch"),
 		new Voidling(game, 1056, -704, "touch"),
@@ -1459,7 +1541,7 @@ function createPlatforms(game) {
 }
 
 /**
-    TextBox
+    TextBox (TextBox Id)
 */
 
 function TextBox(game, image, text) {
@@ -1503,6 +1585,7 @@ TextBox.prototype.update = function() {
                 this.game.player1.canControl = true;
         	} else if (this.game.currentPhase === 3) {
                 if (soundOn) {
+                	bossMusic.pause();
                     climbMusic.play();
                 }
         		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "You think you've WON?");
@@ -1544,7 +1627,7 @@ TextBox.prototype.update = function() {
         		this.game.addEntity(chat);
         		this.game.currentPhase = 16;
         	} else if (this.game.currentPhase === 16) {
-         		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "...here we go again!");
+         		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "... Here we go again!");
          		this.game.addEntity(chat);
         		this.game.currentPhase = 17;
         		this.game.step = 0;
@@ -1577,14 +1660,16 @@ TextBox.prototype.update = function() {
 			this.showText = this.text.substring(0, this.progress);
 			var c = this.showText.charAt(this.progress - 1);
 			if (c === '?' || (c.toLowerCase() != c.toUpperCase())) { // It's a character
-			    var sound = new Audio("./sounds/chat.wav");
-			    sound.volume = 0.4;
-			    if (this.image.indexOf("Riven") !== -1) {
-			    	sound = new Audio("./sounds/chat2.wav");
-                    sound.volume = 0.1;
-			    }
-			    sound.play();
-			}
+                if (soundOn) {
+                    var sound = new Audio("./sounds/chat.wav");
+                    sound.volume = 0.4;
+                    if (this.image.indexOf("Riven") !== -1) {
+                        sound = new Audio("./sounds/chat2.wav");
+                        sound.volume = 0.1;
+                    }
+                    sound.play();
+                }
+            }
 		}
 	}
     Entity.prototype.update.call(this);
@@ -2647,6 +2732,7 @@ Malzahar.prototype.update = function() {
 		this.dead = true;
         this.attackable = false;
         this.attackEnabled = false;
+        bossMusic.pause();
 		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "HEhHehEEhHe...");
 		this.game.addEntity(chat);
         playSound(disappearSound);
@@ -2758,9 +2844,11 @@ Malzahar.prototype.update = function() {
 	            	if (this.x != this.destinationX && this.destinationX != -1) {
                         if (this.destinationX > this.hitBox.x + this.hitBox.width) {
                             this.lastDirection = "Right";
+                            this.idleAnimation = this.idleRight;
                             this.walkAnimation = this.idleRight;
                         } else if (this.destinationX < this.hitBox.x) {
                             this.lastDirection = "Left";
+                            this.idleAnimation = this.idleLeft;
                             this.walkAnimation = this.idleLeft;
                         }
 	            		//particles on the current body
@@ -2855,6 +2943,13 @@ Malzahar.prototype.update = function() {
 	                }
 	                this.walkToDestination = false;
 	                this.state = "idle";
+                    if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
+                        this.lastDirection = "Right";
+                        this.idleAnimation = this.idleRight;
+                    } else {
+                        this.lastDirection = "Left";
+                        this.idleAnimation = this.idleLeft;
+                    }
                     playSound(teleportSound);
 	            } else if (this.cooldown[2] === 0 && !this.walkToDestination && this.game.currentPhase >= 15) {
 	            	var yTarget = this.game.liveCamera.y + 350;
@@ -3789,7 +3884,11 @@ Character.prototype.update = function () {
     });
     
     if (this.running) {
-        footsteps.volume = 0.8;
+        if (soundOn) {
+            footsteps.volume = 0.8;
+        } else {
+            footsteps.volume = 0.0;
+        }
         if (this.lastDirection === "Right") {
             this.x += this.runSpeed;
         } else if (this.lastDirection === "Left") {
@@ -3995,4 +4094,5 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.setMap(map);
     gameEngine.setUI(ui);
     gameEngine.start();
+    document.getElementById("gameWorld").focus();
 });
