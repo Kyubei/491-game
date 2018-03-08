@@ -516,7 +516,86 @@ UI.prototype.draw = function (ctx) { //draw ui
                                     this.game.addEntity(particle);
         }
 	}
+    if (soundOn) {
+        document.getElementById("image").src = "img/UI/MusicOn.png";
+        bossMusic.volume = bossMusicVolume;
+        climbMusic.volume = 0.2;
+        earthRumble.volume = 0.4;
+        fireSound.volume = 0.4;
+        healSound.volume = 0.1;
+        invulnSound.volume = 0.1;
+        reksaiProjectileSound.volume = 0.1;
+        lightningSound.volume = 0.1;
+        lightningExSound.volume = 0.2;
+        explosionSound.volume = 0.4;
+        burnSound.volume = 0.2;
+        hitSound.volume = 0.5;
+        voidlingDeathSound.volume = 0.1;
+        screamSound.volume = 0.1;
+        shootSound.volume = 0.1;
+        spawnSound.volume = 0.1;
+        disappearSound.volume = 1.0;
+        bounceSound.volume = 0.3;
+        autoSound.volume = 0.1;
+        q1Sound.volume = 0.1;
+        q2Sound.volume = 0.1;
+        q3Sound.volume = 0.1;
+        eSound.volume = 0.1;
+        wSound.volume = 0.1;
+        hitSound.volume = 1;
+        teleportSound.volume = 0.3;
+        voidGateSound.volume = 1;
+        laserSound.volume = 0.2;
+        burrowingSound.volume = 0.2;
+        unburrowingSound.volume = 0.2;
+        rocksSound.volume = 0.05;
+        jumpSound.volume = 0.3;
+        breakSound.volume = 0.3;   
+    } else {
+        document.getElementById("image").src = "img/UI/MusicOff.png";
+        
+        bossMusic.volume = 0;
+        climbMusic.loop = 0;
+        climbMusic.volume = 0;
+        earthRumble.volume = 0;
+        fireSound.volume = 0;
+        healSound.volume = 0;
+        invulnSound.volume = 0;
+        reksaiProjectileSound.volume = 0;
+        lightningSound.volume = 0;
+        lightningExSound.volume = 0;
+        explosionSound.volume = 0;
+        burnSound.volume = 0;
+        hitSound.volume = 0;
+        voidlingDeathSound.volume = 0;
+        screamSound.volume = 0;
+        shootSound.volume = 0;
+        spawnSound.volume = 0;
+        disappearSound.volume = 0;
+        bounceSound.volume = 0;
+        autoSound.volume = 0;
+        q1Sound.volume = 0;
+        q2Sound.volume = 0;
+        q3Sound.volume = 0;
+        eSound.volume = 0;
+        wSound.volume = 0;
+        hitSound.volume = 0;
+        teleportSound.volume = 0;
+        voidGateSound.volume = 0;
+        laserSound.volume = 0;
+        burrowingSound.volume = 0;
+        unburrowingSound.volume = 0;
+        rocksSound.volume = 0;
+        jumpSound.volume = 0;
+        breakSound.volume = 0;
+        
+    }
     Entity.prototype.draw.call(this);	
+};
+
+function musicControl() {
+    soundOn = !soundOn;
+    document.getElementById("gameWorld").focus();
 };
 
 // Updates given player's resources
@@ -643,7 +722,7 @@ Platform.prototype.update = function () {
 		    this.y += this.vSpeed;
 		}
 	}
-    if (this.game.currentPhase === 10 && !this.removeFromWorld) {
+    if ((this.game.currentPhase === 10 || this.game.currentPhase === 17) && !this.removeFromWorld) {
         if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
 			for (i = 0; i < this.hitBox.width; i += 10) {
 	            playSound(breakSound);
@@ -815,7 +894,7 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 768, -1712),
 		
-		new Platform(game, 960, -1712, 2, 0, 112), //HORIZONTAL
+		new Platform(game, 955, -1712, 2, 0, 85), //HORIZONTAL
 		
 		new Platform(game, 896, -1760),
 		
@@ -1278,7 +1357,7 @@ function createPlatforms(game) {
 		new Voidling(game, 976, -1008, "explode"),
 		new Voidling(game, 1184, -1008, "touch"),
 		new Voidling(game, 1392, -1008, "touch"),
-		new Voidling(game, 1056, -1152, "touch"),
+		new Voidling(game, 1100, -1152, "touch"),
 		new Voidling(game, 1232, -1152, "touch"),
 		new Voidling(game, 992, -704, "touch"),
 		new Voidling(game, 1056, -704, "touch"),
@@ -1415,7 +1494,7 @@ function createPlatforms(game) {
 }
 
 /**
-    TextBox
+    TextBox (TextBox Id)
 */
 
 function TextBox(game, image, text) {
@@ -1500,7 +1579,7 @@ TextBox.prototype.update = function() {
         		this.game.addEntity(chat);
         		this.game.currentPhase = 16;
         	} else if (this.game.currentPhase === 16) {
-         		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "...here we go again!");
+         		var chat = new TextBox(this.game, "./img/Chat/RivenSquare.png", "... Here we go again!");
          		this.game.addEntity(chat);
         		this.game.currentPhase = 17;
         		this.game.step = 0;
@@ -1523,14 +1602,16 @@ TextBox.prototype.update = function() {
 			this.showText = this.text.substring(0, this.progress);
 			var c = this.showText.charAt(this.progress - 1);
 			if (c === '?' || (c.toLowerCase() != c.toUpperCase())) { // It's a character
-			    var sound = new Audio("./sounds/chat.wav");
-			    sound.volume = 0.4;
-			    if (this.image.indexOf("Riven") !== -1) {
-			    	sound = new Audio("./sounds/chat2.wav");
-                    sound.volume = 0.1;
-			    }
-			    sound.play();
-			}
+                if (soundOn) {
+                    var sound = new Audio("./sounds/chat.wav");
+                    sound.volume = 0.4;
+                    if (this.image.indexOf("Riven") !== -1) {
+                        sound = new Audio("./sounds/chat2.wav");
+                        sound.volume = 0.1;
+                    }
+                    sound.play();
+                }
+            }
 		}
 	}
     Entity.prototype.update.call(this);
@@ -2676,9 +2757,11 @@ Malzahar.prototype.update = function() {
 	            	if (this.x != this.destinationX && this.destinationX != -1) {
                         if (this.destinationX > this.hitBox.x + this.hitBox.width) {
                             this.lastDirection = "Right";
+                            this.idleAnimation = this.idleRight;
                             this.walkAnimation = this.idleRight;
                         } else if (this.destinationX < this.hitBox.x) {
                             this.lastDirection = "Left";
+                            this.idleAnimation = this.idleLeft;
                             this.walkAnimation = this.idleLeft;
                         }
 	            		//particles on the current body
@@ -2745,6 +2828,13 @@ Malzahar.prototype.update = function() {
 	                }
 	                this.walkToDestination = false;
 	                this.state = "idle";
+                    if (this.game.player1.hitBox.x > this.hitBox.x + (this.hitBox.width / 2)) {
+                        this.lastDirection = "Right";
+                        this.idleAnimation = this.idleRight;
+                    } else {
+                        this.lastDirection = "Left";
+                        this.idleAnimation = this.idleLeft;
+                    }
                     playSound(teleportSound);
 	            } else if (this.cooldown[2] === 0 && !this.walkToDestination && this.game.currentPhase >= 15) {
                     var particle = new Particle(VOID_GATE, this.game.liveCamera.x + 30, this.game.liveCamera.y + 350, 
@@ -3679,7 +3769,11 @@ Character.prototype.update = function () {
     });
     
     if (this.running) {
-        footsteps.volume = 0.8;
+        if (soundOn) {
+            footsteps.volume = 0.8;
+        } else {
+            footsteps.volume = 0.0;
+        }
         if (this.lastDirection === "Right") {
             this.x += this.runSpeed;
         } else if (this.lastDirection === "Left") {
@@ -3884,4 +3978,5 @@ ASSET_MANAGER.downloadAll(function () {
     gameEngine.setMap(map);
     gameEngine.setUI(ui);
     gameEngine.start();
+    document.getElementById("gameWorld").focus();
 });

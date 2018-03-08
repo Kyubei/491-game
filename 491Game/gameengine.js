@@ -208,7 +208,7 @@ GameEngine.prototype.update = function () {
 			}
 		}
 		if (this.currentPhase === 17) {
-			this.camera.y = -1700 - (this.step - 100) / 2;
+            this.camera.y = -1700 - (this.step - 100) / 2;
 		}
 	    if (this.liveCamera.x != this.camera.x) {
 	    	if (this.liveCamera.x < this.camera.x) {
@@ -231,8 +231,7 @@ GameEngine.prototype.update = function () {
             this.liveCamera.x = 800;
             this.liveCamera.y = -1700;
             this.cameraLock = true;
-        }
-        if (this.currentPhase === 17 && this.camera.y <= -5250) {
+        } else if (this.currentPhase === 17 && this.camera.y <= -5250) {
             this.currentPhase = 18;
             this.camera.x = 800;
             this.camera.y = -5250;
