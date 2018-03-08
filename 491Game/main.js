@@ -4,7 +4,6 @@
 
 var soundOn = true;
 var showHitBox = false;
-var testingMode = true; // W damage = 700
 
 var gameEngine;
 
@@ -584,6 +583,11 @@ function Platform(game, x, y, hSpeed, vSpeed, switchDelay, specialId, stepOffset
     this.switchDelay = switchDelay || 0;
 	this.specialId = specialId || 0;
     this.step = stepOffset || 0;
+    this.delay = 0;
+    if (this.vSpeed != 0 && this.step > 0) {
+    	this.delay = this.step;
+    	this.step = 0;
+    }
     // Pictures and Animations
     this.platformPicture = ASSET_MANAGER.getAsset("./img/UI/Platform.png");
     if (this.specialId === 1) {
@@ -607,33 +611,37 @@ Platform.prototype.constructor = Platform;
 Platform.prototype.update = function () {
 	// Only update when it is visible on the screen
 	if (isOnScreen(this)) {
-		this.step++;
-		if (this.switchDelay > 0 && this.step % this.switchDelay === 0) {
-			this.hSpeed *= -1;
-			this.vSpeed *= -1;
-		}
-		if (this.specialId === 2) {
-			if (this.step >= 150) {
-				if (this.step === 150)
-		            playSound(fireSound);
-				if (this.step % 2 === 0) {
-					for (i = 0; i < this.hitBox.width; i += 10) {
-						if (Math.random() >= 0.5) {
-				            var particle = new Particle(SHAPE_PART, this.x + i, this.y, 1, -1, 0, -4, 0, 0.1, 0, 5, 0, 50, 1, 0, true, this.game);
-				            var element;
-				            element = new SquareElement(4 + Math.random() * 2, 4 + Math.random() * 2, "#f27d30", "#eab120");
-				            particle.other = element;
-				            particle.attackId = 5;
-				            this.game.addEntity(particle);
+		if (this.delay > 0) {
+			this.delay--;
+		} else {
+			this.step++;
+			if (this.switchDelay > 0 && this.step % this.switchDelay === 0) {
+				this.hSpeed *= -1;
+				this.vSpeed *= -1;
+			}
+			if (this.specialId === 2) {
+				if (this.step >= 150) {
+					if (this.step === 150)
+			            playSound(fireSound);
+					if (this.step % 2 === 0) {
+						for (i = 0; i < this.hitBox.width; i += 10) {
+							if (Math.random() >= 0.5) {
+					            var particle = new Particle(SHAPE_PART, this.x + i, this.y, 1, -1, 0, -4, 0, 0.1, 0, 5, 0, 50, 1, 0, true, this.game);
+					            var element;
+					            element = new SquareElement(4 + Math.random() * 2, 4 + Math.random() * 2, "#f27d30", "#eab120");
+					            particle.other = element;
+					            particle.attackId = 5;
+					            this.game.addEntity(particle);
+							}
 						}
 					}
 				}
+				if (this.step >= 200)
+					this.step = 0;
 			}
-			if (this.step >= 200)
-				this.step = 0;
+		    this.x += this.hSpeed;
+		    this.y += this.vSpeed;
 		}
-	    this.x += this.hSpeed;
-	    this.y += this.vSpeed;
 	}
     if (this.game.currentPhase === 10 && !this.removeFromWorld) {
         if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
@@ -1760,7 +1768,7 @@ Particle.prototype.update = function() {
 		   	this.y = 330;
 		    if (this.explodeTime === 0)
 		    	this.removeFromWorld = true; //-4784
-		} else if (this.y >= 330 && this.explodeTime === 0) {
+		} else if (((this.y >= 330 && this.game.currentPhase < 14) || this.y >= -1340 && this.game.currentPhase == 14) && this.explodeTime === 0) {
 	    	this.life = 0;
 	    	this.explodeTime = 20;
 	    	this.y = 330;
@@ -2534,6 +2542,13 @@ Malzahar.prototype.update = function() {
 	    var element = new CircleElement(6 + Math.random() * 3, "#240340", "#131d4f");
 	   	newParticle.other = element;
 	    this.game.addEntity(newParticle);
+        if (this.game.player1.hitBox.x < this.hitBox.x) {
+            this.lastDirection = "Left";
+            this.idleAnimation = this.idleLeft;
+        } else {
+            this.lastDirection = "Right";
+            this.idleAnimation = this.idleRight;
+        }
 	}
     if (this.spawnTimer >= 0 && this.spawnCount > 0) {
         if (this.spawnTimer <= 0) {
@@ -3195,9 +3210,6 @@ function Character(game) {
     this.qDamage = 4;
     this.qScaling = 2;
     this.wDamage = 4;
-    if (testingMode) {
-        this.wDamage = 700;
-    }
     // String Variables
 	this.lastDirection = "Right";
     // Boolean Variables
@@ -3641,7 +3653,7 @@ Character.prototype.update = function () {
     	currentPlatform.update();
         if ((that.hitBox.x + that.hitBox.width) > currentPlatform.hitBox.x) {
             if (that.hitBox.x < (currentPlatform.hitBox.x + currentPlatform.hitBox.width)) {
-                if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed <= currentPlatform.hitBox.y) {
+                if ((that.hitBox.y + that.hitBox.height) + currentPlatform.vSpeed <= currentPlatform.hitBox.y || (that.hitBox.y + that.hitBox.height) - currentPlatform.vSpeed <= currentPlatform.hitBox.y) {
                     if ((that.hitBox.y + that.hitBox.height - (that.yVelocity - that.gravity )) >= currentPlatform.hitBox.y) {
                         platformFound = true;
                         if (currentPlatform.specialId === 1) { //bouncy platform

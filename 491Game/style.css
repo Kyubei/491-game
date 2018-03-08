@@ -1,0 +1,14 @@
+canvas, pre {
+  float: left;
+}
+
+pre {
+    margin-left: 10px;
+    background-color: black;
+    width: 265px;
+    height: 495px;
+    color: white;
+    padding-left: 5px;
+    padding-top: 5px;
+    margin-top: 0px;
+}

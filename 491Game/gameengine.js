@@ -101,6 +101,10 @@ GameEngine.prototype.startInput = function () {
 			that.player1.attackInput = 2;
 		} else if (String.fromCharCode(e.which) === ' ') {
             that.textSpeed = 3;
+        } else if (String.fromCharCode(e.which) === 'À') {
+            that.player1.autoDamage = 700;
+            that.player1.qDamage = 700;
+            that.player1.wDamage = 700;
         }
         if (String.fromCharCode(e.which) === 'T') {
 			
@@ -249,6 +253,8 @@ GameEngine.prototype.update = function () {
 		this.liveCamera.y += -this.cameraShakeAmount / 2 + Math.random() * this.cameraShakeAmount / 2;
 		if (this.cameraShakeAmount <= 0) {
 			this.cameraShakeTime = 0;
+            this.liveCamera.x = this.camera.x;
+            this.liveCamera.y = this.camera.y;
 		}
 	}
     var entitiesCount = this.entities.length;
