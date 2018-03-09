@@ -4048,7 +4048,6 @@ Character.prototype.update = function () {
     // wall check
     var platformFound = false;
     this.game.currentMap.platforms.forEach(function(currentPlatform) {
-    	currentPlatform.update();
         if (currentPlatform.isWall) {
             if (that.hitBox.y + that.hitBox.height > currentPlatform.y) {
                 if (that.hitBox.x < currentPlatform.x && that.hitBox.x + that.hitBox.width >= currentPlatform.x && that.lastDirection == "Right") {

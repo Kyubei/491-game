@@ -106,6 +106,8 @@ GameEngine.prototype.startInput = function () {
             that.player1.autoDamage = 700;
             that.player1.qDamage = 700;
             that.player1.wDamage = 700;
+            that.player1.y -= 200;
+            that.player1.yVelocity = 0;
         }
         if (String.fromCharCode(e.which) === 'T') {
 			if (that.player1.wDamage === 700) {
