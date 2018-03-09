@@ -279,7 +279,6 @@ function getRandomColor(color1, color2) {
 
 // Returns whether or not the entity is on the screen
 function isOnScreen(entity) {
-	//return true;
 	return (entity.x >= entity.game.liveCamera.x - 50 && entity.x <= entity.game.liveCamera.x + entity.game.liveCamera.width + 50
 			&& entity.y >= entity.game.liveCamera.y -50 && entity.y <= entity.game.liveCamera.y + entity.game.liveCamera.height + 50);
 }
@@ -1549,7 +1548,9 @@ function createPlatforms2(game) {
 		
 		new Platform(game, 1552, -4784),
 		
-		new Platform(game, 1168, -4785, 0, 0, 0, 1), //BOUNCY
+		new Platform(game, 1168, -4784),
+		
+		new Platform(game, 1168, -4784 - 32, 0, 0, 0, 1), //BOUNCY
 		
 		new Platform(game, 1168, -4928),
 		
@@ -2074,7 +2075,7 @@ Particle.prototype.update = function() {
 		   	newParticle.other = element;
 			if (this.life >= 150) //only do damage after a certain period of windup
 				newParticle.attackId = 4;
-			console.log("Void gate particle at: "+this.x+", "+this.y+". Player: "+this.game.player1.x+", "+this.game.player1.y);
+			//console.log("Void gate particle at: "+this.x+", "+this.y+". Player: "+this.game.player1.x+", "+this.game.player1.y);
 		    this.game.addEntity(newParticle);
 		}
 	}
@@ -2158,7 +2159,7 @@ Particle.prototype.update = function() {
 		   	newParticle.other = element;
 		    this.game.addEntity(newParticle);
 		} else {
-			console.log("deleting goop "+this.y)
+			//console.log("deleting goop "+this.y)
 			this.removeFromWorld = true;			
 		}
 	}
@@ -2941,7 +2942,7 @@ Malzahar.prototype.update = function() {
 			this.alpha = 1;
 			this.game.currentPhase++;
 		}
-		console.log("REAPPEARING INTO THE WORLD! "+this.x+","+this.y+", player is "+this.game.player1.x+", "+this.game.player1.y+", gamephase="+this.game.currentPhase);
+		//console.log("REAPPEARING INTO THE WORLD! "+this.x+","+this.y+", player is "+this.game.player1.x+", "+this.game.player1.y+", gamephase="+this.game.currentPhase);
         this.state = "idle";
 	    var newParticle = new Particle(PART_SECONDARY, this.x + Math.random() * 100, this.y + Math.random() * 160, 
 				-2, 2, -2, 2, 0, 0.1, 0, 30, 0, 15, .7, .2, true, this.game);
@@ -4293,16 +4294,14 @@ Character.prototype.update = function () {
     
     // wall check
     var platformFound = false;
-    if (!noSnap) {
+    if (!noSnap && this.game.currentPhase < 0) {
 	    this.game.currentMap.platforms.forEach(function(currentPlatform) {
 	        if (currentPlatform.isWall) {
 	        	if (that.hitBox.y + that.hitBox.height > currentPlatform.y && that.hitBox.y < currentPlatform.y + currentPlatform.height) {
 	                if (that.hitBox.x < currentPlatform.x && that.hitBox.x + that.hitBox.width >= currentPlatform.x && that.lastDirection == "Right") {
 	                    that.x = currentPlatform.x - that.hitBox.width - that.hitBoxDef.offsetX;
-	                    console.log("snap to the left")
 	                } else if (that.hitBox.x < currentPlatform.x + currentPlatform.width && that.hitBox.x + that.hitBox.width >= currentPlatform.x + currentPlatform.width && that.lastDirection == "Left") {
 	                    that.x = currentPlatform.x + currentPlatform.width - that.hitBoxDef.growthX - that.hitBoxDef.offsetX - 1;
-	                    console.log("snap to the r. "+that.attacking)
 	                }
 	            }
 	        }
