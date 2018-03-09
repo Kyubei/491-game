@@ -3655,7 +3655,26 @@ Character.prototype.update = function () {
         }
         if (this.game.currentPhase === 10 || this.game.currentPhase === 17) {
             if (this.game.liveCamera.y <= -120 && this.hitBox.y + this.hitBox.height >= this.game.liveCamera.y + 500) {
-                this.currentHealth = 0;
+                if (mode === "easy") {
+                    this.yVelocity = 20;
+                    this.jumping = true;
+                    this.y = this.game.liveCamera.y + 500 - this.hitBox.height - 10;
+                    this.currentHealth -= 50;
+                    if (this.currentHealth > 0) {
+                        playSound(hitSound);
+                    }
+                } else if (mode === "medium") {
+                    this.yVelocity = 15;
+                    this.jumping = true;
+                    this.y = this.game.liveCamera.y + 500 - this.hitBox.height - 10;
+                    this.currentHealth -= 50;
+                    if (this.currentHealth > 0) {
+                        playSound(hitSound);
+                    }
+                } else {
+                    this.currentHealth = 0;
+                }
+                console.log(mode);
             }
         }
         if (this.bounceTimer > 0) {
@@ -4112,7 +4131,7 @@ Character.prototype.update = function () {
     var platformFound = false;
     this.game.currentMap.platforms.forEach(function(currentPlatform) {
         if (currentPlatform.isWall) {
-            if (that.hitBox.y + that.hitBox.height > currentPlatform.y) {
+            if (that.hitBox.y + that.hitBox.height > currentPlatform.y && that.hitBox.y < currentPlatform.y + currentPlatform.height) {
                 if (that.hitBox.x < currentPlatform.x && that.hitBox.x + that.hitBox.width >= currentPlatform.x && that.lastDirection == "Right") {
                     that.x = currentPlatform.x - that.hitBox.width - that.hitBoxDef.offsetX;
                 } else if (that.hitBox.x < currentPlatform.x + currentPlatform.width && that.hitBox.x + that.hitBox.width >= currentPlatform.x + currentPlatform.width && that.lastDirection == "Left") {
