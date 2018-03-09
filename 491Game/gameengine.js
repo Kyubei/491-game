@@ -46,18 +46,19 @@ GameEngine.prototype.init = function (ctx) {
 	this.player1AttackIndex = 0; //the actual skill being used
 	this.player1AttackInput = 0; //the raw attack input
 	this.player1LastLightAttack = 0;
-	this.currentPhase = 0;
+	this.currentPhase = -1;
 	this.currentBoss = null;
     this.currentMap = null;
     this.UI = null;
     this.textSpeed = 8;
     this.step = 0;
-    this.cameraLock = true;
+    this.cameraLock = false;
+    this.gameWon = false;
     this.cameraSpeed = 5;
     this.camera = { //where the camera wants to be
-    	x: 0,
+    	x: -2400,
     	y: 0,
-    	minX: 0,
+    	minX: -2400,
     	maxX: 0,
     	minY: 0,
     	maxY: 0,
@@ -65,7 +66,7 @@ GameEngine.prototype.init = function (ctx) {
     	height: 600
     };
     this.liveCamera = { //where the camera actually is
-    	x: 0,
+    	x: -2400,
     	y: 0,
     	width: 800,
     	height: 600
@@ -221,6 +222,12 @@ GameEngine.prototype.update = function () {
 	    		this.liveCamera.y = Math.max(this.camera.y, this.liveCamera.y - this.cameraSpeed);	    		
 	    	}
 	    }
+        if (this.currentPhase === -1 && this.camera.x >= 0) {
+            this.currentPhase = 0;
+            this.camera.x = 0;
+            this.liveCamera.x = 0;
+            this.cameraLock = true;
+        }
         if (this.currentPhase === 10 && this.camera.y <= -1700) {
             this.currentPhase = 11;
             this.camera.x = 800;
