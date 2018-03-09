@@ -3,7 +3,7 @@
 */
 
 var soundOn = true;
-var showHitBox = true;
+var showHitBox = false;
 var invincible = true;
 
 var gameEngine;
@@ -522,7 +522,7 @@ UI.prototype.draw = function (ctx) { //draw ui
             this.gameOverTransparency += 0.025;
             ctx.globalAlpha = this.gameOverTransparency;
         }
-        if (!victory.isPlaying()) {
+        if (!isPlaying(victory)) {
             playSound(victory);
         }
         ctx.font = "100px Calibri";
@@ -2817,7 +2817,7 @@ Malzahar.prototype.update = function() {
         this.attackEnabled = false;
 		var chat = new TextBox(this.game, "./img/Chat/MalzSquare.png", "...impossible...");
 		this.game.addEntity(chat);
-        finalmusic.pause();
+        finalMusic.pause();
         playSound(disappearSound);
 	}
     if (this.game.currentPhase === 3 || this.game.currentPhase === 15) {
