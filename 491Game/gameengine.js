@@ -117,6 +117,15 @@ GameEngine.prototype.startInput = function () {
 	            that.player1.jumping = true;
 			}
 		}
+        if (String.fromCharCode(e.which) === '6') {
+			if (that.player1.wDamage === 700) {
+	        	that.player1.xVelocity = 3;
+	        	that.player1.yVelocity = 15;
+	        	that.player1.bounceTimer = 30;
+	        	that.player1.jumpSpeed = 0;
+	            that.player1.jumping = true;
+			}
+		}
         e.preventDefault();
     }, false);
     this.ctx.canvas.addEventListener("keyup", function (e) {
