@@ -102,7 +102,7 @@ GameEngine.prototype.startInput = function () {
 			that.player1.attackInput = 2;
 		} else if (String.fromCharCode(e.which) === ' ') {
             that.textSpeed = 3;
-        } else if (String.fromCharCode(e.which) === 'À') {
+        } else if (String.fromCharCode(e.which) === '*') {
             that.player1.autoDamage = 700;
             that.player1.qDamage = 700;
             that.player1.wDamage = 700;
@@ -111,15 +111,6 @@ GameEngine.prototype.startInput = function () {
         }
         if (String.fromCharCode(e.which) === 'T') {
 			if (that.player1.wDamage === 700) {
-	        	that.player1.yVelocity = 15;
-	        	that.player1.bounceTimer = 30;
-	        	that.player1.jumpSpeed = 0;
-	            that.player1.jumping = true;
-			}
-		}
-        if (String.fromCharCode(e.which) === '6') {
-			if (that.player1.wDamage === 700) {
-	        	that.player1.xVelocity = 3;
 	        	that.player1.yVelocity = 15;
 	        	that.player1.bounceTimer = 30;
 	        	that.player1.jumpSpeed = 0;
